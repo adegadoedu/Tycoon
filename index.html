@@ -261,7 +261,8 @@ body:not(.jogando) .btn-papo{display:none}
 .papo-nota{color:var(--sub);font-weight:800;font-size:.85rem;margin:6px 0 0;text-align:center}
 .papo-regras{background:var(--painel2);border:3px dashed var(--contorno);border-radius:12px;padding:10px 12px;font-weight:800;font-size:.9rem}
 .papo-regras ul{margin:6px 0 10px 18px}
-#btnRanking,#btnPersonagem,#btnSair{font-size:1.15rem;padding:4px 10px;cursor:pointer}
+#btnMotoca{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
+#btnRanking,#btnPersonagem,#btnMotoca,#btnSair{font-size:1.15rem;padding:4px 10px;cursor:pointer}
 .abas{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .aba{border:3px solid var(--contorno);border-radius:12px;background:var(--painel2);padding:8px;font-weight:900}
 .aba.ativa{background:var(--amarelo);color:#2A1A12}
@@ -287,7 +288,7 @@ body:not(.jogando) .alerta{display:none}
 /* barra do topo compacta em celulares (fica no fim para ter prioridade) */
 @media (max-width:440px){
   .hud .linha-hud{gap:4px}
-  .hud .linha-hud .pilula,.hud #btnRanking,.hud #btnPersonagem,.hud #btnMusica,.hud #btnSair{padding:3px 6px;font-size:1rem}
+  .hud .linha-hud .pilula,.hud #btnRanking,.hud #btnPersonagem,.hud #btnMotoca,.hud #btnMusica,.hud #btnSair{padding:3px 6px;font-size:1rem}
   .hud #dinheiro{font-size:1.05rem;padding:3px 8px 3px 6px;gap:4px}
   .hud #dinheiro .tk{display:none}
   .hud #taxa{font-size:.68rem;padding:3px 5px}
@@ -302,6 +303,7 @@ body:not(.jogando) .alerta{display:none}
   <div class="linha-hud">
     <button class="pilula" id="btnRanking" aria-label="Ver ranking">🏆</button>
     <button class="pilula" id="btnPersonagem" aria-label="Meu personagem">👤</button>
+    <a class="pilula" id="btnMotoca" href="motoca/" aria-label="Jogar Motoca: a aventura da Adega" title="Motoca: a aventura da Adega">🎮</a>
     <div class="pilula" id="dinheiro" role="button" tabindex="0" aria-label="Trocar dinheiro por cupom de desconto"><span id="icDin"></span><span id="valDin">0</span><span class="tk" aria-hidden="true">🎟️</span></div>
     <div class="pilula" id="taxa">0/min</div>
     <button class="pilula" id="btnMusica" type="button" aria-label="Música">🔊</button>
