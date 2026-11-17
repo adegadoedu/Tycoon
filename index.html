@@ -513,15 +513,16 @@ body:not(.jogando) .alerta{display:none}
 <section class="tela" id="telaCupom" hidden>
   <div class="caixa">
     <div class="cabeca"><h2 class="titulo" style="font-size:1.8rem">Trocar por desconto</h2><span class="pilula" id="cpSaldo"></span></div>
-    <p class="txt">Cada <b>1 milhão</b> no jogo vira <b>R$ 1,00</b> de desconto de verdade na Adega do Edu, em produtos não alcoólicos. Limite de <b>R$ 10,00 por mês</b>.</p>
+    <p class="txt">Cada <b>1 milhão</b> no jogo vira <b>R$ 1,00</b> de cupom. O cupom dá <b>10% de desconto</b> na compra de produtos não alcoólicos da Adega do Edu, <b>até o valor dele</b>. Limite de <b>R$ 10,00 por mês</b>.</p>
     <div class="stats"><div class="stat"><span>Dá para trocar agora</span><b id="cpPode">R$ 0,00</b></div><div class="stat"><span>Usado este mês</span><b id="cpMes">R$ 0,00 de R$ 10,00</b></div></div>
     <div class="seletor"><button type="button" id="cpMenos" aria-label="Diminuir valor">−</button><b id="cpValor">R$ 1,00</b><button type="button" id="cpMais" aria-label="Aumentar valor">+</button></div>
+    <p class="txt" id="cpDica" style="font-size:.85rem;margin:6px 0 0"></p>
     <button class="btn" id="cpGerar">Gerar cupom</button>
     <p class="erro" id="cpErro" role="alert"></p>
     <div id="cpNovo"></div>
     <h3>Meus cupons</h3>
     <ul class="lista-cp" id="cpLista"></ul>
-    <p class="txt" style="font-size:.82rem;color:var(--sub)">Regras: mostre o código no balcão na hora de pagar. Um cupom por compra, não cumulativo com outras promoções, válido por 30 dias e só em produtos não alcoólicos.</p>
+    <p class="txt" style="font-size:.82rem;color:var(--sub)">Regras: mostre o código no balcão na hora de pagar. O cupom dá 10% da compra até o valor dele e só pode ser usado uma vez (o que sobrar não fica guardado). Um cupom por compra, não cumulativo com outras promoções, válido por 30 dias e só em produtos não alcoólicos.</p>
     <button class="btn amarelo" id="cpFechar">Voltar ao jogo</button>
   </div>
 </section>
@@ -564,7 +565,7 @@ body:not(.jogando) .alerta{display:none}
     <h2 class="titulo" style="font-size:2rem">Adega completa!</h2>
     <p class="txt"><b>🛵 Novidade: as entregas de moto foram liberadas!</b> Use o botão “Entregas” para levar pedidos aos clientes e faturar ainda mais.</p>
     <p class="txt">Você cumpriu todas as tarefas da Adega do Edu. A loja continua funcionando: siga melhorando os setores, mantendo o estoque cheio e batendo recordes de faturamento.</p>
-    <div class="cupom"><b>🎁 Cupom de conclusão:</b> por ter completado todas as tarefas, você ganha um cupom único de até R$ 5,00, em produtos não alcoólicos da Adega do Edu. Ele conta dentro do limite de R$ 10,00 por mês.</div>
+    <div class="cupom"><b>🎁 Cupom de conclusão:</b> por ter completado todas as tarefas, você ganha um cupom único de 10% de desconto, até R$ 5,00, em produtos não alcoólicos da Adega do Edu. Ele conta dentro do limite de R$ 10,00 por mês.</div>
     <button class="btn amarelo" id="btnConclusao">Pegar meu cupom de conclusão</button>
     <p class="erro" id="conclErro" role="alert"></p>
     <div id="conclNovo"></div>
@@ -1775,19 +1776,24 @@ function renderCupom(){
   $('#cpPode').textContent=reais(m*100);
   $('#cpMes').textContent=reais(cp.usadoMes)+' de '+reais(LIMITE_MES_REAIS*100);
   $('#cpValor').textContent=reais(cp.valor*100);
+  $('#cpDica').innerHTML='Cupom de '+reais(cp.valor*100)+': use numa compra a partir de <b>'+reais(cp.valor*1000)+'</b> para aproveitar o valor inteiro.';
+  $('#cpDica').hidden=!(cp.online&&m>=1);
   $('#cpMenos').disabled=cp.valor<=1; $('#cpMais').disabled=cp.valor>=m;
   const g=$('#cpGerar');
   g.disabled=!cp.online||m<1;
-  g.textContent=!cp.online?'Cupons indisponíveis':m>=1?`Gerar cupom de ${reais(cp.valor*100)}`:(cp.usadoMes>=LIMITE_MES_REAIS*100?'Limite do mês atingido':'Junte 1 milhão para trocar');
+  g.textContent=!cp.online?'Cupons indisponíveis':m>=1?`Gerar cupom de até ${reais(cp.valor*100)}`:(cp.usadoMes>=LIMITE_MES_REAIS*100?'Limite do mês atingido':'Junte 1 milhão para trocar');
 }
+const cpPct={};
+const textoCupom=(pct,c)=>pct?`${pct}% até ${reais(c)}`:reais(c);
+const compraCheia=(pct,c)=>reais(Math.ceil(c*100/pct));
 function renderListaCupons(rows){
   const ul=$('#cpLista'); ul.innerHTML='';
   if(!rows.length){ const li=document.createElement('li'); li.className='off'; li.textContent='Você ainda não gerou cupons.'; ul.appendChild(li); return; }
   rows.forEach(r=>{
     const li=document.createElement('li'), c=document.createElement('span'), v=document.createElement('b'), st=document.createElement('span');
     const usado=!!r.usado_em, venc=!usado&&new Date(r.expira_em)<new Date();
-    c.className='c'; c.textContent=r.codigo; v.textContent=reais(r.valor_centavos); st.className='st';
-    st.textContent=(r.tipo==='conclusao'?'🎁 Conclusão · ':'')+(usado?'✔ Usado em '+dataBR(r.usado_em):venc?'Expirado em '+dataBR(r.expira_em):'Válido até '+dataBR(r.expira_em));
+    const px=cpPct[r.codigo]||{}; c.className='c'; c.textContent=r.codigo; v.textContent=textoCupom(px.percentual,r.valor_centavos); st.className='st';
+    st.textContent=(r.tipo==='conclusao'?'🎁 Conclusão · ':'')+(usado?'✔ Usado em '+dataBR(r.usado_em)+(px.usado_desconto_centavos?' · desconto de '+reais(px.usado_desconto_centavos):''):venc?'Expirado em '+dataBR(r.expira_em):'Válido até '+dataBR(r.expira_em)+(px.percentual?' · compra a partir de '+compraCheia(px.percentual,r.valor_centavos)+' usa tudo':''));
     if(usado||venc) li.className='off';
     li.append(c,v,st); ul.appendChild(li);
   });
@@ -1795,6 +1801,7 @@ function renderListaCupons(rows){
 async function carregarCupons(){
   try{
     const rows=await rpc('meus_cupons',{p_id:S.perfil.id,p_token:S.perfil.token})||[];
+    try{ const ps=await rpc('meus_cupons_percentual',{p_id:S.perfil.id,p_token:S.perfil.token})||[]; ps.forEach(x=>{ cpPct[x.codigo]=x; }); }catch(e){}
     const mes=mesAtual(); cp.usadoMes=rows.filter(r=>r.mes===mes).reduce((t,r)=>t+r.valor_centavos,0);
     renderListaCupons(rows); renderCupom();
   }catch(e){ $('#cpErro').textContent='Não foi possível carregar seus cupons. Confira a internet.'; }
@@ -1822,9 +1829,9 @@ $('#cpGerar').addEventListener('click',async()=>{
     const r=await rpc('trocar_por_cupom',{p_id:S.perfil.id,p_token:S.perfil.token,p_reais:v}); const l=Array.isArray(r)?r[0]:r;
     S.din-=v*MOEDAS_POR_REAL; salvar(); atualizarHUD(true); SOM.marco();
     const box=document.createElement('div'); box.className='cupom-novo';
-    const t1=document.createElement('div'); t1.textContent='Seu cupom de '+reais(l.cupom_centavos)+':';
+    const t1=document.createElement('div'); t1.textContent='Seu cupom: 10% de desconto, até '+reais(l.cupom_centavos)+':';
     const cod=document.createElement('div'); cod.className='cod'; cod.textContent=l.cupom_codigo;
-    const t2=document.createElement('div'); t2.textContent='Mostre este código no balcão da Adega do Edu. Válido até '+dataBR(l.cupom_expira)+'.';
+    const t2=document.createElement('div'); t2.textContent='Mostre este código no balcão da Adega do Edu. Para usar o valor inteiro, compre a partir de '+compraCheia(10,l.cupom_centavos)+' em produtos não alcoólicos. Válido até '+dataBR(l.cupom_expira)+'.';
     box.append(t1,cod,t2); $('#cpNovo').innerHTML=''; $('#cpNovo').appendChild(box);
     await carregarCupons();
   }catch(e){
@@ -1844,9 +1851,9 @@ $('#btnConclusao').addEventListener('click',async()=>{
     ultimoEnvio=''; await sincronizar(true);
     const r=await rpc('gerar_cupom_conclusao',{p_id:S.perfil.id,p_token:S.perfil.token}); const l=Array.isArray(r)?r[0]:r;
     const box=document.createElement('div'); box.className='cupom-novo';
-    const t1=document.createElement('div'); t1.textContent='🎁 Seu cupom de conclusão de '+reais(l.cupom_centavos)+':';
+    const t1=document.createElement('div'); t1.textContent='🎁 Seu cupom de conclusão: 10% de desconto, até '+reais(l.cupom_centavos)+':';
     const cod=document.createElement('div'); cod.className='cod'; cod.textContent=l.cupom_codigo;
-    const t2=document.createElement('div'); t2.textContent='Mostre este código no balcão da Adega do Edu. Válido até '+dataBR(l.cupom_expira)+'. Ele também fica na lista de cupons do 🎟️.';
+    const t2=document.createElement('div'); t2.textContent='Mostre este código no balcão da Adega do Edu. Para usar o valor inteiro, compre a partir de '+compraCheia(10,l.cupom_centavos)+' em produtos não alcoólicos. Válido até '+dataBR(l.cupom_expira)+'. Ele também fica na lista de cupons do 🎟️.';
     box.append(t1,cod,t2); $('#conclNovo').innerHTML=''; $('#conclNovo').appendChild(box);
     btn.textContent='Cupom de conclusão já pego'; SOM.marco();
     S.conclusaoMes=mesAtualConclusao(); salvar(); renderTarefa();

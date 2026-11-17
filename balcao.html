@@ -34,6 +34,9 @@ button:disabled{opacity:.5;cursor:default}
 .res.ok{background:var(--verde-claro)}
 .res.ruim{background:var(--vermelho-claro)}
 .res .valor{font-size:2.2rem;font-weight:900;margin:2px 0}
+.compra{margin-top:12px;padding-top:12px;border-top:2px dashed var(--borda)}
+.compra .desc{font-size:1.6rem;font-weight:900;margin-top:8px}
+.compra .pequeno{margin-top:4px}
 .res dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0 0}
 .res dt{color:var(--sub)}
 .res dd{margin:0;font-weight:700}
@@ -133,7 +136,7 @@ async function rpc(nome,corpo){
 }
 const reais=c=>'R$ '+(c/100).toFixed(2).replace('.',',');
 const dataHora=d=>new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-const MSG={senha_invalida:'Senha incorreta.',cupom_inexistente:'Cupom não encontrado. Confira o código.',cupom_ja_usado:'Este cupom já foi usado.',cupom_expirado:'Este cupom está vencido.'};
+const MSG={senha_invalida:'Senha incorreta.',cupom_inexistente:'Cupom não encontrado. Confira o código.',cupom_ja_usado:'Este cupom já foi usado.',cupom_expirado:'Este cupom está vencido.',compra_invalida:'Digite o valor da compra.'};
 try{ $('#senha').value=sessionStorage.getItem('senhaBalcao')||''; }catch(e){}
 $('#senha').addEventListener('change',()=>{ try{ sessionStorage.setItem('senhaBalcao',$('#senha').value); }catch(e){} });
 $('#codigo').addEventListener('input',()=>{ $('#btnUsar').disabled=true; $('#resultado').innerHTML=''; });
@@ -141,6 +144,9 @@ function codigo(){ let c=$('#codigo').value.toUpperCase().replace(/[^A-Z0-9]/g,'
 function mostrar(cls,html){ const r=document.createElement('div'); r.className='res '+cls; r.innerHTML=html; $('#resultado').innerHTML=''; $('#resultado').appendChild(r); return r; }
 function erro(e){ const k=Object.keys(MSG).find(x=>e.message.indexOf(x)>=0); mostrar('ruim','<div class="status"></div>').querySelector('.status').textContent=k?MSG[k]:'Não foi possível consultar agora. Confira a internet.'; }
 let atual=null;
+function centavos(t){ t=String(t||'').replace(/[^0-9,.]/g,''); if(!t) return 0; if(t.indexOf(',')>=0) t=t.replace(/\./g,'').replace(',','.'); const v=Math.round(parseFloat(t)*100); return isFinite(v)&&v>0?v:0; }
+function descontoDe(compra){ return atual&&atual.pct?Math.min(atual.valor_centavos,Math.floor(compra*atual.pct/100)):0; }
+function calcDesconto(){ const c=centavos($('#compra').value), d=descontoDe(c); $('#descCalc').textContent='Desconto: '+reais(d); $('#btnUsar').disabled=!(d>0); }
 $('#btnConsultar').addEventListener('click',async()=>{
   const c=codigo(), senha=$('#senha').value; $('#btnUsar').disabled=true; atual=null;
   if(!senha){ mostrar('ruim','<div class="status">Digite a senha do balcão.</div>'); return; }
@@ -155,7 +161,19 @@ $('#btnConsultar').addEventListener('click',async()=>{
     r.querySelector('.valor').textContent=reais(x.valor_centavos)+' de desconto';
     r.querySelector('.tp').textContent=x.tipo==='conclusao'?'🎁 Conclusão das tarefas':'Troca de dinheiro do jogo';
     r.querySelector('.ap').textContent=x.apelido; r.querySelector('.cr').textContent=dataHora(x.criado_em); r.querySelector('.ex').textContent=dataHora(x.expira_em);
-    if(!usado&&!venc){ atual=x; $('#btnUsar').disabled=false; }
+    if(!usado&&!venc){
+      atual=x; atual.pct=null;
+      try{ const p=await rpc('cupom_percentual',{p_codigo:c,p_senha:senha}); atual.pct=(typeof p==='number')?p:null; }catch(e){ atual.pct=null; atual.semPct=true; }
+      if(atual.pct){
+        r.querySelector('.valor').textContent=atual.pct+'% da compra, até '+reais(x.valor_centavos);
+        const bx=document.createElement('div'); bx.className='compra';
+        bx.innerHTML='<label for="compra">Valor dos produtos não alcoólicos</label><input id="compra" inputmode="decimal" autocomplete="off" placeholder="R$ 0,00"><div class="desc" id="descCalc">Desconto: R$ 0,00</div><p class="pequeno" id="descObs"></p>';
+        r.appendChild(bx);
+        $('#descObs').textContent='O desconto é '+atual.pct+'% da compra, até '+reais(x.valor_centavos)+'. Para usar o valor inteiro, a compra precisa ser de '+reais(Math.ceil(x.valor_centavos*100/atual.pct))+' ou mais. O cupom só pode ser usado uma vez.';
+        $('#compra').addEventListener('input',calcDesconto); setTimeout(()=>$('#compra').focus(),50);
+        $('#btnUsar').disabled=true;
+      } else $('#btnUsar').disabled=false;
+    }
     try{ sessionStorage.setItem('senhaBalcao',senha); }catch(e){}
   }catch(e){ erro(e); }
   finally{ $('#btnConsultar').disabled=false; }
@@ -341,6 +359,21 @@ $('#btnResumo').addEventListener('click',carregarResumo);
 if($('#senha').value) setTimeout(carregarResumo,300);
 $('#btnUsar').addEventListener('click',async()=>{
   if(!atual) return;
+  if(atual.pct){
+    const compra=centavos($('#compra')&&$('#compra').value), d=descontoDe(compra);
+    if(!(d>0)){ $('#descCalc').textContent='Digite o valor da compra.'; return; }
+    if(!confirm(`Dar baixa no cupom ${atual.codigo} (${atual.apelido})?\nCompra: ${reais(compra)}\nDesconto: ${reais(d)}\nDepois disso ele não pode ser usado de novo.`)) return;
+    $('#btnUsar').disabled=true;
+    try{
+      const x=await rpc('usar_cupom_compra',{p_codigo:atual.codigo,p_senha:$('#senha').value,p_compra_centavos:compra});
+      const r=mostrar('ok','<div class="status"></div><div class="valor"></div><p></p>');
+      r.querySelector('.status').textContent='✔ Baixa feita';
+      r.querySelector('.valor').textContent='Desconte '+reais(x.desconto_centavos);
+      r.querySelector('p').textContent=`Cupom ${x.codigo} de ${x.apelido} usado em ${dataHora(x.usado_em)}, numa compra de ${reais(x.compra_centavos)} em produtos não alcoólicos.`;
+      atual=null; $('#codigo').value=''; carregarResumo();
+    }catch(e){ erro(e); }
+    return;
+  }
   if(!confirm(`Dar baixa no cupom ${atual.codigo} de ${reais(atual.valor_centavos)} (${atual.apelido})? Depois disso ele não pode ser usado de novo.`)) return;
   $('#btnUsar').disabled=true;
   try{
