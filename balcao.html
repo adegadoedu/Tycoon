@@ -58,6 +58,7 @@ th{color:var(--sub);font-weight:700;font-size:.8rem}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .vazio{color:var(--sub);font-size:.9rem;margin:6px 0}
 .rolagem{overflow-x:auto}
+.rolagem.val td,.rolagem.val th{white-space:nowrap}
 .mod-item{border:2px solid var(--borda);border-radius:12px;padding:10px;margin:8px 0;background:var(--fundo)}
 .mod-item.alerta{border-color:var(--vermelho);background:var(--vermelho-claro)}
 .mod-item .quem{font-weight:900;font-size:.9rem;display:flex;justify-content:space-between;gap:8px}
@@ -211,6 +212,17 @@ async function carregarResumo(){
     box.appendChild(el('div','sub-tit','Quem mais gerou cupons este mês'));
     if(r.jogadores_mes.length) box.appendChild(tabela([['Jogador'],['Cupons',1],['Usados',1],['Valor',1]],r.jogadores_mes.map(x=>[x.apelido,String(x.cupons),String(x.usados),reais(x.valor)])));
     else box.appendChild(el('p','vazio','Ninguém gerou cupom este mês.'));
+    box.appendChild(el('div','sub-tit','📅 Validade dos cupons (últimos 60 dias)'));
+    try{
+      const vs=await rpc('cupons_validade',{p_senha:senha})||[];
+      if(vs.length){
+        const dia=d=>new Date(d).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+        const sit=x=>{ if(x.situacao==='usado') return '✔ Usado '+dia(x.usado_em)+(x.usado_desconto_centavos?' ('+reais(x.usado_desconto_centavos)+')':'');
+          if(x.situacao==='vencido') return '✖ Vencido';
+          const dias=Math.ceil((new Date(x.expira_em)-new Date())/86400000); return dias<=3?'⚠️ Vence em '+dias+(dias===1?' dia':' dias'):'🟢 Válido'; };
+        const tv=tabela([['Validade'],['Situação'],['Jogador'],['Valor',1],['Código']],vs.map(x=>[dia(x.expira_em),sit(x),x.apelido||'—',(x.percentual?x.percentual+'% até ':'')+reais(x.valor_centavos),x.codigo])); tv.classList.add('val'); box.appendChild(tv);
+      } else box.appendChild(el('p','vazio','Nenhum cupom gerado nos últimos 60 dias.'));
+    }catch(e){ box.appendChild(el('p','vazio',/cupons_validade|404|function/i.test(e.message)?'Para ver a validade, rode o arquivo supabase-cupons-validade.sql no Supabase.':'Não foi possível carregar a validade agora.')); }
     box.appendChild(el('div','sub-tit','Últimos cupons usados no balcão'));
     if(r.ultimos_usados.length) box.appendChild(tabela([['Quando'],['Jogador'],['Código'],['Valor',1]],r.ultimos_usados.map(x=>[dataHora(x.usado_em),x.apelido,x.codigo,reais(x.valor)])));
     else box.appendChild(el('p','vazio','Nenhum cupom usado ainda.'));
