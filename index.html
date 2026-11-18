@@ -86,6 +86,15 @@ body:not(.jogando) .btn-corretora{display:none}
 .corr-rapidos{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
 #cadRespBox[hidden]{display:none}
 #cadRespBox{background:#FFF3C4;border-radius:10px;padding:6px 8px}
+.dica-campo{font-size:.8rem;color:var(--sub);margin:-4px 2px 8px;font-weight:700}
+.codigo-6{letter-spacing:.35em;font-size:1.3rem!important;text-align:center}
+.conta-bloco{border:3px solid var(--contorno);border-radius:14px;padding:10px 12px;margin:8px 0;background:var(--painel2)}
+.conta-linha{display:flex;gap:8px;align-items:center}
+.conta-linha input{flex:1;min-width:0;box-sizing:border-box;padding:10px 12px;border:3px solid var(--contorno);border-radius:12px;font:800 1rem 'Nunito',sans-serif;background:#fff;color:#2A1A12}
+.conta-linha .btn{width:auto;flex:none;margin:0;padding:10px 12px;font-size:.92rem}
+.ok-msg{color:#1F7A45;font-weight:900;text-align:center;margin:4px 0}
+.ok-msg:empty{display:none}
+#cadCelBox[hidden],#telaRecuperar [hidden],#telaConta [hidden],#btnConta[hidden]{display:none!important}
 .btn-missoes{position:fixed;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);z-index:6;font:900 1rem 'Nunito',sans-serif;background:#FFC93C;color:#2A1A12;border:4px solid var(--contorno);border-radius:999px;padding:10px 16px;box-shadow:0 5px 0 var(--contorno)}
 body:not(.jogando) .btn-missoes{display:none}
 .badge-missoes{position:absolute;top:-10px;right:-8px;min-width:24px;height:24px;border-radius:12px;background:#E8433A;color:#fff;border:3px solid #2A1A12;font-size:.8rem;display:flex;align-items:center;justify-content:center;padding:0 4px;animation:pulo 1s ease-in-out infinite}
@@ -327,6 +336,8 @@ body:not(.jogando) .alerta{display:none}
     <label class="campo"><span>Nome ou apelido</span><input id="cadNome" maxlength="20" autocomplete="nickname" placeholder="Como você quer aparecer no ranking"></label>
     <label class="campo"><span>Idade</span><input id="cadIdade" type="number" inputmode="numeric" min="1" max="120" placeholder="Sua idade"></label>
     <label class="campo"><span>Crie uma senha</span><input id="cadSenha" type="password" maxlength="30" autocomplete="new-password" placeholder="Mínimo 4 caracteres, para entrar em outros aparelhos"></label>
+    <div id="cadCelBox" hidden><label class="campo"><span>Celular com WhatsApp (opcional)</span><input id="cadCel" type="tel" inputmode="tel" maxlength="16" autocomplete="tel" placeholder="(11) 98765-4321"></label>
+    <p class="dica-campo">Só para você recuperar a senha se esquecer. Menores de 12 anos: use o celular do responsável.</p></div>
     <label class="aceite" id="cadRespBox" hidden><input type="checkbox" id="cadResp"><span>Tenho menos de 12 anos e minha mãe, meu pai ou outro adulto responsável <b>autorizou</b> o meu cadastro no jogo.</span></label>
     <label class="aceite"><input type="checkbox" id="cadAceite"><span>Li e aceito a <a href="privacidade.html" target="_blank" rel="noopener">política de privacidade</a>. Meu nome ou apelido e meu faturamento no jogo vão aparecer no ranking; a idade não aparece.</span></label>
     <p class="erro" id="cadErro" role="alert"></p>
@@ -343,7 +354,57 @@ body:not(.jogando) .alerta{display:none}
     <label class="campo"><span>Senha</span><input id="logSenha" type="password" maxlength="30" autocomplete="current-password" placeholder="Sua senha"></label>
     <p class="erro" id="logErro" role="alert"></p>
     <button class="btn" id="btnEntrar">Entrar</button>
+    <button type="button" class="link-btn" id="btnEsqueci">Esqueci minha senha</button>
     <button type="button" class="link-btn" id="btnIrCadastro">Criar um cadastro novo</button>
+  </div>
+</section>
+
+<section class="tela" id="telaRecuperar" hidden>
+  <div class="caixa">
+    <h2 class="titulo centro" style="font-size:1.9rem">Esqueci minha senha</h2>
+    <div id="recPasso1">
+      <label class="campo"><span>Seu apelido</span><input id="recApelido" maxlength="20" autocomplete="username" placeholder="Seu apelido no ranking"></label>
+      <p class="txt" id="recWhatsInfo" style="font-size:.92rem">Vamos mandar um código para o WhatsApp confirmado na sua conta.</p>
+      <p class="txt" id="recSemWhats" style="font-size:.92rem">Vá até a <b>Adega do Edu</b> e peça no balcão um <b>código para nova senha</b>. Depois, toque em “Tenho um código do balcão”.</p>
+      <button class="btn" id="btnRecEnviar" type="button">📲 Enviar código pelo WhatsApp</button>
+      <button type="button" class="link-btn" id="btnRecBalcao">Tenho um código do balcão</button>
+    </div>
+    <div id="recPasso2" hidden>
+      <p class="txt" id="recDestino"></p>
+      <label class="campo"><span>Código</span><input id="recCodigo" class="codigo-6" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label>
+      <label class="campo"><span>Nova senha</span><input id="recNova" type="password" maxlength="30" autocomplete="new-password" placeholder="Mínimo 4 caracteres"></label>
+      <label class="campo"><span>Repita a nova senha</span><input id="recNova2" type="password" maxlength="30" autocomplete="new-password" placeholder="A mesma senha"></label>
+      <button class="btn" id="btnRecSalvar" type="button">Salvar nova senha e entrar</button>
+      <button type="button" class="link-btn" id="btnRecReenviar">Não chegou? Enviar outro código</button>
+    </div>
+    <p class="erro" id="recErro" role="alert"></p>
+    <button type="button" class="link-btn" id="btnRecVoltar">Voltar para entrar</button>
+  </div>
+</section>
+
+<section class="tela" id="telaConta" hidden>
+  <div class="caixa">
+    <h2 class="titulo centro" style="font-size:1.8rem">🔐 Celular e senha</h2>
+    <div id="contaCelSec" class="conta-bloco">
+      <div class="missao-txt">WhatsApp para recuperar a senha</div>
+      <p class="txt" id="contaCelInfo" style="font-size:.92rem;margin:4px 0 8px"></p>
+      <div class="conta-linha"><input id="contaCel" type="tel" inputmode="tel" maxlength="16" autocomplete="tel" placeholder="(11) 98765-4321"><button class="btn peq" id="btnContaEnviar" type="button">Enviar código</button></div>
+      <div id="contaCodBox" hidden>
+        <p class="txt" id="contaCodInfo" style="font-size:.9rem;margin:8px 0 4px"></p>
+        <div class="conta-linha"><input id="contaCodigo" class="codigo-6" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"><button class="btn peq" id="btnContaConfirmar" type="button">Confirmar</button></div>
+      </div>
+    </div>
+    <div class="conta-bloco">
+      <div class="missao-txt">Trocar a senha</div>
+      <label class="campo" id="contaAtualBox"><span>Senha atual</span><input id="contaAtual" type="password" maxlength="30" autocomplete="current-password"></label>
+      <label class="campo"><span>Nova senha</span><input id="contaNova" type="password" maxlength="30" autocomplete="new-password" placeholder="Mínimo 4 caracteres"></label>
+      <label class="campo"><span>Repita a nova senha</span><input id="contaNova2" type="password" maxlength="30" autocomplete="new-password"></label>
+      <p class="dica-campo" id="contaTrocaInfo" style="margin:0 2px 8px">Você pode trocar a senha uma vez por dia.</p>
+      <button class="btn amarelo" id="btnContaSenha" type="button">Trocar senha</button>
+    </div>
+    <p class="erro" id="contaErro" role="alert"></p>
+    <p class="ok-msg" id="contaOk" role="status"></p>
+    <button type="button" class="link-btn" id="btnContaFechar">Fechar</button>
   </div>
 </section>
 
@@ -371,6 +432,7 @@ body:not(.jogando) .alerta{display:none}
       <button class="btn peq" id="btnPersSalvar" type="button">Salvar</button>
     </div>
     <button class="btn amarelo peq" id="btnCartao" type="button">📤 Compartilhar meu cartão</button>
+    <button class="btn azul peq" id="btnConta" type="button" style="margin-top:8px">🔐 Celular e senha</button>
     <button type="button" class="link-btn" id="btnPersFechar">Fechar</button>
   </div>
 </section>
@@ -1628,6 +1690,7 @@ $('#btnCadastrar').addEventListener('click',async()=>{
   if(idade<12&&!$('#cadResp').checked){ err.textContent=msgCadastro.autorizacao_responsavel; return; }
   if(senha.length<4){ err.textContent='Crie uma senha com pelo menos 4 caracteres.'; $('#cadSenha').focus(); return; }
   if(!$('#cadAceite').checked){ err.textContent='Para continuar, aceite a política de privacidade.'; return; }
+  if(whatsAtivo&&$('#cadCel').value.trim()&&!celValido($('#cadCel').value)){ err.textContent='Confira o celular (com DDD) ou deixe o campo vazio.'; $('#cadCel').focus(); return; }
   let id=null, token=null;
   if(rankingAtivo()){
     btn.disabled=true; const txt=btn.textContent; btn.textContent='Criando cadastro…'; err.textContent='';
@@ -1642,11 +1705,13 @@ $('#btnCadastrar').addEventListener('click',async()=>{
     btn.disabled=false; btn.textContent=txt;
   }
   err.textContent=''; $('#cadSenha').value='';
+  const celCad=whatsAtivo&&id&&celValido($('#cadCel').value)?$('#cadCel').value:''; let celEnvio=null;
+  if(celCad) chamarFuncao('enviar-codigo',{finalidade:'confirmar',id,token,celular:celCad}).then(d=>{ celEnvio=d; }).catch(()=>{});
   const jaJogava=!!S.perfil;
   S.perfil={apelido:nome,idade,id,token,temSenha:!!id}; ultimoEnvio=''; checarMes(); salvar();
   $('#telaCadastro').hidden=true; SOM.marco();
   const seguir=()=>{ if(S.viuInicio||jaJogava){ document.body.classList.add('jogando'); atualizarHUD(); } else $('#telaInicio').hidden=false; };
-  abrirPersonagem({primeiraVez:true,depois:seguir});
+  abrirPersonagem({primeiraVez:true,depois:()=>{ seguir(); quandoJogando(()=>{ if(celEnvio&&celEnvio.ok) abrirConta({confirmar:true,final:celEnvio.final}); }); }});
   if(id) sincronizar(true); else garantirRegistro();
 });
 
@@ -1906,7 +1971,7 @@ function abrirPersonagem(op){
   op=op||{}; aoFecharPers=op.depois||null;
   visEdit=normalizarVisual(S.perfil&&S.perfil.visual);
   $('#persTexto').textContent=op.primeiraVez?'Ele vai trabalhar no caixa da sua adega e aparecer no ranking. Dá para mudar depois no botão 👤.':'Ele trabalha no caixa da sua adega e aparece no ranking.';
-  $('#btnPersFechar').style.display=op.primeiraVez?'none':''; $('#btnCartao').style.display=op.primeiraVez?'none':'';
+  $('#btnPersFechar').style.display=op.primeiraVez?'none':''; $('#btnCartao').style.display=op.primeiraVez?'none':''; $('#btnConta').style.display=op.primeiraVez?'none':'';
   $('#persErro').textContent='';
   prepararCenaPrev(); renderOpcoesPers(); atualizarPrevia();
   $('#telaPersonagem').hidden=false; renderNivelBox(); if(!animPrev) loopPrev();
@@ -3178,6 +3243,146 @@ atualizarBotaoMusica();
 ['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{ if(!MUS.iniciada) iniciarMusica(); else if(MUS.ctx.state==='suspended'&&!document.hidden) MUS.ctx.resume(); },{passive:true}));
 document.addEventListener('visibilitychange',()=>{ if(!MUS.ctx) return; if(document.hidden) MUS.ctx.suspend(); else MUS.ctx.resume(); });
 setInterval(()=>{ if(MUS.iniciada) trocarTrilha(); },5000);
+
+// ================= Conta: celular (WhatsApp), trocar e recuperar senha =================
+const MSG_CONTA={jogador_invalido:'Sua conta não foi reconhecida. Entre de novo.',celular_invalido:'Digite um celular válido com DDD, por exemplo (11) 98765-4321.',
+  celular_em_uso:'Esse celular já está confirmado em outra conta.',apelido_nao_encontrado:'Não encontramos esse apelido.',
+  sem_celular:'Essa conta não tem WhatsApp confirmado. Peça um código no balcão da Adega do Edu.',jogador_falido:'Essa adega faliu.',
+  muitos_codigos:'Muitos códigos pedidos. Espere 1 hora e tente de novo.',aguarde_minuto:'Espere 1 minuto para pedir outro código.',
+  limite_global:'O envio de códigos está pausado no momento. Tente mais tarde ou peça um código no balcão.',
+  whatsapp_falhou:'Não conseguimos enviar pelo WhatsApp. Confira se o número tem WhatsApp ou peça um código no balcão.',
+  envio_nao_configurado:'O envio pelo WhatsApp ainda não está ativo. Peça um código no balcão da Adega do Edu.',
+  codigo_errado:'Código incorreto. Confira e tente de novo.',codigo_expirado:'Esse código venceu ou já foi usado. Peça um novo.',
+  codigo_bloqueado:'Muitas tentativas erradas com esse código. Peça um novo.',senha_atual_errada:'A senha atual está incorreta.',
+  senha_invalida_formato:'A nova senha precisa ter de 4 a 30 caracteres.',senha_troca_limite:'Você já trocou a senha nas últimas 24 horas. Tente de novo amanhã.'};
+const msgConta=t=>{ const k=Object.keys(MSG_CONTA).find(x=>String(t||'').indexOf(x)>=0); return k?MSG_CONTA[k]:'Sem conexão com a internet. Tente de novo.'; };
+let whatsAtivo=false;
+async function chamarFuncao(nome,corpo){
+  const r=await fetch(SUPABASE_URL.replace(/\/+$/,'')+'/functions/v1/'+nome,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_CHAVE},body:JSON.stringify(corpo)});
+  let d=null; try{ d=await r.json(); }catch(e){}
+  if(!r.ok&&!(d&&d.erro)) throw new Error('funcao_indisponivel');
+  return d||{};
+}
+async function checarWhats(){
+  if(!rankingAtivo()) return;
+  try{ const d=await chamarFuncao('enviar-codigo',{finalidade:'status'}); whatsAtivo=!!d.ativo; }catch(e){ whatsAtivo=false; }
+  $('#cadCelBox').hidden=!whatsAtivo;
+}
+function mascaraCel(inp){ inp.addEventListener('input',()=>{ let d=inp.value.replace(/\D/g,''); if(d.startsWith('55')&&d.length>11) d=d.slice(2); d=d.slice(0,11);
+  inp.value=d.length>7?`(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`:d.length>2?`(${d.slice(0,2)}) ${d.slice(2)}`:d; }); }
+const celValido=v=>{ const d=String(v||'').replace(/\D/g,''); return d.length===11&&d[2]==='9'&&d[0]!=='0'; };
+const soDigitos=inp=>inp.addEventListener('input',()=>{ inp.value=inp.value.replace(/\D/g,'').slice(0,6); });
+
+// ---------- Esqueci minha senha ----------
+let recApelido='';
+function abrirRecuperar(){
+  $('#telaLogin').hidden=true; $('#telaRecuperar').hidden=false;
+  $('#recApelido').value=$('#logNome').value.trim(); $('#recPasso1').hidden=false; $('#recPasso2').hidden=true; $('#recErro').textContent='';
+  $('#recWhatsInfo').hidden=!whatsAtivo; $('#btnRecEnviar').hidden=!whatsAtivo;
+  $('#recSemWhats').hidden=whatsAtivo;
+}
+function irPasso2(texto){
+  $('#recPasso1').hidden=true; $('#recPasso2').hidden=false; $('#recDestino').innerHTML=texto; $('#recErro').textContent='';
+  ['#recCodigo','#recNova','#recNova2'].forEach(s=>$(s).value=''); setTimeout(()=>$('#recCodigo').focus(),50);
+  $('#btnRecReenviar').hidden=!recApelido||!whatsAtivo||texto.indexOf('balcão')>=0;
+}
+async function enviarCodigoRecuperar(){
+  const btn=$('#btnRecEnviar'), err=$('#recErro'), ap=$('#recApelido').value.trim();
+  if(ap.length<2){ err.textContent='Digite o seu apelido.'; return; }
+  btn.disabled=true; err.textContent='';
+  try{ const d=await chamarFuncao('enviar-codigo',{finalidade:'recuperar',apelido:ap});
+    if(d.erro){ err.textContent=msgConta(d.erro); return; }
+    recApelido=ap; irPasso2(`Enviamos um código de 6 números para o seu WhatsApp <b>•••• ${d.final}</b>. Ele vale por 10 minutos.`); }
+  catch(e){ err.textContent=msgConta(''); }
+  finally{ btn.disabled=false; }
+}
+$('#btnEsqueci').addEventListener('click',abrirRecuperar);
+$('#btnRecEnviar').addEventListener('click',enviarCodigoRecuperar);
+$('#btnRecReenviar').addEventListener('click',()=>{ $('#recPasso1').hidden=false; $('#recPasso2').hidden=true; enviarCodigoRecuperar(); });
+$('#btnRecBalcao').addEventListener('click',()=>{ const ap=$('#recApelido').value.trim(); if(ap.length<2){ $('#recErro').textContent='Digite o seu apelido.'; return; }
+  recApelido=ap; irPasso2('Digite o <b>código de 6 números</b> que você recebeu no balcão da Adega do Edu.'); });
+$('#btnRecVoltar').addEventListener('click',()=>{ $('#telaRecuperar').hidden=true; $('#telaLogin').hidden=false; });
+soDigitos($('#recCodigo'));
+$('#btnRecSalvar').addEventListener('click',async()=>{
+  const btn=$('#btnRecSalvar'), err=$('#recErro'), cod=$('#recCodigo').value, n1=$('#recNova').value, n2=$('#recNova2').value;
+  if(cod.length!==6){ err.textContent='O código tem 6 números.'; return; }
+  if(n1.length<4){ err.textContent='A nova senha precisa ter pelo menos 4 caracteres.'; return; }
+  if(n1!==n2){ err.textContent='As duas senhas não são iguais.'; return; }
+  btn.disabled=true; err.textContent='';
+  try{ const r=await rpc('recuperar_senha',{p_apelido:recApelido,p_codigo:cod,p_nova:n1});
+    if(r!=='ok'){ err.textContent=msgConta(r); return; }
+    toastMissao('🔑 Senha nova salva! Entrando…');
+    $('#telaRecuperar').hidden=true; $('#telaLogin').hidden=false; $('#logNome').value=recApelido; $('#logSenha').value=n1; $('#btnEntrar').click(); }
+  catch(e){ err.textContent=msgConta(e.message); }
+  finally{ btn.disabled=false; }
+});
+
+// ---------- Celular e senha (dentro do jogo) ----------
+let contaInfo=null;
+function travarTroca(libera){
+  const fut=libera&&new Date(libera)>new Date();
+  $('#btnContaSenha').disabled=!!fut;
+  ['#contaAtual','#contaNova','#contaNova2'].forEach(x=>$(x).disabled=!!fut);
+  $('#contaTrocaInfo').innerHTML=fut?`Senha trocada há pouco. A próxima troca fica liberada <b>${new Date(libera).toLocaleString('pt-BR',{weekday:'long',hour:'2-digit',minute:'2-digit'})}</b>.`:'Você pode trocar a senha uma vez por dia.';
+}
+function quandoJogando(fn){ // espera a tela de boas-vindas fechar antes de abrir a confirmação
+  const tenta=()=>{ if(document.body.classList.contains('jogando')&&$('#telaInicio').hidden){ setTimeout(fn,600); return true; } return false; };
+  if(tenta()) return; const ob=new MutationObserver(()=>{ if(tenta()) ob.disconnect(); });
+  ob.observe(document.body,{attributes:true,attributeFilter:['class']}); ob.observe($('#telaInicio'),{attributes:true,attributeFilter:['hidden']});
+}
+async function abrirConta(op){
+  op=op||{};
+  if(!S.perfil||!S.perfil.id){ toastMissao('Sua conta ainda não está online. Conecte-se à internet.'); return; }
+  $('#telaConta').hidden=false; SOM.abrir(); $('#contaErro').textContent=''; $('#contaOk').textContent='';
+  $('#contaCelInfo').textContent='Carregando…';
+  ['#contaCel','#contaCodigo','#contaAtual','#contaNova','#contaNova2'].forEach(s=>$(s).value='');
+  $('#contaCelSec').hidden=!whatsAtivo; $('#contaCodBox').hidden=!op.confirmar;
+  try{ contaInfo=await rpc('conta_status',{p_id:S.perfil.id,p_token:S.perfil.token}); }catch(e){ contaInfo={celular:null,tem_senha:true}; }
+  $('#contaCelInfo').innerHTML=contaInfo.celular?`WhatsApp confirmado: <b>${contaInfo.celular}</b> ✔`:'Nenhum WhatsApp confirmado. Cadastre um para recuperar a senha sozinho.';
+  $('#btnContaEnviar').textContent=contaInfo.celular?'Trocar número':'Enviar código';
+  $('#contaAtualBox').hidden=!contaInfo.tem_senha;
+  travarTroca(contaInfo.tem_senha&&contaInfo.troca_liberada_em);
+  if(op.confirmar) $('#contaCodInfo').innerHTML=`Enviamos um código para o WhatsApp <b>•••• ${op.final}</b>. Digite abaixo para confirmar.`;
+}
+$('#btnContaFechar').addEventListener('click',()=>{ $('#telaConta').hidden=true; });
+mascaraCel($('#contaCel')); mascaraCel($('#cadCel')); soDigitos($('#contaCodigo'));
+$('#btnContaEnviar').addEventListener('click',async()=>{
+  const btn=$('#btnContaEnviar'), err=$('#contaErro'), cel=$('#contaCel').value;
+  $('#contaOk').textContent='';
+  if(!celValido(cel)){ err.textContent=MSG_CONTA.celular_invalido; return; }
+  btn.disabled=true; err.textContent='';
+  try{ const d=await chamarFuncao('enviar-codigo',{finalidade:'confirmar',id:S.perfil.id,token:S.perfil.token,celular:cel});
+    if(d.erro){ err.textContent=msgConta(d.erro); return; }
+    $('#contaCodBox').hidden=false; $('#contaCodInfo').innerHTML=`Enviamos um código para o WhatsApp <b>•••• ${d.final}</b>. Digite abaixo para confirmar.`; $('#contaCodigo').focus(); }
+  catch(e){ err.textContent=msgConta(''); }
+  finally{ btn.disabled=false; }
+});
+$('#btnContaConfirmar').addEventListener('click',async()=>{
+  const btn=$('#btnContaConfirmar'), err=$('#contaErro'), cod=$('#contaCodigo').value;
+  if(cod.length!==6){ err.textContent='O código tem 6 números.'; return; }
+  btn.disabled=true; err.textContent='';
+  try{ const r=await rpc('celular_confirmar',{p_id:S.perfil.id,p_token:S.perfil.token,p_codigo:cod});
+    if(!r||!r.ok){ err.textContent=msgConta(r&&r.erro); return; }
+    $('#contaCodBox').hidden=true; $('#contaCelInfo').innerHTML=`WhatsApp confirmado: <b>${r.celular}</b> ✔`; $('#btnContaEnviar').textContent='Trocar número';
+    $('#contaOk').textContent='✔ WhatsApp confirmado! Agora você pode recuperar a senha sozinho.'; SOM.marco(); }
+  catch(e){ err.textContent=msgConta(e.message); }
+  finally{ btn.disabled=false; }
+});
+$('#btnContaSenha').addEventListener('click',async()=>{
+  const btn=$('#btnContaSenha'), err=$('#contaErro'), at=$('#contaAtual').value, n1=$('#contaNova').value, n2=$('#contaNova2').value;
+  $('#contaOk').textContent='';
+  if(contaInfo&&contaInfo.tem_senha&&!at){ err.textContent='Digite a sua senha atual.'; return; }
+  if(n1.length<4){ err.textContent='A nova senha precisa ter pelo menos 4 caracteres.'; return; }
+  if(n1!==n2){ err.textContent='As duas senhas novas não são iguais.'; return; }
+  btn.disabled=true; err.textContent='';
+  try{ await rpc('alterar_senha',{p_id:S.perfil.id,p_token:S.perfil.token,p_atual:at,p_nova:n1});
+    ['#contaAtual','#contaNova','#contaNova2'].forEach(s=>$(s).value=''); S.perfil.temSenha=true; salvar(); $('#contaAtualBox').hidden=false; if(contaInfo) contaInfo.tem_senha=true; travarTroca(new Date(Date.now()+864e5).toISOString());
+    $('#contaOk').textContent='✔ Senha trocada! Use a nova senha para entrar em outros aparelhos.'; SOM.marco(); return; }
+  catch(e){ err.textContent=msgConta(e.message); if(/senha_troca_limite/.test(e.message)){ try{ const c=await rpc('conta_status',{p_id:S.perfil.id,p_token:S.perfil.token}); travarTroca(c.troca_liberada_em); }catch(_){} return; } }
+  btn.disabled=false;
+});
+$('#btnConta').addEventListener('click',()=>abrirConta());
+setTimeout(checarWhats,1500);
 
 // ================= Papo da Adega (conversa rápida, ideias e chat) =================
 const FRASES_PAPO=['Boa noite, turma! 👋','Bom dia, pessoal! ☀️','Bati 1 milhão! 🎉','Bora pro top 10! 🏆','Entrega perfeita! 🛵','Quem tá jogando agora? 🙋',

@@ -56,6 +56,7 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}
 th,td{text-align:left;padding:6px 4px;border-bottom:1px solid color-mix(in srgb,var(--sub) 35%,transparent)}
 th{color:var(--sub);font-weight:700;font-size:.8rem}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.cod-grande{font:900 2.4rem/1.1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.18em;margin:8px 0;user-select:all}
 .vazio{color:var(--sub);font-size:.9rem;margin:6px 0}
 .rolagem{overflow-x:auto}
 .rolagem.val td,.rolagem.val th{white-space:nowrap}
@@ -94,6 +95,15 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
       <button id="btnUsar" type="button" class="prim" disabled>Dar baixa</button>
     </div>
     <div id="resultado" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="cartao" id="boxCodSenha">
+    <h2>🔑 Código para nova senha</h2>
+    <p class="pequeno">Para o jogador que esqueceu a senha. <b>Confira que é a própria pessoa</b> (ou o responsável, se for criança) antes de entregar o código. Ele vale por 24 horas e só serve uma vez.</p>
+    <label for="apelidoSenha">Apelido do jogador</label>
+    <input id="apelidoSenha" autocomplete="off" maxlength="20" placeholder="Como aparece no ranking">
+    <div class="linha"><button id="btnCodSenha" type="button" class="prim">Gerar código</button></div>
+    <div id="resCodSenha" role="status" aria-live="polite"></div>
   </section>
 
   <section class="cartao" id="boxProgresso">
@@ -361,6 +371,23 @@ async function carregarProgresso(){
     box.appendChild(el('p','vazio',k?MSG[k]:(/progresso_jogadores/.test(e.message)?'Esta consulta ainda não foi instalada no banco. Rode o supabase-progresso-jogadores.sql no Supabase.':'Não foi possível carregar agora. Confira a internet.')));
   }
 }
+$('#btnCodSenha').addEventListener('click',async()=>{
+  const box=$('#resCodSenha'), ap=$('#apelidoSenha').value.trim(), b=$('#btnCodSenha');
+  box.innerHTML='';
+  if(!$('#senha').value){ box.appendChild(el('p','vazio','Digite a senha do balcão lá em cima.')); return; }
+  if(ap.length<2){ box.appendChild(el('p','vazio','Digite o apelido do jogador.')); return; }
+  b.disabled=true;
+  try{
+    const x=await rpc('balcao_codigo_senha',{p_senha:$('#senha').value,p_apelido:ap});
+    const r=el('div','res ok'); r.append(el('div','status','Código para '+x.apelido),el('div','cod-grande',String(x.codigo).replace(/(\d{3})(\d{3})/,'$1 $2')),
+      el('p','','No jogo: tela de entrar → “Esqueci minha senha” → “Tenho um código do balcão”. Vale por 24 horas.'+(x.celular?' Esse jogador também tem WhatsApp confirmado ('+x.celular+') e pode recuperar sozinho.':'')));
+    box.appendChild(r);
+  }catch(e){
+    const m={senha_invalida:'Senha do balcão incorreta.',apelido_nao_encontrado:'Não existe jogador com esse apelido. Confira a escrita.'};
+    const k=Object.keys(m).find(c=>e.message.indexOf(c)>=0);
+    box.appendChild(el('p','vazio',k?m[k]:(/balcao_codigo_senha/.test(e.message)?'Esta função ainda não foi instalada. Rode o supabase-senha-whatsapp.sql no Supabase.':'Não foi possível gerar agora. Confira a internet.')));
+  }finally{ b.disabled=false; }
+});
 $('#btnProgresso').addEventListener('click',carregarProgresso);
 if($('#senha').value) setTimeout(carregarProgresso,650);
 $('#btnSeguranca').addEventListener('click',carregarSeguranca);
