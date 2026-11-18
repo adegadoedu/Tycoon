@@ -82,6 +82,7 @@ body:not(.jogando) .btn-corretora{display:none}
 .corr-saldo b{font-family:'Lilita One',sans-serif;font-size:1.6rem;color:#FFC93C}
 .corr-aporte{border:3px solid var(--contorno);border-radius:14px;padding:10px 12px;margin:8px 0;background:var(--painel2)}
 .corr-aporte input{width:100%;box-sizing:border-box;margin:8px 0;padding:10px 12px;border:3px solid var(--contorno);border-radius:12px;font:900 1.1rem 'Nunito',sans-serif;background:#fff;color:#2A1A12}
+.corr-resgate{background:color-mix(in srgb,#FFC93C 18%,var(--painel2))}
 .corr-rapidos{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
 #cadRespBox[hidden]{display:none}
 #cadRespBox{background:#FFF3C4;border-radius:10px;padding:6px 8px}
@@ -2782,7 +2783,7 @@ setTimeout(()=>{ if(S){ garantirMissoes(); atualizarBtnMissoes(); } },2500);
 
 // ================= Corretora da Adega (parte 1 do IPO) =================
 function corretoraLiberadaLocal(){ return !!(S&&S.perfil&&S.perfil.id&&!S.falido&&IDS.every(id=>S.est[id].aberta&&S.est[id].nivel>=40)); }
-const MSG_CORR={corretora_bloqueada:'A corretora libera quando todos os setores da sua adega chegam ao nível 40.',valor_minimo:'O aporte mínimo é de 1 mil.',limite_diario:'Esse valor passa do seu limite de aportes de hoje.',jogador_falido:'Adegas falidas não podem investir.',jogador_invalido:'Sua conta não foi reconhecida. Entre de novo.'};
+const MSG_CORR={corretora_bloqueada:'A corretora libera quando todos os setores da sua adega chegam ao nível 40.',valor_minimo:'O valor mínimo é de 1 mil.',saldo_insuficiente:'Você não tem esse saldo na corretora.',limite_diario:'Esse valor passa do seu limite de aportes de hoje.',jogador_falido:'Adegas falidas não podem investir.',jogador_invalido:'Sua conta não foi reconhecida. Entre de novo.'};
 let corrStatus=null;
 const lerValor=t=>Math.floor(Number(String(t).replace(/\D/g,''))||0);
 async function carregarCorretora(){
@@ -2797,7 +2798,32 @@ function renderCorretora(){
   add(`<div class="corr-saldo"><span>Saldo na corretora</span><b>💵 ${fmt(Number(C.saldo))}</b></div>`);
   const bg=document.createElement('button'); bg.type='button'; bg.className='pilula guia-btn'; bg.textContent='❓ Como funciona a corretora'; bg.addEventListener('click',abrirGuiaCorr); b.appendChild(bg);
   add('<p class="txt">A corretora é onde fica o dinheiro que você separa para <b>investir</b>. Em breve, você poderá comprar ações das adegas de outros jogadores quando elas abrirem capital na bolsa (IPO).</p>');
-  if(!C.liberado){ add(`<p class="txt"><b>🔒 Libera quando todos os setores da sua adega chegarem ao nível 40.</b> Seu setor mais baixo está no nível ${C.menor_nivel}.</p>`); return; }
+  const saldo=Number(C.saldo);
+  if(saldo>=1000){
+    const rb=document.createElement('div'); rb.className='corr-aporte corr-resgate';
+    rb.innerHTML=`<div class="missao-txt">Resgatar para o caixa da adega</div>
+      <div class="missao-info">Disponível para resgate: ${fmt(saldo)}</div>
+      <input id="corrResgValor" inputmode="numeric" autocomplete="off" placeholder="Valor do resgate">
+      <div class="corr-rapidos"></div>`;
+    b.appendChild(rb);
+    const ri=rb.querySelector('#corrResgValor'), rr=rb.querySelector('.corr-rapidos');
+    ri.addEventListener('input',()=>{ const v=lerValor(ri.value); ri.value=v?v.toLocaleString('pt-BR'):''; });
+    [['25%',0.25],['50%',0.5],['Tudo',1]].forEach(([t,fr])=>{ const x=document.createElement('button'); x.type='button'; x.className='pilula'; x.textContent=t;
+      x.addEventListener('click',()=>{ const v=Math.floor(saldo*fr); ri.value=v?v.toLocaleString('pt-BR'):''; }); rr.appendChild(x); });
+    const brs=document.createElement('button'); brs.type='button'; brs.className='btn amarelo'; brs.textContent='Resgatar';
+    brs.addEventListener('click',async()=>{
+      const v=lerValor(ri.value);
+      if(v<1000) return alert('O resgate mínimo é de 1 mil.');
+      if(v>saldo) return alert(MSG_CORR.saldo_insuficiente);
+      if(!confirm('Resgatar '+fmt(v)+' da corretora para o caixa da adega?')) return;
+      brs.disabled=true;
+      try{ await rpc('corretora_resgatar',{p_id:S.perfil.id,p_token:S.perfil.token,p_valor:v});
+        S.din+=v; salvar(); atualizarHUD(true); SOM.coletar(); toastMissao('💵 Resgate de '+fmt(v)+' voltou para o caixa da adega!'); await carregarCorretora(); }
+      catch(e){ const k=Object.keys(MSG_CORR).find(x=>e.message.indexOf(x)>=0); alert(k?MSG_CORR[k]:(/corretora_resgatar/.test(e.message)?'O resgate ainda não foi instalado no servidor.':'Não foi possível fazer o resgate agora. Confira a internet.')); brs.disabled=false; }
+    });
+    rb.appendChild(brs);
+  }
+  if(!C.liberado){ add(`<p class="txt"><b>🔒 Novos aportes liberam quando todos os setores da sua adega chegarem ao nível 40.</b> Seu setor mais baixo está no nível ${C.menor_nivel}.</p>`); if(C.extrato.length) mostrarExtratoCorr(C,add); return; }
   const disp=Number(C.disponivel_hoje), lim=Number(C.limite_dia);
   const box=document.createElement('div'); box.className='corr-aporte';
   box.innerHTML=`<div class="missao-txt">Aportar do caixa da adega</div>
@@ -2823,11 +2849,14 @@ function renderCorretora(){
     catch(e){ const k=Object.keys(MSG_CORR).find(x=>e.message.indexOf(x)>=0); alert(k?MSG_CORR[k]:'Não foi possível fazer o aporte agora. Confira a internet.'); bt.disabled=false; }
   });
   box.appendChild(bt);
-  add('<p class="txt" style="font-size:.82rem;color:var(--sub)">O limite diário é de 5% de todo o faturamento da sua adega (mínimo de 100 mil). Por enquanto, o dinheiro vai da adega para a corretora; o resgate chega junto com os lucros e dividendos das ações.</p>');
+  add('<p class="txt" style="font-size:.82rem;color:var(--sub)">O limite diário é de 5% de todo o faturamento da sua adega (mínimo de 100 mil). Você pode resgatar o saldo para o caixa da adega quando quiser. O resgate volta para o caixa, mas não conta como faturamento no ranking.</p>');
+  mostrarExtratoCorr(C,add);
+  add('<p class="txt" style="font-size:.78rem;color:var(--sub);margin-top:8px">Simulação educativa com dinheiro fictício do jogo. Não é recomendação de investimento.</p>');
+}
+function mostrarExtratoCorr(C,add){
   add('<p class="txt" style="margin-top:8px"><b>Extrato</b></p>');
   if(!C.extrato.length) add('<p class="txt" style="color:var(--sub)">Nenhuma movimentação ainda.</p>');
-  C.extrato.forEach(e=>add(`<div class="stat"><span>${e.descricao}<br><small>${new Date(e.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small></span><b>+${fmt(Number(e.valor))}</b></div>`));
-  add('<p class="txt" style="font-size:.78rem;color:var(--sub);margin-top:8px">Simulação educativa com dinheiro fictício do jogo. Não é recomendação de investimento.</p>');
+  C.extrato.forEach(e=>{ const v=Number(e.valor); add(`<div class="stat"><span>${e.descricao}<br><small>${new Date(e.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small></span><b style="color:${v<0?'#C2362B':'inherit'}">${v<0?'−':'+'}${fmt(Math.abs(v))}</b></div>`); });
 }
 function abrirCorretora(){ $('#telaCorretora').hidden=false; SOM.abrir(); carregarCorretora(); if(!S.guiaCorrVisto) abrirGuiaCorr(); }
 $('#btnCorretora').addEventListener('click',abrirCorretora);
@@ -2840,7 +2869,7 @@ const GUIA_CORR=[
   {ic:'🏪',tit:'2. Adegas viram empresas',txt:'Quando um jogador deixa todos os setores no <b>nível 60</b>, ele pode “abrir o capital” da adega: dividir a empresa em pedacinhos, chamados <b>ações</b>, e vender alguns para outros jogadores.<br><br>Essa estreia na bolsa se chama <b>IPO</b>.'},
   {ic:'🤝',tit:'3. Você vira sócio',txt:'Com o dinheiro da corretora, você compra ações das adegas dos outros. Quem tem ações é <b>sócio</b> da empresa.<br><br>Se a adega vai bem, a ação passa a valer mais, e você ainda recebe uma parte do lucro, chamada <b>dividendo</b>.'},
   {ic:'⚠️',tit:'4. Investir tem risco',txt:'Se a adega vai mal, a ação perde valor. Se ela fecha, a ação pode virar zero.<br><br>Por isso, a regra de ouro: <b>não coloque tudo numa adega só</b>. Dividir entre várias se chama <b>diversificar</b>.'},
-  {ic:'🗓️',tit:'O que já funciona e o que vem aí',txt:'<b>Já funciona:</b> aportes e extrato.<br><br><b>Em breve:</b> os IPOs das adegas, a compra e venda de ações e os dividendos.<br><br>O dinheiro que você aportar fica guardado na corretora até lá.'},
+  {ic:'🗓️',tit:'O que já funciona e o que vem aí',txt:'<b>Já funciona:</b> aportes, resgates e extrato.<br><br><b>Em breve:</b> os IPOs das adegas, a compra e venda de ações e os dividendos.<br><br>Se precisar, você pode <b>resgatar</b> o saldo de volta para o caixa da adega a qualquer momento.'},
   {ic:'📖',tit:'Palavrinhas da bolsa',txt:'<div class="guia-dic"><p><b>Aporte:</b> dinheiro que você separa para investir.</p><p><b>Ação:</b> um pedacinho de uma empresa.</p><p><b>IPO:</b> quando a empresa começa a vender ações na bolsa.</p><p><b>Dividendo:</b> parte do lucro que a empresa divide com os sócios.</p><p><b>Diversificar:</b> investir em várias empresas para diminuir o risco.</p></div>'}
 ];
 let guiaPasso=0;
