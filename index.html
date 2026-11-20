@@ -272,7 +272,7 @@ body:not(.jogando) .btn-papo{display:none}
 .papo-regras{background:var(--painel2);border:3px dashed var(--contorno);border-radius:12px;padding:10px 12px;font-weight:800;font-size:.9rem}
 .papo-regras ul{margin:6px 0 10px 18px}
 #btnMotoca{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
-#btnRanking,#btnPersonagem,#btnMotoca,#btnSair{font-size:1.15rem;padding:4px 10px;cursor:pointer}
+#btnRanking,#btnPersonagem,#btnMotoca,#btnMapa,#btnSair{font-size:1.15rem;padding:4px 10px;cursor:pointer}
 .abas{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .aba{border:3px solid var(--contorno);border-radius:12px;background:var(--painel2);padding:8px;font-weight:900}
 .aba.ativa{background:var(--amarelo);color:#2A1A12}
@@ -295,15 +295,67 @@ body:not(.jogando) .btn-papo{display:none}
 body:not(.jogando) .alerta{display:none}
 @media (prefers-reduced-motion: reduce){ .selo .seta,.tarefa button,.selo.fechado.pode,.pop{animation-duration:.01s;animation-iteration-count:1} .painel{transition:none} }
 
+/* mapa da adega */
+#btnMapa{position:relative}
+.mapa-badge{position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:50%;background:#E8433A;border:2px solid var(--contorno);animation:pulo 1.6s ease-in-out infinite}
+.mapa-badge[hidden]{display:none}
+.tela-mapa{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;background:#8CCB6E;padding-top:env(safe-area-inset-top,0px)}
+.tela-mapa[hidden]{display:none}
+.mapa-topo{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px 0;max-width:34rem;width:100%;margin:0 auto;box-sizing:border-box}
+.mapa-topo .titulo{font-size:1.8rem}
+.mapa-dica{margin:6px auto 0;padding:0 14px;max-width:34rem;font-size:.82rem;font-weight:800;color:#1F3B1A;text-align:center}
+.mapa-rolagem{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.mapa-mundo{position:relative;max-width:30rem;margin:0 auto;background:radial-gradient(circle at 20% 30%,rgba(255,255,255,.18) 0 8%,transparent 9%) 0 0/90px 90px}
+.mapa-zona{position:absolute;left:3%;right:3%;border:3px dashed rgba(42,26,18,.35);border-radius:28px;opacity:.9}
+.mapa-zona-nome{position:absolute;transform:translateY(-50%);left:calc(3% + 14px);z-index:1;background:var(--contorno);color:#fff;font:900 .75rem 'Nunito',sans-serif;padding:3px 10px;border-radius:999px}
+.mapa-enfeite{position:absolute;transform:translate(-50%,-50%);font-size:1.6rem;opacity:.85;pointer-events:none;filter:drop-shadow(0 2px 0 rgba(0,0,0,.2))}
+.mapa-trilha{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.mapa-trilha path{fill:none;vector-effect:non-scaling-stroke;stroke-linecap:round}
+#mapaTrilhaBase{stroke:#FFF6E0;stroke-width:16;stroke-dasharray:2 26}
+#mapaTrilhaFeita{stroke:var(--amarelo);stroke-width:12;filter:drop-shadow(0 3px 0 var(--contorno))}
+.mapa-no{position:absolute;transform:translate(-50%,-50%);background:none;border:none;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-decoration:none;color:inherit;-webkit-tap-highlight-color:transparent}
+.mapa-bola{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.75rem;background:#fff;border:4px solid var(--contorno);box-shadow:0 5px 0 var(--contorno);transition:transform .15s}
+.mapa-no.feito .mapa-bola{background:#7FD88F}
+.mapa-no.atual .mapa-bola{background:var(--amarelo);animation:pulo 1.4s ease-in-out infinite}
+.mapa-no.bloq .mapa-bola{background:#D8D2C6;filter:grayscale(.85)}
+.mapa-no.breve .mapa-bola{background:#C9B8F0}
+.mapa-no.sel .mapa-bola{outline:4px solid #fff;outline-offset:3px;transform:scale(1.08)}
+.mapa-extra .mapa-bola{width:46px;height:46px;font-size:1.35rem;background:#2A2550}
+.mapa-marca{position:absolute;top:-6px;right:-8px;font-size:.8rem;font-weight:900;min-width:22px;height:22px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#fff;border:3px solid var(--contorno)}
+.mapa-marca:empty{display:none}
+.mapa-no.feito .mapa-marca{background:var(--verde);color:#fff}
+.mapa-chip{margin-top:6px;background:var(--contorno);color:#fff;font:900 .74rem 'Nunito',sans-serif;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.mapa-no.atual .mapa-chip{background:#E8433A}
+.mapa-voce{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none;transition:left .4s,top .4s;z-index:2}
+.mapa-voce span{width:40px;height:40px;border-radius:50%;background:#fff;border:3px solid var(--contorno);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.4rem}
+.mapa-voce img{width:100%;height:100%;object-fit:cover}
+.mapa-voce b{margin-top:-4px;background:#E8433A;color:#fff;font:900 .66rem 'Nunito',sans-serif;padding:1px 7px;border-radius:999px;border:2px solid var(--contorno)}
+.mapa-painel{background:var(--painel);color:var(--texto);border:4px solid var(--contorno);border-bottom:none;border-radius:22px 22px 0 0;box-shadow:0 -4px 0 rgba(0,0,0,.15);padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 14px);width:100%;max-width:34rem;margin:0 auto;box-sizing:border-box}
+.mapa-pt{display:flex;align-items:center;gap:10px}
+.mapa-pic{font-size:2rem}
+.mapa-pt b{display:block;font:400 1.3rem 'Lilita One','Arial Black',sans-serif}
+.mapa-st{font-size:.8rem;font-weight:900;color:var(--sub)}
+.mapa-st.feito{color:var(--verde-esc)} .mapa-st.atual{color:#C0392B} .mapa-st.breve{color:#6A4FB8}
+.mapa-desc{margin:6px 0;font-size:.9rem;font-weight:700}
+.mapa-req{font-size:.88rem;font-weight:900;margin-top:4px}
+.mapa-prog{font-size:.82rem;font-weight:800;color:var(--sub)}
+.mapa-painel .btn{margin-top:8px}
+
 /* barra do topo compacta em celulares (fica no fim para ter prioridade) */
 @media (max-width:440px){
   .hud .linha-hud{gap:4px}
-  .hud .linha-hud .pilula,.hud #btnRanking,.hud #btnPersonagem,.hud #btnMotoca,.hud #btnMusica,.hud #btnSair{padding:3px 6px;font-size:1rem}
+  .hud .linha-hud .pilula,.hud #btnRanking,.hud #btnPersonagem,.hud #btnMotoca,.hud #btnMapa,.hud #btnMusica,.hud #btnSair{padding:3px 6px;font-size:1rem}
   .hud #dinheiro{font-size:1.05rem;padding:3px 8px 3px 6px;gap:4px}
   .hud #dinheiro .tk{display:none}
   .hud #taxa{font-size:.68rem;padding:3px 5px}
 }
-@media (max-width:345px){ .hud #taxa{display:none} }
+@media (max-width:400px){
+  .hud .linha-hud{gap:2px}
+  .hud .linha-hud .pilula,.hud #btnRanking,.hud #btnPersonagem,.hud #btnMotoca,.hud #btnMapa,.hud #btnMusica,.hud #btnSair{padding:3px 5px;font-size:.95rem}
+  .hud #dinheiro{font-size:1rem;padding:3px 7px 3px 5px}
+  .hud #taxa{font-size:.62rem;line-height:1.05;white-space:normal;max-width:48px;text-align:center;padding:2px 4px}
+}
+@media (max-width:359px){ .hud #taxa{display:none} }
 </style>
 </head>
 <body>
@@ -314,6 +366,7 @@ body:not(.jogando) .alerta{display:none}
     <button class="pilula" id="btnRanking" aria-label="Ver ranking">🏆</button>
     <button class="pilula" id="btnPersonagem" aria-label="Meu personagem">👤</button>
     <a class="pilula" id="btnMotoca" href="https://adegadoedu.github.io/motoca/" aria-label="Jogar Motoca: a aventura da Adega" title="Motoca: a aventura da Adega">🎮</a>
+    <button class="pilula" id="btnMapa" type="button" aria-label="Mapa da Adega" title="Mapa da Adega">🗺️<span class="mapa-badge" id="mapaBadge" hidden></span></button>
     <div class="pilula" id="dinheiro" role="button" tabindex="0" aria-label="Trocar dinheiro por cupom de desconto"><span id="icDin"></span><span id="valDin">0</span><span class="tk" aria-hidden="true">🎟️</span></div>
     <div class="pilula" id="taxa">0/min</div>
     <button class="pilula" id="btnMusica" type="button" aria-label="Música">🔊</button>
@@ -442,6 +495,13 @@ body:not(.jogando) .alerta{display:none}
 
 <button class="btn-corretora" id="btnCorretora" type="button" hidden>📈 Corretora</button>
 <button class="btn-venda" id="btnVenda" type="button" hidden>💼 Vender a Adega</button>
+
+<section class="tela-mapa" id="telaMapa" hidden aria-label="Mapa da Adega">
+  <div class="mapa-topo"><h2 class="titulo">🗺️ Mapa da Adega</h2><button class="pilula" id="btnMapaFechar" type="button" aria-label="Fechar">✕</button></div>
+  <p class="mapa-dica">O nível é o dos <b>setores da loja</b>: todos precisam chegar lá. Toque numa etapa para ver o que falta.</p>
+  <div class="mapa-rolagem" id="mapaRolagem"><div class="mapa-mundo" id="mapaMundo"></div></div>
+  <div class="mapa-painel" id="mapaPainel"></div>
+</section>
 
 <section class="tela" id="telaCorretora" hidden>
   <div class="caixa">
@@ -3384,6 +3444,112 @@ $('#btnContaSenha').addEventListener('click',async()=>{
 $('#btnConta').addEventListener('click',()=>abrirConta());
 setTimeout(checarWhats,1500);
 
+// ================= Mapa da Adega (etapas do jogo e quando liberam) =================
+const menorNivelSetores=()=>Math.min(...IDS.map(id=>S.est[id].aberta?S.est[id].nivel:0));
+const setoresAbertos=()=>IDS.filter(id=>S.est[id].aberta).length;
+const ETAPAS_MAPA=[
+  {id:'abertura',ic:'🥤',nome:'Abertura da Adega',chip:'Início',zona:0,
+   desc:'Você começa com a geladeira de refri e o balcão do Edu. Atenda, cobre os clientes e melhore os setores.',
+   req:'Liberado desde o começo.',prog:()=>[1,1]},
+  {id:'missoes',ic:'📅',nome:'Missões do dia',chip:'3 tarefas',zona:0,
+   desc:'A cada 6 horas chegam missões novas, com prêmios e um baú no fim.',
+   req:'Complete as 3 primeiras tarefas (com o cadastro online).',prog:()=>[Math.min(S.tarefa,3),3],
+   feito:()=>missoesLiberadas(),acao:{txt:'Abrir missões',fn:()=>abrirMissoes()}},
+  {id:'loja',ic:'🛒',nome:'Loja completa',chip:'6 setores',zona:0,
+   desc:'Abra água e suco, salgadinhos, gelo, carvão e a mercearia. Cada setor vende produtos mais caros.',
+   req:'Abra os 6 setores da loja.',prog:()=>[setoresAbertos(),IDS.length]},
+  {id:'nv25',ic:'🏆',nome:'Todos no nível 25',chip:'Nv 25',zona:0,
+   desc:'Uma das tarefas grandes: deixar a loja inteira no nível 25.',
+   req:'Leve todos os setores ao nível 25.',prog:()=>[Math.min(menorNivelSetores(),25),25],nivel:true},
+  {id:'entregas',ic:'🛵',nome:'Entregas de moto',chip:'16 tarefas',zona:0,
+   desc:'Saia de moto entregando pedidos pelo bairro. Junto vem o 🎁 cupom de conclusão, de desconto real na Adega.',
+   req:'Complete as 16 tarefas.',prog:()=>[Math.min(S.tarefa,TAREFAS.length),TAREFAS.length],
+   feito:()=>entregasLiberadas(),acao:{txt:'Fazer entregas',fn:()=>{ const b=$('#btnEntregas'); if(b) b.click(); }}},
+  {id:'pdr',ic:'📦',nome:'Ponto de Retirada',chip:'Nv 40',zona:1,
+   desc:'A Adega vira ponto de retirada do Mercado Livre, da Shopee e da Amazon. A van traz pacotes e os clientes trazem renda extra. Do nível 40 em diante, cada melhoria encarece só 5% (antes eram 20%).',
+   req:'Leve todos os setores ao nível 40.',prog:()=>[Math.min(menorNivelSetores(),40),40],nivel:true,
+   feito:()=>PDR().liberado||pdrPodeLiberar(),acao:{txt:'Abrir o ponto',fn:()=>abrirPdr()}},
+  {id:'corretora',ic:'📈',nome:'Corretora',chip:'Nv 40',zona:1,
+   desc:'Separe parte do caixa para investir, aprenda como a bolsa funciona e acompanhe o seu extrato.',
+   req:'Leve todos os setores ao nível 40 (com o cadastro online).',prog:()=>[Math.min(menorNivelSetores(),40),40],nivel:true,
+   feito:()=>corretoraLiberadaLocal(),acao:{txt:'Abrir a corretora',fn:()=>abrirCorretora()}},
+  {id:'ipo',ic:'🔔',nome:'IPO da Adega',chip:'Nv 60',zona:2,breve:true,
+   desc:'Sua adega abre capital na bolsa e outros jogadores podem comprar ações dela.',
+   req:'Leve todos os setores ao nível 60.',prog:()=>[Math.min(menorNivelSetores(),60),60],nivel:true},
+  {id:'venda',ic:'💼',nome:'Venda da Adega',chip:'Nv 100',zona:3,
+   desc:'Receba propostas de compradores pela sua adega e entre no ranking das maiores vendas.',
+   req:'Leve todos os setores ao nível 100.',prog:()=>[Math.min(menorNivelSetores(),100),100],nivel:true,
+   feito:()=>vendaLiberada(),acao:{txt:'Ver propostas',fn:()=>abrirVenda()}},
+  {id:'nova',ic:'🏪',nome:'Nova Adega',chip:'Após a venda',zona:3,
+   desc:'Depois de vender, você abre uma adega nova com bônus permanente de faturamento.',
+   req:'Venda a sua adega.',prog:()=>[Math.min((S&&S.prest)||0,1),1],feito:()=>((S&&S.prest)||0)>0}
+];
+const ZONAS_MAPA=[{nome:'Bairro da Adega',cor:'#F6D29C',y:[702,1195]},{nome:'Avenida do Comércio',cor:'#BFDDF0',y:[482,688]},{nome:'Centro Financeiro',cor:'#D9CDF3',y:[336,466]},{nome:'Topo do Mercado',cor:'#F7E59A',y:[40,322]}];
+// posições: x em %, y em px (de baixo para cima)
+const POS_MAPA=[[24,1120],[62,1030],[80,935],[44,845],[20,752],[46,628],[78,532],[48,404],[22,270],[58,150]];
+const ALT_MAPA=1210;
+function etapaFeita(e){ if(e.breve) return false; if(e.feito) return !!e.feito(); const p=e.prog(); return p[0]>=p[1]; }
+function etapaAtual(){ const i=ETAPAS_MAPA.findIndex(e=>!e.breve&&!etapaFeita(e)); return i<0?ETAPAS_MAPA.length-1:i; }
+function estadoEtapa(i){ const e=ETAPAS_MAPA[i]; if(etapaFeita(e)) return 'feito'; if(e.breve) return 'breve'; return i===etapaAtual()?'atual':'bloq'; }
+const contaFeitas=()=>ETAPAS_MAPA.filter(etapaFeita).length;
+let mapaSel=0, mapaMontado=false;
+function curvaMapa(pts){ // Catmull-Rom → Bézier
+  if(pts.length<2) return '';
+  let d=`M${pts[0][0]},${pts[0][1]}`;
+  for(let i=0;i<pts.length-1;i++){ const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(pts.length-1,i+2)];
+    d+=` C${p1[0]+(p2[0]-p0[0])/6},${p1[1]+(p2[1]-p0[1])/6} ${p2[0]-(p3[0]-p1[0])/6},${p2[1]-(p3[1]-p1[1])/6} ${p2[0]},${p2[1]}`; }
+  return d;
+}
+function montarMapa(){
+  const W=$('#mapaMundo'); W.style.height=ALT_MAPA+'px';
+  // zonas
+  let html='';
+  ZONAS_MAPA.forEach(z=>{ html+=`<div class="mapa-zona" style="top:${z.y[0]}px;height:${z.y[1]-z.y[0]}px;background:${z.cor}"></div>`; });
+  ZONAS_MAPA.forEach(z=>{ html+=`<span class="mapa-zona-nome" style="top:${z.y[0]}px">${z.nome}</span>`; });
+  // enfeites
+  [['🌳',8,1180],['🏠',90,1150],['🌳',92,1010],['🌳',6,960],['🏡',8,830],['🌳',88,800],['🚌',90,690],['🏢',8,560],['🌳',92,460],['🏦',84,380],['🏙️',10,420],['🌳',90,250],['⭐',86,90],['🌳',6,150]]
+    .forEach(([e,x,y])=>{ html+=`<span class="mapa-enfeite" style="left:${x}%;top:${y}px">${e}</span>`; });
+  html+=`<svg class="mapa-trilha" viewBox="0 0 100 ${ALT_MAPA}" preserveAspectRatio="none" aria-hidden="true"><path id="mapaTrilhaBase" d="${curvaMapa(POS_MAPA)}"/><path id="mapaTrilhaFeita" d=""/></svg>`;
+  ETAPAS_MAPA.forEach((e,i)=>{ const [x,y]=POS_MAPA[i];
+    html+=`<button type="button" class="mapa-no" data-i="${i}" style="left:${x}%;top:${y}px" aria-label="${e.nome}"><span class="mapa-bola">${e.ic}</span><span class="mapa-marca"></span><span class="mapa-chip">${e.chip}</span></button>`; });
+  html+=`<a class="mapa-no mapa-extra" href="https://adegadoedu.github.io/motoca/" style="left:84%;top:1078px" aria-label="Motoca: a aventura da Adega"><span class="mapa-bola">🎮</span><span class="mapa-chip">Motoca · livre</span></a>`;
+  html+=`<div class="mapa-voce" id="mapaVoce"><span id="mapaVoceRosto">🙂</span><b>Você</b></div>`;
+  W.innerHTML=html;
+  W.querySelectorAll('button.mapa-no').forEach(b=>b.addEventListener('click',()=>{ mapaSel=+b.dataset.i; SOM.abrir(); renderMapa(); }));
+  mapaMontado=true;
+}
+function renderMapa(){
+  if(!mapaMontado) montarMapa();
+  const at=etapaAtual();
+  document.querySelectorAll('#mapaMundo button.mapa-no').forEach(b=>{ const i=+b.dataset.i, st=estadoEtapa(i);
+    b.className='mapa-no '+st+(i===mapaSel?' sel':''); b.querySelector('.mapa-marca').textContent=st==='feito'?'✔':st==='bloq'?'🔒':st==='breve'?'⏳':''; });
+  $('#mapaTrilhaFeita').setAttribute('d',curvaMapa(POS_MAPA.slice(0,at+1)));
+  const [vx,vy]=POS_MAPA[at], V=$('#mapaVoce'); V.style.left=vx+'%'; V.style.top=(vy-66)+'px';
+  const u=S.perfil&&S.perfil.visual&&typeof rostoURL==='function'?rostoURL(S.perfil.visual):'';
+  $('#mapaVoceRosto').innerHTML=u?`<img src="${u}" alt="">`:'🙂';
+  // painel
+  const e=ETAPAS_MAPA[mapaSel], st=estadoEtapa(mapaSel), p=e.prog();
+  const stTxt={feito:'✔ Liberado',atual:'Próxima etapa',bloq:'🔒 Bloqueado',breve:'⏳ Em breve'}[st];
+  let h=`<div class="mapa-pt"><span class="mapa-pic">${e.ic}</span><div><b>${e.nome}</b><span class="mapa-st ${st}">${stTxt}</span></div></div><p class="mapa-desc">${e.desc}</p>`;
+  if(st!=='feito'){
+    h+=`<div class="mapa-req">🎯 ${e.req}</div><div class="missao-barra"><i style="width:${Math.min(100,100*p[0]/p[1])}%"></i></div>`;
+    h+=`<div class="mapa-prog">${e.nivel?`Seu setor mais baixo: <b>nível ${menorNivelSetores()}</b> de ${p[1]}`:`<b>${p[0]}</b> de ${p[1]}`}${e.breve&&p[0]>=p[1]?' · você já chegou! O IPO abre em breve.':''}</div>`;
+  }
+  if(st==='feito'&&e.acao) h+=`<button class="btn" type="button" id="mapaAcao">${e.acao.txt}</button>`;
+  $('#mapaPainel').innerHTML=h;
+  const b=$('#mapaAcao'); if(b) b.addEventListener('click',()=>{ fecharMapa(); setTimeout(e.acao.fn,60); });
+}
+function abrirMapa(){
+  if(!S) return;
+  mapaSel=etapaAtual(); $('#telaMapa').hidden=false; SOM.abrir(); renderMapa();
+  S.mapaVistos=contaFeitas(); salvar(); atualizarBadgeMapa();
+  const sc=$('#mapaRolagem'); requestAnimationFrame(()=>{ sc.scrollTop=Math.max(0,POS_MAPA[mapaSel][1]-sc.clientHeight*0.55); });
+}
+function fecharMapa(){ $('#telaMapa').hidden=true; }
+function atualizarBadgeMapa(){ const d=$('#mapaBadge'); if(!d||!S) return; d.hidden=!(S.mapaVistos===undefined||contaFeitas()>S.mapaVistos); }
+$('#btnMapa').addEventListener('click',abrirMapa);
+$('#btnMapaFechar').addEventListener('click',fecharMapa);
+
 // ================= Papo da Adega (conversa rápida, ideias e chat) =================
 const FRASES_PAPO=['Boa noite, turma! 👋','Bom dia, pessoal! ☀️','Bati 1 milhão! 🎉','Bora pro top 10! 🏆','Entrega perfeita! 🛵','Quem tá jogando agora? 🙋',
   'Peguei meu cupom! 🎟️','Minha adega tá bombando! 🔥','Estoque cheio, tudo certo! 📦','Alguém tem uma dica? 🤔','Valeu, pessoal! 🙏','Rumo ao nível 25! 🚀',
@@ -3556,7 +3722,7 @@ function atualizarHUD(pulo){
   const be=document.getElementById('btnEntregas'); if(be) be.hidden=!entregasLiberadas();
   const bv=document.getElementById('btnVenda'); if(bv) bv.hidden=!vendaLiberada();
   const bc=document.getElementById('btnCorretora'); if(bc) bc.hidden=!corretoraLiberadaLocal();
-  atualizarBtnMissoes();
+  atualizarBtnMissoes(); if(typeof atualizarBadgeMapa==='function') atualizarBadgeMapa();
   $('#valDin').textContent=fmt(S.din);
   if(pulo){const e=$('#dinheiro');e.classList.remove('pulo');void e.offsetWidth;e.classList.add('pulo');}
   renderTarefa(); renderSelos();
