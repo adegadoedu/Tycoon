@@ -295,11 +295,15 @@ body:not(.jogando) .btn-papo{display:none}
 body:not(.jogando) .alerta{display:none}
 @media (prefers-reduced-motion: reduce){ .selo .seta,.tarefa button,.selo.fechado.pode,.pop{animation-duration:.01s;animation-iteration-count:1} .painel{transition:none} }
 
+/* carregando */
+#carregandoAdega{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#46736D;color:#fff;font-weight:900}
+#carregandoAdega .titulo{font-size:2.6rem}
+#carregandoAdega span{animation:pulo 1.2s ease-in-out infinite}
 /* mapa da adega */
 #btnMapa{position:relative}
 .mapa-badge{position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:50%;background:#E8433A;border:2px solid var(--contorno);animation:pulo 1.6s ease-in-out infinite}
 .mapa-badge[hidden]{display:none}
-.tela-mapa{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;background:#8CCB6E;padding-top:env(safe-area-inset-top,0px)}
+.tela-mapa{position:fixed;inset:0;z-index:9;display:flex;flex-direction:column;background:#8CCB6E;padding-top:env(safe-area-inset-top,0px)}
 .tela-mapa[hidden]{display:none}
 .mapa-topo{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px 0;max-width:34rem;width:100%;margin:0 auto;box-sizing:border-box}
 .mapa-topo .titulo{font-size:1.8rem}
@@ -307,6 +311,7 @@ body:not(.jogando) .alerta{display:none}
 .mapa-rolagem{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .mapa-mundo{position:relative;max-width:30rem;margin:0 auto;background:radial-gradient(circle at 20% 30%,rgba(255,255,255,.18) 0 8%,transparent 9%) 0 0/90px 90px}
 .mapa-zona{position:absolute;left:3%;right:3%;border:3px dashed rgba(42,26,18,.35);border-radius:28px;opacity:.9}
+.mapa-zona-nome.dir{left:auto;right:calc(3% + 14px)}
 .mapa-zona-nome{position:absolute;transform:translateY(-50%);left:calc(3% + 14px);z-index:1;background:var(--contorno);color:#fff;font:900 .75rem 'Nunito',sans-serif;padding:3px 10px;border-radius:999px}
 .mapa-enfeite{position:absolute;transform:translate(-50%,-50%);font-size:1.6rem;opacity:.85;pointer-events:none;filter:drop-shadow(0 2px 0 rgba(0,0,0,.2))}
 .mapa-trilha{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
@@ -365,7 +370,7 @@ body:not(.jogando) .alerta{display:none}
   <div class="linha-hud">
     <button class="pilula" id="btnRanking" aria-label="Ver ranking">🏆</button>
     <button class="pilula" id="btnPersonagem" aria-label="Meu personagem">👤</button>
-    <a class="pilula" id="btnMotoca" href="https://adegadoedu.github.io/motoca/" aria-label="Jogar Motoca: a aventura da Adega" title="Motoca: a aventura da Adega">🎮</a>
+    <a class="pilula" id="btnMotoca" href="https://adegadoedu.github.io/motoca/?volta=jogo" aria-label="Jogar Motoca: a aventura da Adega" title="Motoca: a aventura da Adega">🎮</a>
     <button class="pilula" id="btnMapa" type="button" aria-label="Mapa da Adega" title="Mapa da Adega">🗺️<span class="mapa-badge" id="mapaBadge" hidden></span></button>
     <div class="pilula" id="dinheiro" role="button" tabindex="0" aria-label="Trocar dinheiro por cupom de desconto"><span id="icDin"></span><span id="valDin">0</span><span class="tk" aria-hidden="true">🎟️</span></div>
     <div class="pilula" id="taxa">0/min</div>
@@ -614,7 +619,8 @@ body:not(.jogando) .alerta{display:none}
   </div>
 </section>
 
-<section class="tela" id="telaInicio">
+<div id="carregandoAdega" aria-live="polite"><p class="titulo">Adega do Edu</p><span>Abrindo a adega…</span></div>
+<section class="tela" id="telaInicio" hidden>
   <div class="caixa centro">
     <h1 class="titulo grande">Adega do Edu</h1>
     <p class="titulo" style="font-size:1.5rem;color:#fff;margin-top:4px">Tycoon</p>
@@ -3484,10 +3490,10 @@ const ETAPAS_MAPA=[
    desc:'Depois de vender, você abre uma adega nova com bônus permanente de faturamento.',
    req:'Venda a sua adega.',prog:()=>[Math.min((S&&S.prest)||0,1),1],feito:()=>((S&&S.prest)||0)>0}
 ];
-const ZONAS_MAPA=[{nome:'Bairro da Adega',cor:'#F6D29C',y:[702,1195]},{nome:'Avenida do Comércio',cor:'#BFDDF0',y:[482,688]},{nome:'Centro Financeiro',cor:'#D9CDF3',y:[336,466]},{nome:'Topo do Mercado',cor:'#F7E59A',y:[40,322]}];
-// posições: x em %, y em px (de baixo para cima)
-const POS_MAPA=[[24,1120],[62,1030],[80,935],[44,845],[20,752],[46,628],[78,532],[48,404],[22,270],[58,150]];
-const ALT_MAPA=1210;
+const ZONAS_MAPA=[{nome:'Bairro da Adega',cor:'#F6D29C',y:[45,538]},{nome:'Avenida do Comércio',cor:'#BFDDF0',y:[552,758]},{nome:'Centro Financeiro',cor:'#D9CDF3',y:[774,904]},{nome:'Grandes Negócios',cor:'#F7E59A',y:[918,1205],dir:true}];
+// posições: x em %, y em px (o caminho começa em cima e desce)
+const POS_MAPA=[[24,120],[62,210],[80,305],[44,395],[20,488],[46,612],[78,708],[48,836],[22,970],[58,1090]];
+const ALT_MAPA=1240;
 function etapaFeita(e){ if(e.breve) return false; if(e.feito) return !!e.feito(); const p=e.prog(); return p[0]>=p[1]; }
 function etapaAtual(){ const i=ETAPAS_MAPA.findIndex(e=>!e.breve&&!etapaFeita(e)); return i<0?ETAPAS_MAPA.length-1:i; }
 function estadoEtapa(i){ const e=ETAPAS_MAPA[i]; if(etapaFeita(e)) return 'feito'; if(e.breve) return 'breve'; return i===etapaAtual()?'atual':'bloq'; }
@@ -3505,14 +3511,14 @@ function montarMapa(){
   // zonas
   let html='';
   ZONAS_MAPA.forEach(z=>{ html+=`<div class="mapa-zona" style="top:${z.y[0]}px;height:${z.y[1]-z.y[0]}px;background:${z.cor}"></div>`; });
-  ZONAS_MAPA.forEach(z=>{ html+=`<span class="mapa-zona-nome" style="top:${z.y[0]}px">${z.nome}</span>`; });
+  ZONAS_MAPA.forEach(z=>{ html+=`<span class="mapa-zona-nome${z.dir?' dir':''}" style="top:${z.y[0]}px">${z.nome}</span>`; });
   // enfeites
-  [['🌳',8,1180],['🏠',90,1150],['🌳',92,1010],['🌳',6,960],['🏡',8,830],['🌳',88,800],['🚌',90,690],['🏢',8,560],['🌳',92,460],['🏦',84,380],['🏙️',10,420],['🌳',90,250],['⭐',86,90],['🌳',6,150]]
+  [['🌳',8,60],['🏠',90,90],['🌳',92,230],['🌳',6,280],['🏡',8,410],['🌳',88,440],['🚌',90,550],['🏢',8,680],['🌳',92,780],['🏦',84,860],['🏙️',10,820],['🌳',90,990],['⭐',86,1150],['🌳',6,1090]]
     .forEach(([e,x,y])=>{ html+=`<span class="mapa-enfeite" style="left:${x}%;top:${y}px">${e}</span>`; });
   html+=`<svg class="mapa-trilha" viewBox="0 0 100 ${ALT_MAPA}" preserveAspectRatio="none" aria-hidden="true"><path id="mapaTrilhaBase" d="${curvaMapa(POS_MAPA)}"/><path id="mapaTrilhaFeita" d=""/></svg>`;
   ETAPAS_MAPA.forEach((e,i)=>{ const [x,y]=POS_MAPA[i];
     html+=`<button type="button" class="mapa-no" data-i="${i}" style="left:${x}%;top:${y}px" aria-label="${e.nome}"><span class="mapa-bola">${e.ic}</span><span class="mapa-marca"></span><span class="mapa-chip">${e.chip}</span></button>`; });
-  html+=`<a class="mapa-no mapa-extra" href="https://adegadoedu.github.io/motoca/" style="left:84%;top:1078px" aria-label="Motoca: a aventura da Adega"><span class="mapa-bola">🎮</span><span class="mapa-chip">Motoca · livre</span></a>`;
+  html+=`<a class="mapa-no mapa-extra" href="https://adegadoedu.github.io/motoca/?volta=mapa" style="left:84%;top:162px" aria-label="Motoca: a aventura da Adega"><span class="mapa-bola">🎮</span><span class="mapa-chip">Motoca · livre</span></a>`;
   html+=`<div class="mapa-voce" id="mapaVoce"><span id="mapaVoceRosto">🙂</span><b>Você</b></div>`;
   W.innerHTML=html;
   W.querySelectorAll('button.mapa-no').forEach(b=>b.addEventListener('click',()=>{ mapaSel=+b.dataset.i; SOM.abrir(); renderMapa(); }));
@@ -3524,7 +3530,7 @@ function renderMapa(){
   document.querySelectorAll('#mapaMundo button.mapa-no').forEach(b=>{ const i=+b.dataset.i, st=estadoEtapa(i);
     b.className='mapa-no '+st+(i===mapaSel?' sel':''); b.querySelector('.mapa-marca').textContent=st==='feito'?'✔':st==='bloq'?'🔒':st==='breve'?'⏳':''; });
   $('#mapaTrilhaFeita').setAttribute('d',curvaMapa(POS_MAPA.slice(0,at+1)));
-  const [vx,vy]=POS_MAPA[at], V=$('#mapaVoce'); V.style.left=vx+'%'; V.style.top=(vy-66)+'px';
+  const [vx,vy]=POS_MAPA[at], V=$('#mapaVoce'); V.style.left=(vx<50?vx+17:vx-17)+'%'; V.style.top=(vy-4)+'px';
   const u=S.perfil&&S.perfil.visual&&typeof rostoURL==='function'?rostoURL(S.perfil.visual):'';
   $('#mapaVoceRosto').innerHTML=u?`<img src="${u}" alt="">`:'🙂';
   // painel
@@ -3537,17 +3543,37 @@ function renderMapa(){
   }
   if(st==='feito'&&e.acao) h+=`<button class="btn" type="button" id="mapaAcao">${e.acao.txt}</button>`;
   $('#mapaPainel').innerHTML=h;
-  const b=$('#mapaAcao'); if(b) b.addEventListener('click',()=>{ fecharMapa(); setTimeout(e.acao.fn,60); });
+  const b=$('#mapaAcao'); if(b) b.addEventListener('click',()=>irDoMapa(e.acao.fn));
 }
-function abrirMapa(){
-  if(!S) return;
-  mapaSel=etapaAtual(); $('#telaMapa').hidden=false; SOM.abrir(); renderMapa();
+let retornoMapa=null, tRetorno=0;
+const algumaTelaAberta=()=>!!document.querySelector('.tela:not([hidden])')||document.body.classList.contains('entregando');
+function abrirMapa(op){
+  if(!S) return; op=op||{};
+  mapaSel=op.sel!=null?op.sel:etapaAtual(); $('#telaMapa').hidden=false; if(!op.quieto) SOM.abrir(); renderMapa();
   S.mapaVistos=contaFeitas(); salvar(); atualizarBadgeMapa();
-  const sc=$('#mapaRolagem'); requestAnimationFrame(()=>{ sc.scrollTop=Math.max(0,POS_MAPA[mapaSel][1]-sc.clientHeight*0.55); });
+  if(location.hash!=='#mapa'){ try{ history.pushState({mapa:1},'','#mapa'); }catch(e){} }
+  const sc=$('#mapaRolagem'); requestAnimationFrame(()=>{ sc.scrollTop=op.rolagem!=null?op.rolagem:Math.max(0,POS_MAPA[mapaSel][1]-sc.clientHeight*0.4); });
 }
-function fecharMapa(){ $('#telaMapa').hidden=true; }
 function atualizarBadgeMapa(){ const d=$('#mapaBadge'); if(!d||!S) return; d.hidden=!(S.mapaVistos===undefined||contaFeitas()>S.mapaVistos); }
-$('#btnMapa').addEventListener('click',abrirMapa);
+function esconderMapa(){ $('#telaMapa').hidden=true; }
+function fecharMapa(){ esconderMapa(); if(location.hash==='#mapa'){ try{ history.back(); }catch(e){} } }
+addEventListener('popstate',()=>{ if(location.hash!=='#mapa'&&!$('#telaMapa').hidden) esconderMapa(); });
+// Ir para uma etapa e, ao sair dela, voltar ao mesmo ponto do mapa
+function irDoMapa(fn){
+  retornoMapa={sel:mapaSel,rolagem:$('#mapaRolagem').scrollTop,abriu:false,t:Date.now()};
+  fecharMapa(); setTimeout(fn,80); trocarTextosRetorno(true);
+  clearInterval(tRetorno); tRetorno=setInterval(()=>{
+    const R=retornoMapa; if(!R){ clearInterval(tRetorno); return; }
+    if(algumaTelaAberta()){ R.abriu=true; return; }
+    if(!R.abriu){ if(Date.now()-R.t>3000){ retornoMapa=null; trocarTextosRetorno(false); } return; }
+    retornoMapa=null; clearInterval(tRetorno); trocarTextosRetorno(false);
+    if(document.body.classList.contains('jogando')) abrirMapa({sel:R.sel,rolagem:R.rolagem,quieto:true});
+  },200);
+}
+function trocarTextosRetorno(mapa){
+  [['#btnFecharPedido','Voltar para a adega'],['#btnVoltarAdega','Voltar para a adega']].forEach(([id,txt])=>{ const b=$(id); if(b) b.textContent=mapa?'🗺️ Voltar para o mapa':txt; });
+}
+$('#btnMapa').addEventListener('click',()=>abrirMapa());
 $('#btnMapaFechar').addEventListener('click',fecharMapa);
 
 // ================= Papo da Adega (conversa rápida, ideias e chat) =================
@@ -4031,9 +4057,15 @@ if(S.mes===undefined){ S.mes=mesAtual(); S.totalInicioMes=S.total; }
 if(S.falido){ $('#telaInicio').hidden=true; mostrarFalencia(); reenviarFalencia(); }
 else if(!S.perfil){ mostrarCadastro(); }
 else if(S.saiu){ $('#telaInicio').hidden=true; mostrarSaiu(); }
+else if(!S.viuInicio){ $('#telaInicio').hidden=false; }
 else if(S.viuInicio){ $('#telaInicio').hidden=true; if(!verificarOffline()) document.body.classList.add('jogando'); sincronizar(); setTimeout(()=>{ if(S.certificado) mostrarCertificado(); else if(S.perfil&&!S.perfil.visual&&!S.falido) abrirPersonagem({primeiraVez:true,depois:pedirSenhaSeNecessario}); else pedirSenhaSeNecessario(); },1200); }
 aplicarVisualJogador();
 laco();
+{ const c=document.getElementById('carregandoAdega'); if(c) c.remove(); }
+if(location.hash==='#mapa'){ // voltou do Motoca pelo mapa
+  try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+  if(S.perfil&&S.viuInicio&&!S.falido&&!S.saiu) setTimeout(()=>{ if(document.body.classList.contains('jogando')&&!algumaTelaAberta()) abrirMapa({quieto:true}); },400);
+}
 })();
 </script>
 <script>
