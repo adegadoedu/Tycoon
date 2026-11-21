@@ -318,6 +318,8 @@ body:not(.jogando) .alerta{display:none}
 .fiado-linha.calote{opacity:.85}
 .fiado-linha.calote b{color:#C0392B;text-decoration:line-through}
 .fiado-cobrar{font:900 .8rem 'Nunito',sans-serif;background:var(--azul);color:#fff;border:3px solid var(--contorno);border-radius:999px;padding:3px 10px;cursor:pointer}
+.fiado-trava{flex-basis:100%;font-size:.76rem;font-weight:800;color:#8A3A1F;background:#FFF1E8;border-radius:8px;padding:5px 8px}
+.fiado-resumo.ruim{color:#B3362B;font-weight:900}
 .fiado-vazio{color:var(--sub);font-size:.9rem}
 .fiado-real{margin:12px 0 4px;background:#FFF6E0;border:3px solid var(--amarelo-esc);border-radius:14px;padding:10px 12px;font-size:.88rem}
 .licao-edu{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
@@ -1516,7 +1518,7 @@ function novoCliente(){
 }
 function irPara(c,dest){ c.caminho=rota(c.g.position,dest); }
 function proximoAlvo(c){
-  while(c.lista.length&&S.est[c.lista[0]].estoque<=0){ pop(c.g.position.clone().setY(1.8),'😕 Acabou '+EST[c.lista[0]].ic,'ruim'); c.lista.shift(); }
+  while(c.lista.length&&S.est[c.lista[0]].estoque<=0){ pop(c.g.position.clone().setY(1.8),'😕 Acabou '+EST[c.lista[0]].ic,'ruim'); faltaComFiado(c.lista[0]); c.lista.shift(); }
   if(!c.lista.length&&c.valor<=0&&!c.retirada){ pop(c.g.position.clone().setY(2.1),'Saiu sem comprar','ruim'); c.g.userData.sacola.visible=false; c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat([FORA_PORTA.clone(),SAIDA.clone()]); return; }
   if(c.lista.length){
     const id=c.lista[0], v=vagasEst[id], s=v.indexOf(null);
@@ -1635,7 +1637,7 @@ function atualizarClientes(dt){
             if(c.est==='carvao'){ const g4=Math.random()<0.45; c.valor+=valorEst('carvao')*(g4?FATOR_4KG:1); pop(c.g.position.clone().setY(1.7),'+🔥 '+(g4?'4 kg':'2 kg'),''); }
             else { c.valor+=valorEst(c.est); pop(c.g.position.clone().setY(1.7),'+'+EST[c.est].ic,''); }
             c.g.userData.sacola.visible=true; }
-          else pop(c.g.position.clone().setY(1.8),'😕 Acabou '+EST[c.est].ic,'ruim');
+          else { pop(c.g.position.clone().setY(1.8),'😕 Acabou '+EST[c.est].ic,'ruim'); faltaComFiado(c.est); }
           c.est=null; proximoAlvo(c);
         }
         break;}
@@ -1967,7 +1969,7 @@ function atualizarAlerta(){
   if(!pior){ el.hidden=true; return; }
   const e=S.est[pior], qp=qtdPossivel(pior), c=qp>0?qp*custoUnit(pior):custoPedido(pior);
   const rua=qp<=0&&S.fiado?fiadoNaRua():0;
-  $('#alertaTxt').textContent=`${EST[pior].ic} ${EST[pior].nome}: ${e.estoque?'estoque acabando ('+e.estoque+'/'+cap(pior)+')':'acabou o estoque!'}`+(rua>0?` · falta caixa, e 💵 ${fmt(rua)} está no fiado 📒`:'');
+  $('#alertaTxt').textContent=`${EST[pior].ic} ${EST[pior].nome}: ${e.estoque?'estoque acabando ('+e.estoque+'/'+cap(pior)+')':'acabou o estoque!'}`+(rua>0?` · falta caixa, e 💵 ${fmt(rua)} está no fiado 📒${textoRepor(rua,pior)?' (repunha '+textoRepor(rua,pior)+')':''}`:'');
   if(rua>0) oferecerLicao('fiado');
   const b=$('#alertaBtn'); const html='🚚 Pedir '+NOTA+' '+fmt(c); if(b._h!==html){b._h=html;b.innerHTML=html;}
   b.disabled=qp<=0; b.dataset.id=pior; el.hidden=false;
@@ -3849,7 +3851,7 @@ function fiadoAVista(c,sozinho){
 }
 function fiadoPendurar(c){
   const f=F(); c.pedeFiado=false; f.pedidos++; f.aceitos++; f.vendido+=c.valor;
-  const prazo=rnd(150,300), r=Math.random(), saida=r<0.5?'pontual':r<0.75?'atrasado':'calote';
+  const prazo=rnd(150,300), r=Math.random(), saida=r<0.4?'pontual':r<0.65?'atrasado':'calote';
   const vence=tJogo()+prazo, resolve=saida==='pontual'?vence-rnd(0,40):saida==='atrasado'?vence+prazo*rnd(0.8,1.4):vence+prazo*1.6;
   f.lista.push({id:++f.seq,nome:c.nomeFiado,valor:c.valor,vence,resolve,saida,lembrete:false});
   const k=c.caixa; pagando[k]=null; baloesCobrar[k].style.display='none';
@@ -3868,16 +3870,28 @@ function atualizarFiado(dt){
   pagando.forEach(c=>{ if(c&&c.pedeFiado&&c.estado==='noCaixa'&&c.t>=FIADO_ESPERA&&c!==fiadoCliente) fiadoAVista(c,true); });
   for(let i=f.lista.length-1;i>=0;i--){
     const e=f.lista[i];
-    if(!e.avisouAtraso&&t>=e.vence&&t<e.resolve){ e.avisouAtraso=true; mudou=true; toastMissao(`📒 ${e.nome} não pagou no dia combinado.`); oferecerLicao('fiado'); }
+    if(!e.avisouAtraso&&t>=e.vence&&t<e.resolve){ e.avisouAtraso=true; mudou=true; toastMissao(`📒 ${e.nome} não pagou no dia combinado.${textoRepor(e.valor)?' Esse dinheiro repunha '+textoRepor(e.valor)+'.':''}`); oferecerLicao('fiado'); }
     if(t<e.resolve) continue;
     f.lista.splice(i,1); mudou=true;
-    if(e.saida==='calote'){ f.perdido+=e.valor; f.hist.unshift({nome:e.nome,valor:e.valor,ok:false}); SOM.erro(); toastMissao(`👻 ${e.nome} sumiu sem pagar ${fmt(e.valor)}. Prejuízo da adega.`); oferecerLicao('fiado'); }
-    else { f.recebido+=e.valor; S.din+=e.valor; S.total+=e.valor; registrarGanho(e.valor); f.hist.unshift({nome:e.nome,valor:e.valor,ok:true,atraso:t>e.vence+5});
+    if(e.saida==='calote'){ f.perdido+=e.valor; f.hist.unshift({nome:e.nome,valor:e.valor,ok:false,clientes:e.clientes||0,vendas:e.vendas||0}); SOM.erro(); toastMissao(`👻 ${e.nome} sumiu sem pagar ${fmt(e.valor)}. Prejuízo da adega.`); oferecerLicao('fiado'); }
+    else { f.recebido+=e.valor; S.din+=e.valor; S.total+=e.valor; registrarGanho(e.valor); f.hist.unshift({nome:e.nome,valor:e.valor,ok:true,atraso:t>e.vence+5,clientes:e.clientes||0,vendas:e.vendas||0,min:Math.max(0,Math.round((t-e.vence)/60))});
+      if(t>e.vence+5) setTimeout(()=>toastMissao(e.clientes?`📒 ${e.nome} pagou com ${minTxt(t-e.vence)} de atraso. Enquanto isso, ${e.clientes} ${e.clientes>1?'clientes saíram':'cliente saiu'} sem produto: 💵 ${fmt(e.vendas)} em vendas perdidas.`:`📒 ${e.nome} pagou com ${minTxt(t-e.vence)} de atraso.`),2700);
       SOM.maquininha(); pop(new THREE.Vector3(CX.x,2.2,CX.z+1.0),`📒 ${e.nome} pagou +${fmt(e.valor)}`,'grande'); atualizarHUD(true); }
     f.hist.length=Math.min(f.hist.length,8);
   }
   if(mudou){ salvar(); atualizarBtnFiado(); if(!$('#telaCaderninho').hidden) renderCaderninho(); }
   else if(!$('#telaCaderninho').hidden) renderCaderninho();
+}
+// --- o que o dinheiro atrasado deixa de comprar ---
+const fiadoAtrasados=()=>S.fiado?S.fiado.lista.filter(e=>(S.tempoJogo||0)>=e.vence):[];
+function setorMaisVazio(){ let m=null,r=2; IDS.forEach(id=>{ const e=S.est[id]; if(!e.aberta) return; const q=e.estoque/cap(id); if(q<r){ r=q; m=id; } }); return m||'refri'; }
+function daPraRepor(valor,id){ id=id||setorMaisVazio(); return {id,q:Math.floor(valor/custoUnit(id))}; }
+function textoRepor(valor,id){ const r=daPraRepor(valor,id); return r.q>0?`${r.q} ${EST[r.id].ic}`:''; }
+function faltaComFiado(id){
+  const at=fiadoAtrasados(); if(!at.length||S.din>=custoUnit(id)*10) return; // só conta quando faltou caixa para repor
+  const e=at.reduce((a,b)=>a.vence<b.vence?a:b), v=valorEst(id);
+  e.clientes=(e.clientes||0)+1; e.vendas=(e.vendas||0)+v; const f=F(); f.vendasPerdidas=(f.vendasPerdidas||0)+v;
+  if(!e.avisouTrava&&S.din<custoUnit(id)*5){ e.avisouTrava=true; toastMissao(`🔒 Acabou ${EST[id].ic} e falta caixa para repor. Se ${e.nome} tivesse pago, dava para comprar ${textoRepor(e.valor,id)}.`); }
 }
 function lembrarFiado(id){
   const f=F(), e=f.lista.find(x=>x.id===id); if(!e||e.lembrete||tJogo()<e.vence) return;
@@ -3891,12 +3905,13 @@ function lembrarFiado(id){
 function renderCaderninho(){
   const f=F(), t=tJogo(), C=$('#cadernoConteudo');
   let h=`<div class="fiado-nums"><div><b>${fmt(fiadoNaRua())}</b><span>na rua agora</span></div><div><b>${fmt(f.recebido)}</b><span>já pagaram</span></div><div class="ruim"><b>${fmt(f.perdido)}</b><span>calote</span></div></div>`;
-  h+=`<p class="fiado-resumo">Você pendurou ${f.aceitos} ${f.aceitos===1?'compra':'compras'} e recusou ${f.recusados}. ${f.vendido>0?`De cada 💵 100 vendidos no fiado, voltaram 💵 ${Math.round(100*f.recebido/f.vendido)} até agora.`:''}</p>`;
+  h+=`<p class="fiado-resumo">Você pendurou ${f.aceitos} ${f.aceitos===1?'compra':'compras'} e recusou ${f.recusados}. ${f.vendido>0?`De cada 💵 100 vendidos no fiado, voltaram 💵 ${Math.round(100*f.recebido/f.vendido)} até agora.`:''}</p>${f.vendasPerdidas?`<p class="fiado-resumo ruim">🔒 Faltou produto enquanto o fiado atrasava: <b>💵 ${fmt(f.vendasPerdidas)} em vendas perdidas</b>.</p>`:''}`;
   if(f.lista.length){ h+='<div class="fiado-tit">Pendurados</div>';
     f.lista.slice().sort((a,b)=>a.vence-b.vence).forEach(e=>{ const atras=t>=e.vence;
-      h+=`<div class="fiado-linha${atras?' atrasado':''}"><span class="fiado-nome">${e.nome}</span><b>${fmt(e.valor)}</b><span class="fiado-st">${atras?'atrasado há '+minTxt(t-e.vence):'vence em '+minTxt(e.vence-t)}</span>${atras&&!e.lembrete?`<button type="button" class="fiado-cobrar" data-id="${e.id}">📲 Cobrar</button>`:atras?'<span class="fiado-st">cobrado</span>':''}</div>`; }); }
+      const rep=atras?textoRepor(e.valor):'';
+      h+=`<div class="fiado-linha${atras?' atrasado':''}"><span class="fiado-nome">${e.nome}</span><b>${fmt(e.valor)}</b><span class="fiado-st">${atras?'atrasado há '+minTxt(t-e.vence):'vence em '+minTxt(e.vence-t)}</span>${atras&&!e.lembrete?`<button type="button" class="fiado-cobrar" data-id="${e.id}">📲 Cobrar</button>`:atras?'<span class="fiado-st">cobrado</span>':''}${atras?`<span class="fiado-trava">🔒 Esse dinheiro parado repunha <b>${rep||'parte do estoque'}</b> no fornecedor.${e.clientes?` Enquanto ele não paga, <b>${e.clientes} ${e.clientes>1?'clientes saíram':'cliente saiu'}</b> sem produto (💵 ${fmt(e.vendas)} em vendas perdidas).`:''}</span>`:''}</div>`; }); }
   else h+='<p class="fiado-vazio">Ninguém está devendo agora.</p>';
-  if(f.hist.length){ h+='<div class="fiado-tit">Últimos</div>'; f.hist.forEach(x=>{ h+=`<div class="fiado-linha ${x.ok?'pago':'calote'}"><span class="fiado-nome">${x.nome}</span><b>${fmt(x.valor)}</b><span class="fiado-st">${x.ok?(x.atraso?'✔ pagou atrasado':'✔ pagou'):'👻 sumiu'}</span></div>`; }); }
+  if(f.hist.length){ h+='<div class="fiado-tit">Últimos</div>'; f.hist.forEach(x=>{ h+=`<div class="fiado-linha ${x.ok?'pago':'calote'}"><span class="fiado-nome">${x.nome}</span><b>${fmt(x.valor)}</b><span class="fiado-st">${x.ok?(x.atraso?'✔ pagou atrasado':'✔ pagou'):'👻 sumiu'}</span>${x.clientes?`<span class="fiado-trava">Na espera, ${x.clientes} ${x.clientes>1?'clientes saíram':'cliente saiu'} sem produto: 💵 ${fmt(x.vendas)} em vendas perdidas.</span>`:''}</div>`; }); }
   h+=`<div class="fiado-real">💛 <b>Na Adega do Edu de verdade não vendemos fiado.</b> O fornecedor cobra à vista, então é o seu pagamento na hora que mantém a geladeira cheia e o preço justo para todo mundo. Obrigado por entender!</div>`;
   if(licaoDisponivel('fiado')||licaoFeita('fiado')) h+=`<button type="button" class="btn azul peq" id="btnCadLicao">📒 ${licaoFeita('fiado')?'Rever':'Ver'} a lição do Edu</button>`;
   if(C._h===h) return; C._h=h; C.innerHTML=h;
