@@ -295,6 +295,57 @@ body:not(.jogando) .btn-papo{display:none}
 body:not(.jogando) .alerta{display:none}
 @media (prefers-reduced-motion: reduce){ .selo .seta,.tarefa button,.selo.fechado.pode,.pop{animation-duration:.01s;animation-iteration-count:1} .painel{transition:none} }
 
+/* fiado e lições */
+.btn-fiado{position:fixed;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 208px);z-index:6;font:900 1rem 'Nunito',sans-serif;background:#FFF0CF;color:#2A1A12;border:4px solid var(--contorno);border-radius:999px;padding:10px 16px;box-shadow:0 5px 0 var(--contorno)}
+.btn-fiado[hidden]{display:none}
+.btn-fiado .badge-missoes{animation:none}
+.cobrar.fiado{background:#FFC93C}
+.fiado-fala{font-size:1.05rem;margin:10px 0}
+.fiado-aviso{color:#B3362B;font-weight:900;font-size:.9rem;margin:6px 0}
+.fiado-aviso:empty{display:none}
+.fiado-dica{font-size:.8rem;color:var(--sub);margin:10px 0 0}
+.fiado-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0 6px}
+.fiado-nums div{background:var(--painel2);border:3px solid var(--contorno);border-radius:12px;padding:6px 4px;text-align:center}
+.fiado-nums b{display:block;font-size:1.05rem}
+.fiado-nums span{font-size:.7rem;color:var(--sub)}
+.fiado-nums .ruim b{color:#C0392B}
+.fiado-resumo{font-size:.85rem;margin:6px 0}
+.fiado-tit{font-weight:900;margin:10px 0 4px}
+.fiado-linha{display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:2px dashed var(--trilho);font-size:.9rem;flex-wrap:wrap}
+.fiado-linha .fiado-nome{flex:1;min-width:6rem}
+.fiado-linha .fiado-st{font-size:.75rem;color:var(--sub)}
+.fiado-linha.atrasado .fiado-st{color:#C0392B}
+.fiado-linha.calote{opacity:.85}
+.fiado-linha.calote b{color:#C0392B;text-decoration:line-through}
+.fiado-cobrar{font:900 .8rem 'Nunito',sans-serif;background:var(--azul);color:#fff;border:3px solid var(--contorno);border-radius:999px;padding:3px 10px;cursor:pointer}
+.fiado-vazio{color:var(--sub);font-size:.9rem}
+.fiado-real{margin:12px 0 4px;background:#FFF6E0;border:3px solid var(--amarelo-esc);border-radius:14px;padding:10px 12px;font-size:.88rem}
+.licao-edu{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+.licao-ic{font-size:2.6rem;line-height:1}
+.licao-edu p{margin:0 0 6px;font-size:.95rem;background:var(--painel2);border:3px solid var(--contorno);border-radius:4px 14px 14px 14px;padding:7px 10px}
+.licao-perg{font-weight:900;font-size:1.05rem;margin:12px 0 6px}
+.licao-ops{display:flex;flex-direction:column;gap:8px}
+.licao-op{font:800 .95rem 'Nunito',sans-serif;text-align:left;background:#fff;color:var(--texto);border:3px solid var(--contorno);border-radius:12px;padding:9px 12px;box-shadow:0 3px 0 var(--contorno);cursor:pointer}
+.licao-op.certa{background:#7FD88F}
+.licao-op.errada{background:#F3B1AB;opacity:.8}
+.licao-op:disabled{cursor:default}
+.licao-res{font-weight:900;margin:10px 0 0;font-size:.95rem}
+.licao-res:empty{display:none}
+.licao-res.bom{color:var(--verde-esc)} .licao-res.ruim{color:#C0392B}
+.licao-premio{font-size:.82rem;color:var(--sub);margin:8px 0 0}
+/* compras */
+.compra-box{margin-top:10px;border:3px solid var(--contorno);border-radius:14px;padding:8px 10px;background:#FFFDF6}
+.compra-tit{font-weight:900;margin-bottom:4px}
+.compra-linha{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 8px;border-radius:10px;margin:4px 0;border:2px solid transparent}
+.compra-linha span{display:flex;flex-direction:column}
+.compra-linha span:last-child{text-align:right;align-items:flex-end}
+.compra-linha small{font-size:.72rem;color:var(--sub);font-weight:700}
+.compra-linha.melhor{background:#DFF5E3;border-color:var(--verde)}
+.compra-linha.melhor b::after{content:''}
+.compra-linha.trancada{opacity:.6}
+.compra-nota{font-size:.78rem;color:var(--sub);font-weight:700;margin:6px 2px 0;line-height:1.35}
+.compra-box .btn{margin-top:6px}
+.licao-nota{font-size:.72rem;color:var(--sub);margin:4px 0 0}
 /* carregando */
 #carregandoAdega{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#46736D;color:#fff;font-weight:900}
 #carregandoAdega .titulo{font-size:2.6rem}
@@ -500,6 +551,34 @@ body:not(.jogando) .alerta{display:none}
 
 <button class="btn-corretora" id="btnCorretora" type="button" hidden>📈 Corretora</button>
 <button class="btn-venda" id="btnVenda" type="button" hidden>💼 Vender a Adega</button>
+
+<button class="btn-fiado" id="btnFiado" type="button" hidden>📒 Fiado <span class="badge-missoes" id="fiadoQtd">0</span></button>
+
+<section class="tela" id="telaFiado" hidden>
+  <div class="caixa centro">
+    <h2 class="titulo" style="font-size:1.9rem">📒 Pendura pra mim?</h2>
+    <p class="txt fiado-fala" id="fiadoFala"></p>
+    <div class="stat destaque"><span>Valor da compra</span><b id="fiadoValor">0</b></div>
+    <p class="fiado-aviso" id="fiadoRua"></p>
+    <button class="btn" id="btnFiadoNao" type="button">💳 Só à vista: Pix ou cartão</button>
+    <button class="btn amarelo" id="btnFiadoSim" type="button" style="margin-top:10px">📒 Pendurar no caderninho</button>
+    <p class="fiado-dica">Lembre: o fornecedor da adega cobra à vista.</p>
+  </div>
+</section>
+
+<section class="tela" id="telaCaderninho" hidden>
+  <div class="caixa">
+    <div class="papo-topo"><h2 class="titulo" style="font-size:1.7rem">📒 Caderninho</h2><button class="pilula" id="btnCadernoFechar" type="button" aria-label="Fechar">✕</button></div>
+    <div id="cadernoConteudo"></div>
+  </div>
+</section>
+
+<section class="tela" id="telaLicao" hidden>
+  <div class="caixa">
+    <div class="papo-topo"><h2 class="titulo" id="licaoTitulo" style="font-size:1.3rem">Lição do Edu</h2><button class="pilula" id="btnLicaoFechar" type="button" aria-label="Fechar">✕</button></div>
+    <div id="licaoConteudo"></div>
+  </div>
+</section>
 
 <section class="tela-mapa" id="telaMapa" hidden aria-label="Mapa da Adega">
   <div class="mapa-topo"><h2 class="titulo">🗺️ Mapa da Adega</h2><button class="pilula" id="btnMapaFechar" type="button" aria-label="Fechar">✕</button></div>
@@ -1420,7 +1499,7 @@ const baloesCobrar=[0,1,2].map(k=>{
   const b=document.createElement('button'); b.type='button'; b.className='cobrar';
   b.innerHTML='<span class="ln"><span class="cart">💳</span><span class="tx"></span></span><span class="br"><i></i></span>';
   b.addEventListener('pointerdown',e=>{e.stopPropagation();});
-  b.addEventListener('click',e=>{e.stopPropagation(); const c=pagando[k]; if(c&&c.estado==='noCaixa'&&!(k===0&&caixaAusente())) cobrar(c,'manual');});
+  b.addEventListener('click',e=>{e.stopPropagation(); const c=pagando[k]; if(c&&c.estado==='noCaixa'&&!(k===0&&caixaAusente())){ if(c.pedeFiado) abrirPedidoFiado(c); else cobrar(c,'manual'); }});
   $('#cobrancas').appendChild(b); return b;
 });
 function cobrar(c,modo){
@@ -1479,9 +1558,11 @@ function posicionarCobrancas(){
     if(!c||c.estado!=='noCaixa'||!document.body.classList.contains('jogando')||(k===0&&caixaAusente())||(c.retirada&&c.valor<=0)){ b.style.display='none'; continue; }
     const t=naTela(c.g.position.clone().setY(1.95));
     b.style.display='flex'; b.style.left=t.x+'px'; b.style.top=t.y+'px';
-    const auto=automatico(k), barra=b.querySelector('.br i');
-    b.classList.toggle('auto',auto);
-    const txt=b.querySelector('.tx'), novo='Cobrar '+fmt(c.valor); if(txt.textContent!==novo) txt.textContent=novo;
+    const auto=automatico(k)&&!c.pedeFiado, barra=b.querySelector('.br i');
+    b.classList.toggle('auto',auto); b.classList.toggle('fiado',!!c.pedeFiado);
+    const txt=b.querySelector('.tx'), novo=(c.pedeFiado?'Pendura? ':'Cobrar ')+fmt(c.valor); if(txt.textContent!==novo) txt.textContent=novo;
+    const ic=b.querySelector('.cart'), icn=c.pedeFiado?'📒':'💳'; if(ic.textContent!==icn) ic.textContent=icn;
+    if(c.pedeFiado){ barra.style.width=Math.max(0,100*(1-c.t/FIADO_ESPERA))+'%'; barra.style.background='#E09A12'; continue; }
     if(auto){ barra.style.width=Math.min(100,100*c.t/tempoPagar())+'%'; barra.style.background='#2F8FD8'; }
     else { const r=Math.max(0,1-c.t/JANELA_GORJETA); barra.style.width=(r*100)+'%'; barra.style.background=r>0.5?'#3CB371':r>0?'#FFB020':'#B9B0A2'; }
   }
@@ -1501,7 +1582,7 @@ function atualizarClientes(dt){
         if(c.t<=0){
           c.g.userData.corpo.rotation.x=0;
           vagasEst[c.est][c.slot]=null; c.lista.shift();
-          if(S.est[c.est].estoque>0){ S.est[c.est].estoque--; atualizarProdutos(c.est); missaoEvento('vender',1,c.est);
+          if(S.est[c.est].estoque>0){ S.est[c.est].estoque--; (c.pegou=c.pegou||{})[c.est]=(c.pegou[c.est]||0)+1; atualizarProdutos(c.est); missaoEvento('vender',1,c.est);
             if(c.est==='carvao'){ const g4=Math.random()<0.45; c.valor+=valorEst('carvao')*(g4?FATOR_4KG:1); pop(c.g.position.clone().setY(1.7),'+🔥 '+(g4?'4 kg':'2 kg'),''); }
             else { c.valor+=valorEst(c.est); pop(c.g.position.clone().setY(1.7),'+'+EST[c.est].ic,''); }
             c.g.userData.sacola.visible=true; }
@@ -1510,11 +1591,11 @@ function atualizarClientes(dt){
         }
         break;}
       case 'fila': mover(c,dt); if(!c.caminho.length) olhar(c,new THREE.Vector3(0,0,-1)); break;
-      case 'indoPagar': if(mover(c,dt)){ c.estado='noCaixa'; c.t=0; } break;
+      case 'indoPagar': if(mover(c,dt)){ c.estado='noCaixa'; c.t=0; c.pedeFiado=sortearFiado(c); } break;
       case 'noCaixa':
         if(c.retirada&&c.valor<=0){ olhar(c,new THREE.Vector3(0,0,-1)); if(!(c.caixa===0&&caixaAusente())){ c.t+=dt; if(c.t>=1.0) entregarPacote(c); } break; }
         olhar(c,new THREE.Vector3(0,0,-1));
-        if(!(c.caixa===0&&caixaAusente())){ c.t+=dt; if(automatico(c.caixa)&&c.t>=tempoPagar()) cobrar(c,'auto'); }
+        if(!(c.caixa===0&&caixaAusente())){ c.t+=dt; if(!c.pedeFiado&&automatico(c.caixa)&&c.t>=tempoPagar()) cobrar(c,'auto'); }
         break;
       case 'indoMesa': if(mover(c,dt)){ const a=c.assento; c.estado='sentado'; c.t=TEMPO_MESA; a.estado='ocupado'; a.copo.visible=true; c.g.rotation.y=Math.atan2(-a.lado,0); c.g.position.y=0.12; c.g.userData.pE.rotation.x=c.g.userData.pD.rotation.x=-1.35; c.g.userData.sacola.visible=false; } break;
       case 'sentado':{
@@ -1540,7 +1621,7 @@ function atualizarClientes(dt){
 // ================= Estoque e fornecedor =================
 function cap(id,n){n=n||S.est[id].nivel;return 20+2*(n-1);}
 function custoUnit(id){return Math.max(1,Math.round(valorEst(id)/multEvento()*0.4*fatorFornecedor()));}
-function faltando(id){const e=S.est[id];return Math.max(0,cap(id)-e.estoque-e.pedido);}
+function faltando(id){const e=S.est[id];return Math.max(0,cap(id)-e.estoque-e.pedido-(S.atac&&S.atac.id===id?S.atac.q:0));}
 function custoPedido(id){return faltando(id)*custoUnit(id);}
 const autoRepor=()=>false; // reposição sempre manual: o jogador faz os pedidos
 function atualizarProdutos(id){
@@ -1573,7 +1654,7 @@ function pedir(id,auto){
   const q=qtdPossivel(id), c=q*custoUnit(id);
   if(q<=0) return false;
   if(auto&&q<Math.min(5,faltando(id))) return false;
-  S.din-=c; S.est[id].pedido+=q; S.pedidos=(S.pedidos||0)+1; missaoEvento('repor',1);
+  S.din-=c; S.est[id].pedido+=q; S.pedidos=(S.pedidos||0)+1; missaoEvento('repor',1); if(S.pedidos>=6) oferecerLicao('compras');
   if(FORN.fila.indexOf(id)<0&&G.lista.indexOf(id)<0) FORN.fila.push(id);
   pop(objEst[id].g.position.clone().setY(2.7),(auto?'Pedido automático 🚚':'Pedido feito 🚚'),'');
   if(!auto) SOM.comprar();
@@ -1653,9 +1734,9 @@ function atualizarFornecedor(dt){
   else if(F.estado==='parado'){
     if(!F.fila.length&&G.estado==='livre'){ F.estado='saindo'; }
     else if(G.estado==='livre'){
-      const cand=[eduDono]; if(S.gerente) cand.push(gerente);
-      cand.sort((a,b)=>a.position.distanceTo(DESCARGA)-b.position.distanceTo(DESCARGA));
-      iniciarRecebimento(cand[0],cand[0]===gerente?'gerente':'edu');
+      const cand=candRecebe();
+      if(cand.length){ cand.sort((a,b)=>a.position.distanceTo(DESCARGA)-b.position.distanceTo(DESCARGA));
+      iniciarRecebimento(cand[0],cand[0]===gerente?'gerente':'edu'); }
     }
   }
   atualizarGerente(dt);
@@ -1836,7 +1917,9 @@ function atualizarAlerta(){
   IDS.forEach(id=>{ const e=S.est[id]; if(!e.aberta||e.pedido>0) return; const q=e.estoque/cap(id); if(q<=0.25&&q<r+1e-9){ if(!pior||q<r){pior=id;r=q;} } });
   if(!pior){ el.hidden=true; return; }
   const e=S.est[pior], qp=qtdPossivel(pior), c=qp>0?qp*custoUnit(pior):custoPedido(pior);
-  $('#alertaTxt').textContent=`${EST[pior].ic} ${EST[pior].nome}: ${e.estoque?'estoque acabando ('+e.estoque+'/'+cap(pior)+')':'acabou o estoque!'}`;
+  const rua=qp<=0&&S.fiado?fiadoNaRua():0;
+  $('#alertaTxt').textContent=`${EST[pior].ic} ${EST[pior].nome}: ${e.estoque?'estoque acabando ('+e.estoque+'/'+cap(pior)+')':'acabou o estoque!'}`+(rua>0?` · falta caixa, e 💵 ${fmt(rua)} está no fiado 📒`:'');
+  if(rua>0) oferecerLicao('fiado');
   const b=$('#alertaBtn'); const html='🚚 Pedir '+NOTA+' '+fmt(c); if(b._h!==html){b._h=html;b.innerHTML=html;}
   b.disabled=qp<=0; b.dataset.id=pior; el.hidden=false;
 }
@@ -1850,6 +1933,8 @@ function semSaida(){
   if(assentos.some(a=>a.estado!=='livre')) return false;
   if(clientes.some(c=>c.valor>0&&c.estado!=='saindo')) return false;
   if(S.tarefa<TAREFAS.length){ const m=TAREFAS[S.tarefa].meta(); if(m[0]>=m[1]) return false; }
+  if(S.fiado&&S.fiado.lista.length) return false;
+  if(S.atac) return false;
   return S.din<Math.min(...abertas.map(custoUnit));
 }
 let tFalencia=0;
@@ -2438,9 +2523,9 @@ function atualizarPdr(dt){
   }
   else if(VAN.estado==='parado'&&G.estado==='livre'){
     if(capPdr()-p.estante<=0){ pop(vanPdr.position.clone().setY(3.0),'Estante cheia! '+VAN.n+' pacotes recusados','ruim'); VAN.estado='saindo'; }
-    else { const cand=[eduDono]; if(S.gerente) cand.push(gerente);
-      cand.sort((a,b)=>a.position.distanceTo(VAN_PT)-b.position.distanceTo(VAN_PT));
-      iniciarRecebimentoVan(cand[0],cand[0]===gerente?'gerente':'edu'); VAN.estado='aguardando'; }
+    else { const cand=candRecebe();
+      if(cand.length){ cand.sort((a,b)=>a.position.distanceTo(VAN_PT)-b.position.distanceTo(VAN_PT));
+      iniciarRecebimentoVan(cand[0],cand[0]===gerente?'gerente':'edu'); VAN.estado='aguardando'; } }
   }
   tSpawnPdr-=dt;
   if(tSpawnPdr<=0){ tSpawnPdr=rnd(4,9); if(p.estante-pdrEmRota>0) novoClienteRetirada(); }
@@ -2787,7 +2872,7 @@ setInterval(()=>{ if(S&&document.body.classList.contains('jogando')){ atualizarD
 setTimeout(()=>{ if(S){ atualizarDecor(); avisarEvento(); } },3500);
 
 // ================= Experiência e nível do jogador =================
-const XP_EVENTO={cobrar:1,cobrarManual:1,mesa:2,repor:2,melhorar:3,entrega:15,tarefa:30,missao:20,bau:50};
+const XP_EVENTO={licao:40,cobrar:1,cobrarManual:1,mesa:2,repor:2,melhorar:3,entrega:15,tarefa:30,missao:20,bau:50};
 const xpProximo=n=>Math.round(60*Math.pow(n,1.4));
 function nivelJog(){ return (S&&S.nivelJ)||1; }
 function multNivel(){ return 1+0.01*(((S&&S.nivelJ)||1)-1); }
@@ -3450,6 +3535,227 @@ $('#btnContaSenha').addEventListener('click',async()=>{
 $('#btnConta').addEventListener('click',()=>abrirConta());
 setTimeout(checarWhats,1500);
 
+// ================= Compras: distribuidor x atacarejo x rede de supermercado =================
+// Educativo: quem compra pouco paga mais caro por unidade. A adega compra de fardo em fardo.
+const ATAC_FATOR=0.87, REDE_FATOR=0.74, ATAC_FRETE=6, ATAC_MIN=12, ATAC_TEMPO=45;
+const atacLiberado=()=>!!(S&&!S.falido&&(S.pedidos||0)>=2);
+const freteAtac=id=>custoUnit(id)*ATAC_FRETE;
+const unitAtac=id=>Math.max(1,Math.round(custoUnit(id)*ATAC_FATOR));
+const custoAtac=(id,q)=>q*unitAtac(id)+freteAtac(id);
+const qtdAtac=id=>faltando(id);
+const eduOcupado=()=>G.estado!=='livre'&&G.g===eduDono;
+const candRecebe=()=>{ const c=[]; if(!S.atac) c.push(eduDono); if(S.gerente) c.push(gerente); return c; };
+function Cmp(){ if(!S.compras) S.compras={viagens:0,un:0,gasto:0,economia:0}; return S.compras; }
+function compararCompra(k){
+  if(!atacLiberado()) return '';
+  const q=faltando(k); if(q<=0&&!(S.atac&&S.atac.id===k)) return '';
+  const U=custoUnit(k), ta=custoAtac(k,Math.max(q,ATAC_MIN)), td=q*U, ua=q>0?ta/q:0, rede=Math.max(1,Math.round(U*REDE_FATOR));
+  const atacMelhor=q>=ATAC_MIN&&ta<td;
+  let h=`<div class="compra-box"><div class="compra-tit">🧾 Onde comprar ${q>0?q+' un.':''}?</div>
+   <div class="compra-linha${!atacMelhor?' melhor':''}"><span>🚚 <b>Distribuidor</b><small>entrega na porta, fardo a fardo</small></span><span><b>${fmt(U)}</b><small>por unidade</small></span></div>
+   <div class="compra-linha${atacMelhor?' melhor':''}"><span>🚗 <b>Atacarejo</b><small>o Edu vai buscar · gasolina e tempo ${fmt(freteAtac(k))}</small></span><span><b>${fmt(unitAtac(k))}</b><small>${q>=ATAC_MIN?'com a gasolina: '+fmt(ua):'mínimo '+ATAC_MIN+' un.'}</small></span></div>
+   <div class="compra-linha trancada"><span>🏭 <b>Rede de supermercado</b><small>caminhões direto da fábrica</small></span><span><b>${fmt(rede)}</b><small>a adega não chega lá</small></span></div>`;
+  if(S.atac) h+=`<p class="compra-nota">🚗 O Edu está no atacarejo buscando ${S.atac.q} ${EST[S.atac.id].ic}. Enquanto isso, ${S.gerente?'o gerente recebe o fornecedor.':'ninguém recebe o caminhão do fornecedor.'}</p>`;
+  else if(eduOcupado()) h+='<p class="compra-nota">O Edu está ocupado recebendo mercadoria agora.</p>';
+  else if(q<ATAC_MIN) h+=`<p class="compra-nota">No atacarejo só se compra caixa fechada: faltam pelo menos ${ATAC_MIN} unidades na geladeira.</p>`;
+  else h+=btnCusto(custoAtac(k,q),`🚗 Buscar ${q} no atacarejo`,'bAtac');
+  h+=`<p class="compra-nota">${q>=ATAC_MIN&&!atacMelhor?'Para essa quantidade, a gasolina e o tempo deixam o atacarejo mais caro. ':''}A gasolina custa o mesmo para 12 ou para 100 unidades: o atacarejo só compensa em compras grandes.${!S.gerente?' Sem gerente, quando o Edu sai, ninguém recebe o fornecedor.':''}</p>`;
+  const C=Cmp(); if(C.viagens) h+=`<p class="compra-nota">Você foi ${C.viagens}× ao atacarejo: ${C.economia>=0?'economizou':'gastou a mais'} 💵 ${fmt(Math.abs(C.economia))} em relação ao distribuidor.</p>`;
+  return h+'</div>';
+}
+function irAtacarejo(k){
+  const q=faltando(k), c=custoAtac(k,q);
+  if(S.atac||eduOcupado()||q<ATAC_MIN||S.din<c) return false;
+  S.din-=c; S.atac={id:k,q,volta:(S.tempoJogo||0)+ATAC_TEMPO,custo:c,distrib:q*custoUnit(k),saiu:(S.tempoJogo||0)};
+  atacFase=null; S.pedidos=(S.pedidos||0)+1; missaoEvento('repor',1);
+  pop(eduDono.position.clone().setY(2.2),'🚗 Fui ao atacarejo!',''); SOM.comprar(); atualizarHUD(true); salvar(); return true;
+}
+let atacFase=null, avisoForn=false;
+function atualizarAtacarejo(dt){ // devolve true enquanto o Edu está fora da rotina normal
+  const A=S.atac, E=EDU, g=E.g; if(!A){ if(atacFase){ atacFase=null; g.visible=true; } return false; }
+  const t=S.tempoJogo||0;
+  if(!atacFase){
+    E.vel=2.2;
+    if(t-A.saiu<2){ atacFase='saindo'; E.caminho=rota(g.position,PORTA).concat([FORA_PORTA.clone(),SAIDA.clone()]); }
+    else { atacFase='fora'; g.visible=false; }
+  }
+  if(atacFase==='saindo'){ if(mover(E,dt)){ g.visible=false; atacFase='fora'; } }
+  else if(atacFase==='fora'){
+    if(!S.gerente&&FORN.estado==='parado'&&!avisoForn){ avisoForn=true; toastMissao('🚚 O fornecedor chegou, mas o Edu está no atacarejo. Ninguém para receber!'); }
+    if(t>=A.volta){ g.visible=true; g.position.copy(SAIDA); E.caminho=[FORA_PORTA.clone(),PORTA.clone()].concat(rota(PORTA,pontoEst(A.id,1))); atacFase='voltando'; }
+  }
+  else if(atacFase==='voltando'){
+    if(mover(E,dt)){
+      const e=S.est[A.id]; e.estoque=Math.min(cap(A.id),e.estoque+A.q); atualizarProdutos(A.id);
+      const C=Cmp(); C.viagens++; C.un+=A.q; C.gasto+=A.custo; C.economia+=A.distrib-A.custo;
+      pop(objEst[A.id].g.position.clone().setY(2.7),`📦 +${A.q} do atacarejo`,'grande'); SOM.marco();
+      S.atac=null; atacFase=null; avisoForn=false; E.vel=1.2; E.estado='parado'; E.t=1.5; E.caminho=[];
+      g.userData.pE.rotation.x=g.userData.pD.rotation.x=0; g.userData.corpo.position.y=0;
+      salvar(); if(painelAtual===A.id) renderPainel(); oferecerLicao('compras');
+    }
+  }
+  return true;
+}
+
+// ================= Fiado (caderninho) e Lições do Edu =================
+// Educativo: mostra por que vender fiado atrapalha a adega (o fornecedor cobra à vista).
+const FIADO_CHANCE=0.1, FIADO_INTERVALO=90, FIADO_MAX_ABERTOS=6, FIADO_ESPERA=20, FIADO_DESISTE=0.1;
+const NOMES_FIADO=['Seu Zé','Dona Cida','Tião','Marquinhos','Dona Neide','Juninho','Seu Valdir','Cris','Dona Lurdes','Betão','Seu Nonato','Dona Fátima','Pedrinho','Seu Jorge','Dona Rosa','Léo'];
+const QUANDO_FIADO=['na sexta','no dia 10','semana que vem','quando eu receber','amanhã sem falta','no fim do mês'];
+function F(){ if(!S.fiado) S.fiado={lista:[],hist:[],vendido:0,recebido:0,perdido:0,pedidos:0,aceitos:0,recusados:0,prox:0,seq:0}; return S.fiado; }
+const fiadoLiberado=()=>!!(S&&S.perfil&&!S.falido&&S.tarefa>=3&&(S.pedidos||0)>=1);
+const fiadoNaRua=()=>F().lista.reduce((t,e)=>t+e.valor,0);
+const tJogo=()=>S.tempoJogo||0;
+const minTxt=s=>{ const m=Math.max(1,Math.round(s/60)); return m+' min'; };
+function sortearFiado(c){
+  if(!fiadoLiberado()||c.retirada||!(c.valor>0)) return false;
+  const f=F(); if(tJogo()<f.prox||f.lista.length>=FIADO_MAX_ABERTOS||pagando.some(o=>o&&o!==c&&o.pedeFiado)) return false;
+  if(Math.random()>=(f.pedidos?FIADO_CHANCE:FIADO_CHANCE*2.5)) return false;
+  f.prox=tJogo()+FIADO_INTERVALO*rnd(0.8,1.3);
+  c.nomeFiado=pega(NOMES_FIADO); c.quandoFiado=pega(QUANDO_FIADO); c.t=0; return true;
+}
+// --- pedido no caixa ---
+let fiadoCliente=null;
+function abrirPedidoFiado(c){
+  fiadoCliente=c; SOM.abrir();
+  $('#fiadoFala').innerHTML=`<b>${c.nomeFiado}:</b> “Ô Edu, pendura pra mim? Eu pago ${c.quandoFiado}.”`;
+  $('#fiadoValor').textContent=fmt(c.valor);
+  const r=fiadoNaRua(); $('#fiadoRua').textContent=r>0?`Já tem 💵 ${fmt(r)} pendurado no caderninho.`:'';
+  $('#telaFiado').hidden=false;
+}
+function fecharPedidoFiado(){ $('#telaFiado').hidden=true; fiadoCliente=null; }
+function sairSemComprar(c,msg){
+  for(const id in (c.pegou||{})){ S.est[id].estoque=Math.min(cap(id),S.est[id].estoque+c.pegou[id]); atualizarProdutos(id); }
+  const k=c.caixa; if(pagando[k]===c) pagando[k]=null; baloesCobrar[k].style.display='none';
+  pop(c.g.position.clone().setY(2.0),msg,'ruim'); c.g.userData.sacola.visible=false;
+  c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat([FORA_PORTA.clone(),SAIDA.clone()]);
+}
+function fiadoAVista(c,sozinho){
+  const f=F(); c.pedeFiado=false; c.t=JANELA_GORJETA; if(!sozinho){ f.recusados++; f.pedidos++; }
+  if(!sozinho&&Math.random()<FIADO_DESISTE){ sairSemComprar(c,'“Fica pra próxima” 🙁'); salvar(); return; }
+  pop(c.g.position.clone().setY(2.5),sozinho?'“Deixa, vai no Pix” 📱':'“Tá bom, vai no Pix!” 👍','');
+  cobrar(c,'manual'); salvar();
+}
+function fiadoPendurar(c){
+  const f=F(); c.pedeFiado=false; f.pedidos++; f.aceitos++; f.vendido+=c.valor;
+  const prazo=rnd(150,300), r=Math.random(), saida=r<0.5?'pontual':r<0.75?'atrasado':'calote';
+  const vence=tJogo()+prazo, resolve=saida==='pontual'?vence-rnd(0,40):saida==='atrasado'?vence+prazo*rnd(0.8,1.4):vence+prazo*1.6;
+  f.lista.push({id:++f.seq,nome:c.nomeFiado,valor:c.valor,vence,resolve,saida,lembrete:false});
+  const k=c.caixa; pagando[k]=null; baloesCobrar[k].style.display='none';
+  pop(c.g.position.clone().setY(2.0),'📒 Pendurado: '+fmt(c.valor),'');
+  c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat([FORA_PORTA.clone(),SAIDA.clone()]);
+  SOM.abrir(); salvar(); atualizarBtnFiado();
+}
+$('#btnFiadoSim').addEventListener('click',()=>{ const c=fiadoCliente; fecharPedidoFiado(); if(c&&c.pedeFiado&&c.estado==='noCaixa') fiadoPendurar(c); });
+$('#btnFiadoNao').addEventListener('click',()=>{ const c=fiadoCliente; fecharPedidoFiado(); if(c&&c.pedeFiado&&c.estado==='noCaixa') fiadoAVista(c,false); });
+// --- o caderninho anda com o tempo ---
+let tFiado=0;
+function atualizarFiado(dt){
+  tFiado+=dt; if(tFiado<0.5||!S.fiado) return; tFiado=0;
+  const f=F(), t=tJogo(); let mudou=false;
+  // cliente que pediu fiado e ninguém respondeu: paga à vista sozinho
+  pagando.forEach(c=>{ if(c&&c.pedeFiado&&c.estado==='noCaixa'&&c.t>=FIADO_ESPERA&&c!==fiadoCliente) fiadoAVista(c,true); });
+  for(let i=f.lista.length-1;i>=0;i--){
+    const e=f.lista[i];
+    if(!e.avisouAtraso&&t>=e.vence&&t<e.resolve){ e.avisouAtraso=true; mudou=true; toastMissao(`📒 ${e.nome} não pagou no dia combinado.`); oferecerLicao('fiado'); }
+    if(t<e.resolve) continue;
+    f.lista.splice(i,1); mudou=true;
+    if(e.saida==='calote'){ f.perdido+=e.valor; f.hist.unshift({nome:e.nome,valor:e.valor,ok:false}); SOM.erro(); toastMissao(`👻 ${e.nome} sumiu sem pagar ${fmt(e.valor)}. Prejuízo da adega.`); oferecerLicao('fiado'); }
+    else { f.recebido+=e.valor; S.din+=e.valor; S.total+=e.valor; registrarGanho(e.valor); f.hist.unshift({nome:e.nome,valor:e.valor,ok:true,atraso:t>e.vence+5});
+      SOM.maquininha(); pop(new THREE.Vector3(CX.x,2.2,CX.z+1.0),`📒 ${e.nome} pagou +${fmt(e.valor)}`,'grande'); atualizarHUD(true); }
+    f.hist.length=Math.min(f.hist.length,8);
+  }
+  if(mudou){ salvar(); atualizarBtnFiado(); if(!$('#telaCaderninho').hidden) renderCaderninho(); }
+  else if(!$('#telaCaderninho').hidden) renderCaderninho();
+}
+function lembrarFiado(id){
+  const f=F(), e=f.lista.find(x=>x.id===id); if(!e||e.lembrete||tJogo()<e.vence) return;
+  e.lembrete=true;
+  if(e.saida==='atrasado'){ e.resolve=Math.min(e.resolve,tJogo()+15); toastMissao(`📲 ${e.nome}: “Foi mal, já vou passar aí!”`); }
+  else if(e.saida==='calote'&&Math.random()<0.35){ e.saida='atrasado'; e.resolve=tJogo()+20; toastMissao(`📲 ${e.nome}: “Vou pagar, vou pagar…”`); }
+  else toastMissao(`📲 ${e.nome} visualizou e não respondeu.`);
+  salvar(); renderCaderninho();
+}
+// --- tela do caderninho ---
+function renderCaderninho(){
+  const f=F(), t=tJogo(), C=$('#cadernoConteudo');
+  let h=`<div class="fiado-nums"><div><b>${fmt(fiadoNaRua())}</b><span>na rua agora</span></div><div><b>${fmt(f.recebido)}</b><span>já pagaram</span></div><div class="ruim"><b>${fmt(f.perdido)}</b><span>calote</span></div></div>`;
+  h+=`<p class="fiado-resumo">Você pendurou ${f.aceitos} ${f.aceitos===1?'compra':'compras'} e recusou ${f.recusados}. ${f.vendido>0?`De cada 💵 100 vendidos no fiado, voltaram 💵 ${Math.round(100*f.recebido/f.vendido)} até agora.`:''}</p>`;
+  if(f.lista.length){ h+='<div class="fiado-tit">Pendurados</div>';
+    f.lista.slice().sort((a,b)=>a.vence-b.vence).forEach(e=>{ const atras=t>=e.vence;
+      h+=`<div class="fiado-linha${atras?' atrasado':''}"><span class="fiado-nome">${e.nome}</span><b>${fmt(e.valor)}</b><span class="fiado-st">${atras?'atrasado há '+minTxt(t-e.vence):'vence em '+minTxt(e.vence-t)}</span>${atras&&!e.lembrete?`<button type="button" class="fiado-cobrar" data-id="${e.id}">📲 Cobrar</button>`:atras?'<span class="fiado-st">cobrado</span>':''}</div>`; }); }
+  else h+='<p class="fiado-vazio">Ninguém está devendo agora.</p>';
+  if(f.hist.length){ h+='<div class="fiado-tit">Últimos</div>'; f.hist.forEach(x=>{ h+=`<div class="fiado-linha ${x.ok?'pago':'calote'}"><span class="fiado-nome">${x.nome}</span><b>${fmt(x.valor)}</b><span class="fiado-st">${x.ok?(x.atraso?'✔ pagou atrasado':'✔ pagou'):'👻 sumiu'}</span></div>`; }); }
+  h+=`<div class="fiado-real">💛 <b>Na Adega do Edu de verdade não vendemos fiado.</b> O fornecedor cobra à vista, então é o seu pagamento na hora que mantém a geladeira cheia e o preço justo para todo mundo. Obrigado por entender!</div>`;
+  if(licaoDisponivel('fiado')||licaoFeita('fiado')) h+=`<button type="button" class="btn azul peq" id="btnCadLicao">📒 ${licaoFeita('fiado')?'Rever':'Ver'} a lição do Edu</button>`;
+  if(C._h===h) return; C._h=h; C.innerHTML=h;
+  C.querySelectorAll('.fiado-cobrar').forEach(b=>b.addEventListener('click',()=>lembrarFiado(+b.dataset.id)));
+  const bl=$('#btnCadLicao'); if(bl) bl.addEventListener('click',()=>{ $('#telaCaderninho').hidden=true; abrirLicao('fiado'); });
+}
+function abrirCaderninho(){ F(); $('#cadernoConteudo')._h=''; renderCaderninho(); $('#telaCaderninho').hidden=false; SOM.abrir(); }
+function atualizarBtnFiado(){ const b=$('#btnFiado'); if(!b||!S) return; const n=S.fiado?S.fiado.lista.length:0; b.hidden=!n||!document.body.classList.contains('jogando'); if(n) $('#fiadoQtd').textContent=n; }
+$('#btnFiado').addEventListener('click',abrirCaderninho);
+$('#btnCadernoFechar').addEventListener('click',()=>{ $('#telaCaderninho').hidden=true; });
+// --- Lições do Edu ---
+const LICOES={
+  fiado:{ic:'📒',tit:'O fiado',
+    falas:['Quando alguém pendura, o produto sai da geladeira, mas o dinheiro <b>não entra no caixa</b>.',
+           'O fornecedor não vende fiado para a adega: ele cobra <b>à vista</b>, na hora da entrega.',
+           'Se muita gente pendura e alguns não pagam, falta dinheiro para repor, e a geladeira fica vazia <b>para todo mundo</b>.'],
+    perg:'Por que o fiado atrapalha a adega?',
+    ops:[{t:'O fornecedor cobra à vista, e o dinheiro do fiado ainda não entrou no caixa.',ok:true},
+         {t:'Porque o produto vendido no fiado fica mais barato.'},
+         {t:'Porque o fiado traz clientes demais para a loja.'}],
+    certo:'Isso! Sem dinheiro no caixa não tem reposição. Por isso a Adega do Edu de verdade não vende fiado, e o preço continua justo para todo mundo. 💛',
+    errado:'Quase! Lembre: o fornecedor quer o pagamento na hora da entrega. Tente de novo.',
+    libera:()=>!!(S.fiado&&S.fiado.pedidos>0)},
+  compras:{ic:'🚗',tit:'Comprar pouco custa mais',
+    falas:['Uma garrafa de refri de 2 litros chega aqui por uns <b>R$ 8,50</b>: a adega compra fardo a fardo do distribuidor, que entrega na porta.',
+           'No atacarejo, a mesma garrafa sai por uns <b>R$ 7,40</b>. Mas alguém tem que ir buscar: gasolina, tempo e a loja sem o dono.',
+           'Uma rede de supermercado compra <b>caminhões inteiros</b> direto da fábrica e paga uns <b>R$ 6,30</b>. Quem compra muito paga menos por garrafa.'],
+    perg:'Por que o supermercado consegue vender o refri mais barato?',
+    ops:[{t:'Porque compra em quantidade enorme e paga menos por cada garrafa.',ok:true},
+         {t:'Porque o refri do supermercado é diferente do refri da adega.'},
+         {t:'Porque a adega não paga nada pelo refri que vende.'}],
+    certo:'Isso! Quanto maior a compra, menor o preço de cada unidade. A adega compra pouco, mas está pertinho de você, aberta até tarde e com a bebida gelada na hora. 💛',
+    errado:'Quase! Pense no tamanho da compra: quem leva um caminhão inteiro paga menos por garrafa.',
+    nota:'Valores de exemplo, parecidos com os de verdade.',
+    libera:()=>!!((S.compras&&S.compras.viagens>0)||(S.pedidos||0)>=6)}
+};
+const licaoFeita=k=>!!(S&&S.licoes&&S.licoes[k]);
+const licaoDisponivel=k=>!!(S&&LICOES[k]&&!licaoFeita(k)&&LICOES[k].libera());
+const premioLicao=()=>Math.max(300,Math.round(rendaRefMissao()*3));
+let licaoAtual=null, licaoPendente=null;
+function oferecerLicao(k){ if(!licaoDisponivel(k)||(S.licoesVistas&&S.licoesVistas[k])) return; licaoPendente=k; }
+function checarLicaoPendente(){
+  const k=licaoPendente; if(!k) return;
+  if(!licaoDisponivel(k)){ licaoPendente=null; return; }
+  if(!document.body.classList.contains('jogando')||document.querySelector('.tela:not([hidden])')||!$('#telaMapa').hidden||painelAtual) return;
+  licaoPendente=null; S.licoesVistas=S.licoesVistas||{}; S.licoesVistas[k]=true; salvar(); abrirLicao(k);
+}
+function abrirLicao(k){
+  const L=LICOES[k]; if(!L) return; licaoAtual=k; const feita=licaoFeita(k);
+  const ops=L.ops.map((o,i)=>({...o,i})).sort(()=>Math.random()-0.5);
+  let h=`<div class="licao-edu"><span class="licao-ic">🧔🏽</span><div>${L.falas.map(x=>`<p>${x}</p>`).join('')}</div></div>`;
+  h+=`<div class="licao-perg">${L.perg}</div><div class="licao-ops">${ops.map(o=>`<button type="button" class="licao-op" data-ok="${o.ok?1:0}">${o.t}</button>`).join('')}</div>`;
+  if(L.nota) h+=`<p class="licao-nota">${L.nota}</p>`;
+  h+=`<p class="licao-res" id="licaoRes" aria-live="polite"></p>`;
+  h+=feita?'<p class="licao-premio">✔ Você já fez esta lição.</p>':`<p class="licao-premio">Acerte e ganhe 💵 ${fmt(premioLicao())} e ⭐ experiência.</p>`;
+  $('#licaoTitulo').textContent=L.ic+' Lição do Edu: '+L.tit; $('#licaoConteudo').innerHTML=h; $('#telaLicao').hidden=false; SOM.abrir();
+  $('#licaoConteudo').querySelectorAll('.licao-op').forEach(b=>b.addEventListener('click',()=>responderLicao(b)));
+}
+function responderLicao(b){
+  const k=licaoAtual, L=LICOES[k], res=$('#licaoRes'), ok=b.dataset.ok==='1';
+  if(!ok){ b.classList.add('errada'); b.disabled=true; res.className='licao-res ruim'; res.textContent=L.errado; SOM.erro(); return; }
+  $('#licaoConteudo').querySelectorAll('.licao-op').forEach(x=>x.disabled=true); b.classList.add('certa');
+  res.className='licao-res bom'; res.textContent=L.certo;
+  if(!licaoFeita(k)){ const p=premioLicao(); S.licoes=S.licoes||{}; S.licoes[k]=true; S.din+=p; somarXP(XP_EVENTO.licao||40);
+    res.textContent+=` +💵 ${fmt(p)}`; SOM.marco(); salvar(); atualizarHUD(true); if(typeof atualizarBadgeMapa==='function') atualizarBadgeMapa(); }
+  const pr=$('#licaoConteudo .licao-premio'); if(pr) pr.textContent='✔ Lição concluída!';
+}
+$('#btnLicaoFechar').addEventListener('click',()=>{ $('#telaLicao').hidden=true; });
+setInterval(()=>{ if(S){ checarLicaoPendente(); atualizarBtnFiado(); } },1000);
+
 // ================= Mapa da Adega (etapas do jogo e quando liberam) =================
 const menorNivelSetores=()=>Math.min(...IDS.map(id=>S.est[id].aberta?S.est[id].nivel:0));
 const setoresAbertos=()=>IDS.filter(id=>S.est[id].aberta).length;
@@ -3461,6 +3767,16 @@ const ETAPAS_MAPA=[
    desc:'A cada 6 horas chegam missões novas, com prêmios e um baú no fim.',
    req:'Complete as 3 primeiras tarefas (com o cadastro online).',prog:()=>[Math.min(S.tarefa,3),3],
    feito:()=>missoesLiberadas(),acao:{txt:'Abrir missões',fn:()=>abrirMissoes()}},
+  {id:'fiado',ic:'📒',nome:'O fiado',chip:'Lição',zona:0,
+   desc:'Alguns clientes vão pedir para pendurar a compra. No caderninho você vê o que acontece com o caixa da adega quando o dinheiro não entra na hora.',
+   req:'Aparece quando um cliente pedir fiado. Depois, faça a lição do Edu.',prog:()=>[(S.fiado&&S.fiado.pedidos>0?1:0)+(licaoFeita('fiado')?1:0),2],
+   feito:()=>licaoFeita('fiado'),acao:{txt:'📒 Abrir o caderninho',fn:()=>abrirCaderninho()},
+   acaoAntes:()=>licaoDisponivel('fiado')?{txt:'📒 Fazer a lição do Edu',fn:()=>abrirLicao('fiado')}:null},
+  {id:'compras',ic:'🚗',nome:'Comprar pouco custa mais',chip:'Lição',zona:0,
+   desc:'Compare o distribuidor, o atacarejo e a rede de supermercado, e descubra por que quem compra pouco paga mais caro por unidade.',
+   req:'Faça 6 pedidos ao fornecedor ou vá uma vez ao atacarejo. Depois, faça a lição do Edu.',prog:()=>[Math.min((S.pedidos||0),6)+(licaoFeita('compras')?1:0),7],
+   feito:()=>licaoFeita('compras'),acao:{txt:'🚗 Rever a lição',fn:()=>abrirLicao('compras')},
+   acaoAntes:()=>licaoDisponivel('compras')?{txt:'🚗 Fazer a lição do Edu',fn:()=>abrirLicao('compras')}:null},
   {id:'loja',ic:'🛒',nome:'Loja completa',chip:'6 setores',zona:0,
    desc:'Abra água e suco, salgadinhos, gelo, carvão e a mercearia. Cada setor vende produtos mais caros.',
    req:'Abra os 6 setores da loja.',prog:()=>[setoresAbertos(),IDS.length]},
@@ -3490,10 +3806,10 @@ const ETAPAS_MAPA=[
    desc:'Depois de vender, você abre uma adega nova com bônus permanente de faturamento.',
    req:'Venda a sua adega.',prog:()=>[Math.min((S&&S.prest)||0,1),1],feito:()=>((S&&S.prest)||0)>0}
 ];
-const ZONAS_MAPA=[{nome:'Bairro da Adega',cor:'#F6D29C',y:[45,538]},{nome:'Avenida do Comércio',cor:'#BFDDF0',y:[552,758]},{nome:'Centro Financeiro',cor:'#D9CDF3',y:[774,904]},{nome:'Grandes Negócios',cor:'#F7E59A',y:[918,1205],dir:true}];
+const ZONAS_MAPA=[{nome:'Bairro da Adega',cor:'#F6D29C',y:[45,713]},{nome:'Avenida do Comércio',cor:'#BFDDF0',y:[727,933]},{nome:'Centro Financeiro',cor:'#D9CDF3',y:[949,1079]},{nome:'Grandes Negócios',cor:'#F7E59A',y:[1093,1380],dir:true}];
 // posições: x em %, y em px (o caminho começa em cima e desce)
-const POS_MAPA=[[24,120],[62,210],[80,305],[44,395],[20,488],[46,612],[78,708],[48,836],[22,970],[58,1090]];
-const ALT_MAPA=1240;
+const POS_MAPA=[[24,120],[60,200],[80,288],[52,372],[22,458],[46,545],[72,640],[46,787],[78,883],[48,1011],[22,1145],[58,1265]];
+const ALT_MAPA=1415;
 function etapaFeita(e){ if(e.breve) return false; if(e.feito) return !!e.feito(); const p=e.prog(); return p[0]>=p[1]; }
 function etapaAtual(){ const i=ETAPAS_MAPA.findIndex(e=>!e.breve&&!etapaFeita(e)); return i<0?ETAPAS_MAPA.length-1:i; }
 function estadoEtapa(i){ const e=ETAPAS_MAPA[i]; if(etapaFeita(e)) return 'feito'; if(e.breve) return 'breve'; return i===etapaAtual()?'atual':'bloq'; }
@@ -3513,7 +3829,7 @@ function montarMapa(){
   ZONAS_MAPA.forEach(z=>{ html+=`<div class="mapa-zona" style="top:${z.y[0]}px;height:${z.y[1]-z.y[0]}px;background:${z.cor}"></div>`; });
   ZONAS_MAPA.forEach(z=>{ html+=`<span class="mapa-zona-nome${z.dir?' dir':''}" style="top:${z.y[0]}px">${z.nome}</span>`; });
   // enfeites
-  [['🌳',8,60],['🏠',90,90],['🌳',92,230],['🌳',6,280],['🏡',8,410],['🌳',88,440],['🚌',90,550],['🏢',8,680],['🌳',92,780],['🏦',84,860],['🏙️',10,820],['🌳',90,990],['⭐',86,1150],['🌳',6,1090]]
+  [['🌳',8,60],['🏠',90,90],['🌳',6,250],['🏡',8,370],['🌳',88,430],['🛒',90,520],['🌳',8,630],['🚌',90,725],['🏢',8,855],['🌳',92,955],['🏦',84,1035],['🏙️',10,995],['🌳',90,1165],['⭐',86,1325],['🌳',6,1265]]
     .forEach(([e,x,y])=>{ html+=`<span class="mapa-enfeite" style="left:${x}%;top:${y}px">${e}</span>`; });
   html+=`<svg class="mapa-trilha" viewBox="0 0 100 ${ALT_MAPA}" preserveAspectRatio="none" aria-hidden="true"><path id="mapaTrilhaBase" d="${curvaMapa(POS_MAPA)}"/><path id="mapaTrilhaFeita" d=""/></svg>`;
   ETAPAS_MAPA.forEach((e,i)=>{ const [x,y]=POS_MAPA[i];
@@ -3541,9 +3857,10 @@ function renderMapa(){
     h+=`<div class="mapa-req">🎯 ${e.req}</div><div class="missao-barra"><i style="width:${Math.min(100,100*p[0]/p[1])}%"></i></div>`;
     h+=`<div class="mapa-prog">${e.nivel?`Seu setor mais baixo: <b>nível ${menorNivelSetores()}</b> de ${p[1]}`:`<b>${p[0]}</b> de ${p[1]}`}${e.breve&&p[0]>=p[1]?' · você já chegou! O IPO abre em breve.':''}</div>`;
   }
-  if(st==='feito'&&e.acao) h+=`<button class="btn" type="button" id="mapaAcao">${e.acao.txt}</button>`;
+  const ac=st==='feito'?e.acao:(e.acaoAntes&&e.acaoAntes());
+  if(ac) h+=`<button class="btn" type="button" id="mapaAcao">${ac.txt}</button>`;
   $('#mapaPainel').innerHTML=h;
-  const b=$('#mapaAcao'); if(b) b.addEventListener('click',()=>irDoMapa(e.acao.fn));
+  const b=$('#mapaAcao'); if(b) b.addEventListener('click',()=>irDoMapa(ac.fn));
 }
 let retornoMapa=null, tRetorno=0;
 const algumaTelaAberta=()=>!!document.querySelector('.tela:not([hidden])')||document.body.classList.contains('entregando');
@@ -3832,9 +4149,9 @@ function renderPainel(){
       <div class="stats">
         ${k==='carvao'?`<div class="stat"><span>Saco 2 kg / 4 kg</span><b>${fmt(valorEst(k))} / ${fmt(valorEst(k)*FATOR_4KG)} <span class="prox">→ ${fmt(valorEst(k,e.nivel+1))} / ${fmt(valorEst(k,e.nivel+1)*FATOR_4KG)}</span></b></div>`:`<div class="stat"><span>Valor por venda</span><b>${fmt(valorEst(k))} <span class="prox">→ ${fmt(valorEst(k,e.nivel+1))}</span></b></div>`}
         <div class="stat"><span>Tempo para pegar</span><b>${tempoEst(k).toFixed(1).replace('.',',')} s</b></div>
-        <div class="stat"><span>Estoque</span><b>${e.estoque} / ${cap(k)}${e.pedido>0?` <span class="prox">🚚 +${e.pedido} a caminho</span>`:''}</b></div>
+        <div class="stat"><span>Estoque</span><b>${e.estoque} / ${cap(k)}${e.pedido>0?` <span class="prox">🚚 +${e.pedido} a caminho</span>`:''}${S.atac&&S.atac.id===k?` <span class="prox">🚗 +${S.atac.q} do atacarejo</span>`:''}</b></div>
         <div class="stat"><span>Custo por unidade</span><b>${fmt(custoUnit(k))}</b></div>
-      </div>`+(faltando(k)>0?(qtdPossivel(k)>0&&qtdPossivel(k)<faltando(k)?btnCusto(qtdPossivel(k)*custoUnit(k),`🚚 Pedir +${qtdPossivel(k)} un.`,'bPedir'):btnCusto(custoPedido(k),`🚚 Pedir +${faltando(k)} un.`,'bPedir')):`<button class="btn azul" disabled>${e.pedido>0?'Pedido a caminho':'Estoque completo'}</button>`)+
+      </div>`+(faltando(k)>0?(qtdPossivel(k)>0&&qtdPossivel(k)<faltando(k)?btnCusto(qtdPossivel(k)*custoUnit(k),`🚚 Pedir +${qtdPossivel(k)} un.`,'bPedir'):btnCusto(custoPedido(k),`🚚 Pedir +${faltando(k)} un.`,'bPedir')):`<button class="btn azul" disabled>${e.pedido>0||(S.atac&&S.atac.id===k)?'Pedido a caminho':'Estoque completo'}</button>`)+compararCompra(k)+
       `<p style="margin:8px 2px 0;color:var(--sub);font-size:.85rem;font-weight:700;line-height:1.35">Fique de olho no estoque: quando ele zera, os clientes não compram. Faça o pedido ao fornecedor antes de acabar.</p>`+(prox?`<div class="marcos"><span>Nv ${prox}: valor x2 e mais rápido</span><div class="trilho"><i style="width:${100*(e.nivel-ant)/(prox-ant)}%"></i></div></div>`:'')+
       `<div class="duas">${btnCusto(custoEst(k),'Melhorar','bAcao')}<button class="btn amarelo" id="bMax">Máximo<small id="bMaxTxt"></small></button></div>`;
     }
@@ -3866,6 +4183,7 @@ function renderPainel(){
   const ba=$('#bAcao'); if(ba) ba.onclick=()=>acao(k);
   const bc=$('#bCaixa'); if(bc) bc.onclick=()=>{const c=CUSTO_CAIXA[S.caixas]*multPrest(); if(S.din<c) return; S.din-=c; S.caixas++; comprado(); atualizarEquipe();};
   const bp=$('#bPedir'); if(bp) bp.onclick=()=>{ if(pedir(k)) renderPainel(); };
+  const bat=$('#bAtac'); if(bat) bat.onclick=()=>{ if(irAtacarejo(k)) renderPainel(); };
   const bx=$('#bExtra'); if(bx) bx.onclick=()=>{ liberarExtras(); renderPainel(); renderSelos(); };
   const bmn=$('#bMesaNova'); if(bmn) bmn.onclick=()=>{const c=CUSTO_MESA[S.mesas.n]*multPrest(); if(S.din<c) return; S.din-=c; S.mesas.n++; atualizarMesas(); atualizarEquipe(); festa(mesasObj[S.mesas.n-1].g.position); comprado();};
   const bgc=$('#bGarcom'); if(bgc) bgc.onclick=()=>{const c=CUSTO_GARCOM*multPrest(); if(S.din<c) return; S.din-=c; S.mesas.garcom=true; atualizarEquipe(); comprado();};
@@ -3993,6 +4311,7 @@ function pontoPasseio(){
 function atualizarEdu(dt){
   const E=EDU, u=E.g.userData;
   if(G.estado!=='livre'&&G.g===E.g){ E.retomar=true; E.aceno=0; u.bE.rotation.z=-0.14; u.bE.rotation.x=0; return; }
+  if(atualizarAtacarejo(dt)) return;
   if(E.retomar){ E.retomar=false; E.estado='parado'; E.t=1.2; E.caminho=[]; u.pE.rotation.x=u.pD.rotation.x=0; u.corpo.position.y=0; }
   if(document.body.classList.contains('jogando')){
     if(E.estado==='andando'){ if(mover(E,dt)){ E.estado='parado'; E.t=rnd(2.5,5.5); E.aceno=Math.random()<0.6?1.8:0; u.pE.rotation.x=u.pD.rotation.x=0; u.corpo.position.y=0; } }
@@ -4016,6 +4335,7 @@ function laco(){
     proxCliente-=dt;
     if(proxCliente<=0){ if(clientes.length<18) novoCliente(); proxCliente=intervalo()*rnd(0.75,1.25); }
     atualizarClientes(dt);
+    atualizarFiado(dt);
     atualizarFornecedor(dt);
     atualizarPdr(dt);
     atualizarOnibus(dt);
@@ -4044,6 +4364,7 @@ function renderPainelLeve(){
   else if(k==='letreiro'&&S.letreiro<MAX_LETREIRO) c=custoLetreiro();
   else if(k==='mesas'&&S.mesas.n) c=custoMesaNivel();
   const bp=$('#bPedir'); if(bp&&IDS.includes(k)) bp.disabled=S.din<custoUnit(k);
+  const bat=$('#bAtac'); if(bat&&IDS.includes(k)) bat.disabled=S.din<custoAtac(k,faltando(k));
   const bmn=$('#bMesaNova'); if(bmn) bmn.disabled=S.din<CUSTO_MESA[S.mesas.n]*multPrest();
   const bgc=$('#bGarcom'); if(bgc) bgc.disabled=S.din<CUSTO_GARCOM*multPrest();
   if(c!==null) b.disabled=S.din<c;
