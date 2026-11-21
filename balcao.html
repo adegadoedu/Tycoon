@@ -57,6 +57,14 @@ th,td{text-align:left;padding:6px 4px;border-bottom:1px solid color-mix(in srgb,
 th{color:var(--sub);font-weight:700;font-size:.8rem}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .cod-grande{font:900 2.4rem/1.1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.18em;margin:8px 0;user-select:all}
+.cat-imp{margin:8px 0;border:2px dashed var(--borda);border-radius:12px;padding:8px 10px}
+.cat-imp textarea{width:100%;box-sizing:border-box;margin:6px 0;font:600 .9rem ui-monospace,Menlo,Consolas,monospace;border:2px solid var(--borda);border-radius:10px;padding:8px}
+.cat-tab{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:8px}
+.cat-tab td{padding:5px 4px;border-bottom:1px solid var(--borda);vertical-align:middle}
+.cat-tab input[type=text]{width:5.5em;padding:5px 6px;border:2px solid var(--borda);border-radius:8px;font:700 .9rem inherit;text-align:right}
+.cat-tab .alc{color:#B3362B;font-size:.75rem;font-weight:800}
+.cat-tab tr.inativo td{opacity:.5}
+.cat-tab button{padding:5px 10px;font-size:.8rem}
 .vazio{color:var(--sub);font-size:.9rem;margin:6px 0}
 .rolagem{overflow-x:auto}
 .rolagem.val td,.rolagem.val th{white-space:nowrap}
@@ -104,6 +112,19 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
     <input id="apelidoSenha" autocomplete="off" maxlength="20" placeholder="Como aparece no ranking">
     <div class="linha"><button id="btnCodSenha" type="button" class="prim">Gerar código</button></div>
     <div id="resCodSenha" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="cartao" id="boxCatalogo">
+    <div class="cab-res"><h2>🛒 Catálogo do jogo</h2><button type="button" id="btnCatCarregar">Carregar</button></div>
+    <p class="pequeno">Os produtos e preços que aparecem no jogo, na tela “🔎 Catálogo da Adega”. Só o preço de venda: custo e estoque ficam no ERP. Bebidas alcoólicas nunca aparecem no jogo.</p>
+    <details class="cat-imp"><summary><b>📥 Atualizar com a planilha do ERP</b></summary>
+      <p class="pequeno">Uma linha por produto: <b>nome; preço; categoria; código</b> (o código é opcional). Pode colar direto do Excel ou escolher um arquivo .csv.</p>
+      <input type="file" id="catArquivo" accept=".csv,.txt,text/csv,text/plain">
+      <textarea id="catTexto" rows="6" placeholder="Coca-Cola 2 L; 12,00; Refrigerante; 789&#10;Miojo; 4,50; Mercearia"></textarea>
+      <label class="pequeno"><input type="checkbox" id="catCompleto"> Esta é a lista completa (tirar do jogo o que não estiver nela)</label>
+      <div class="linha"><button id="btnCatImportar" type="button" class="prim">Atualizar o catálogo</button></div>
+    </details>
+    <div id="catBalcao"><p class="vazio">Digite a senha e toque em Carregar.</p></div>
   </section>
 
   <section class="cartao" id="boxProgresso">
@@ -388,6 +409,58 @@ $('#btnCodSenha').addEventListener('click',async()=>{
     box.appendChild(el('p','vazio',k?m[k]:(/balcao_codigo_senha/.test(e.message)?'Esta função ainda não foi instalada. Rode o supabase-senha-whatsapp.sql no Supabase.':'Não foi possível gerar agora. Confira a internet.')));
   }finally{ b.disabled=false; }
 });
+// ---------- Catálogo do jogo ----------
+const brl=v=>Number(v).toFixed(2).replace('.',',');
+const MSG_CAT={senha_invalida:'Senha do balcão incorreta.',preco_invalido:'Digite um preço maior que zero.',produto_inexistente:'Produto não encontrado.',lista_invalida:'Não entendi a planilha.'};
+const erroCat=e=>{ const k=Object.keys(MSG_CAT).find(c=>e.message.indexOf(c)>=0); return k?MSG_CAT[k]:(/catalogo_/.test(e.message)?'O catálogo ainda não foi instalado. Rode o supabase-catalogo.sql no Supabase.':'Não foi possível agora. Confira a internet.'); };
+async function carregarCatBalcao(){
+  const box=$('#catBalcao'); box.innerHTML='';
+  if(!$('#senha').value){ box.appendChild(el('p','vazio','Digite a senha do balcão lá em cima.')); return; }
+  box.appendChild(el('p','vazio','Carregando…'));
+  try{
+    const l=await rpc('catalogo_admin',{p_senha:$('#senha').value})||[]; box.innerHTML='';
+    const at=l.filter(p=>p.ativo&&!p.alcoolico).length;
+    box.appendChild(el('p','pequeno',`${l.length} produtos cadastrados · ${at} aparecem no jogo.`));
+    const busca=el('input'); busca.type='search'; busca.placeholder='Buscar produto'; busca.style.cssText='width:100%;box-sizing:border-box;padding:8px 10px;border:2px solid var(--borda);border-radius:10px;font:700 .95rem inherit';
+    const tab=el('table','cat-tab'); box.append(busca,tab);
+    const desenhar=()=>{ const q=busca.value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); tab.innerHTML='';
+      l.filter(p=>!q||p.nome.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(q)).forEach(p=>{
+        const tr=el('tr',p.ativo?'':'inativo'), td1=el('td'); td1.append(el('b','',p.nome),el('br'),el('span','pequeno',p.categoria+(p.codigo?' · cód. '+p.codigo:''))); if(p.alcoolico) td1.append(el('div','alc','🍺 alcoólico: não aparece no jogo'));
+        const inp=el('input'); inp.type='text'; inp.inputMode='decimal'; inp.value=brl(p.preco);
+        const ck=el('input'); ck.type='checkbox'; ck.checked=p.ativo&&!p.alcoolico; ck.disabled=!!p.alcoolico; ck.title=p.alcoolico?'Bebida alcoólica nunca aparece no jogo':'Aparece no jogo';
+        const ok=botao('Salvar','',async()=>{ ok.disabled=true; try{ await rpc('catalogo_editar',{p_senha:$('#senha').value,p_id:p.id,p_preco:Number(inp.value.replace(/\./g,'').replace(',','.')),p_ativo:ck.checked}); p.preco=Number(inp.value.replace(/\./g,'').replace(',','.')); p.ativo=ck.checked; ok.textContent='✔'; tr.className=p.ativo?'':'inativo'; }catch(e){ ok.textContent='Erro'; alert(erroCat(e)); } finally{ ok.disabled=false; setTimeout(()=>ok.textContent='Salvar',1500); } });
+        const tdP=el('td'); tdP.append('R$ ',inp); const tdA=el('td'); const lb=el('label','pequeno'); lb.append(ck,' no jogo'); tdA.append(lb); const tdB=el('td'); tdB.append(ok);
+        tr.append(td1,tdP,tdA,tdB); tab.appendChild(tr); }); };
+    busca.addEventListener('input',desenhar); desenhar();
+  }catch(e){ box.innerHTML=''; box.appendChild(el('p','vazio',erroCat(e))); }
+}
+function lerPlanilha(txt){
+  const itens=[];
+  txt.split(/\r?\n/).forEach(linha=>{
+    if(!linha.trim()) return;
+    const sep=linha.includes('\t')?'\t':linha.includes(';')?';':',';
+    const c=linha.split(sep).map(x=>x.trim().replace(/^"|"$/g,''));
+    if(c.length<2) return;
+    const preco=c[1].replace(/R\$\s*/i,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.');
+    if(!/^\d+(\.\d+)?$/.test(preco)) return; // pula cabeçalho e linhas sem preço
+    itens.push({nome:c[0],preco:Number(preco),categoria:c[2]||'Mercearia',codigo:c[3]||''});
+  });
+  return itens;
+}
+$('#catArquivo').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ $('#catTexto').value=r.result; }; r.readAsText(f,'utf-8'); });
+$('#btnCatImportar').addEventListener('click',async()=>{
+  const box=$('#catBalcao'), b=$('#btnCatImportar'); box.innerHTML='';
+  if(!$('#senha').value){ box.appendChild(el('p','vazio','Digite a senha do balcão lá em cima.')); return; }
+  const itens=lerPlanilha($('#catTexto').value);
+  if(!itens.length){ box.appendChild(el('p','vazio','Não achei nenhuma linha com nome e preço. Use: nome; preço; categoria; código.')); return; }
+  if($('#catCompleto').checked&&!confirm(`Atualizar com ${itens.length} produtos e tirar do jogo os que não estão na lista?`)) return;
+  b.disabled=true;
+  try{ const r=await rpc('catalogo_sincronizar',{p_senha:$('#senha').value,p_itens:itens,p_completo:$('#catCompleto').checked});
+    await carregarCatBalcao(); box.prepend(el('p','pequeno',`✔ Catálogo atualizado: ${r.novos} novos, ${r.alterados} alterados${r.inativados?', '+r.inativados+' fora do jogo':''}${r.ignorados?', '+r.ignorados+' linhas ignoradas':''}.`)); $('#catTexto').value=''; }
+  catch(e){ box.appendChild(el('p','vazio',erroCat(e))); }
+  finally{ b.disabled=false; }
+});
+$('#btnCatCarregar').addEventListener('click',carregarCatBalcao);
 $('#btnProgresso').addEventListener('click',carregarProgresso);
 if($('#senha').value) setTimeout(carregarProgresso,650);
 $('#btnSeguranca').addEventListener('click',carregarSeguranca);

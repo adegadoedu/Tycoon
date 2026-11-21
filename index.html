@@ -623,7 +623,7 @@ body:not(.jogando) .alerta{display:none}
     <div class="cat-filtros" id="catFiltros"></div>
     <div class="cat-qtd" id="catQtd"></div>
     <div id="catLista"></div>
-    <p class="bol-nota">Preços de 21/11/2026. Eles podem mudar: confira no balcão. Bebidas alcoólicas não aparecem no jogo.</p>
+    <p class="bol-nota" id="catNota"></p>
   </div>
 </section>
 
@@ -4018,8 +4018,8 @@ setInterval(()=>{ if(S){ checarLicaoPendente(); atualizarBtnFiado(); } },1000);
 
 // ================= Catálogo da Adega do Edu (produtos e preços reais de venda) =================
 // Só preço de venda. Custos e margens da loja nunca vão para o jogo. Sem bebidas alcoólicas.
-const CATALOGO_DATA='21/11/2026';
-const CAT_SETOR={refri:'Refrigerantes',salgadinho:'Doces e salgadinhos',mercearia:'Mercearia'};
+let CATALOGO_DATA='21/11/2026';
+const CAT_SETOR={refri:'Refrigerantes',agua:'Águas e sucos',salgadinho:'Doces e salgadinhos',gelo:'Gelo',carvao:'Carvão',mercearia:'Mercearia'};
 const CATALOGO=[
  ['Coca-Cola 2 L',12,'refri'],['Guaraná 2 L',11,'refri'],
  ['Trento',3.5,'salgadinho'],['Trento Máximo',2.5,'salgadinho'],['Bala Fini',2,'salgadinho'],['Fini Amoras',2,'salgadinho'],['Fini Tubes Morango',2,'salgadinho'],
@@ -4043,6 +4043,21 @@ const CATALOGO=[
  ['Detergente Ypê',4,'mercearia'],['Desinfetante Ypê',7,'mercearia'],['Desinfetante 2 L',10,'mercearia'],['Candida 1 L',5,'mercearia'],['Candida 2 L',8,'mercearia'],['Sabão em Pó 800 g',15,'mercearia'],
  ['Amaciante Ypê',13,'mercearia'],['Veja Multiuso',6.5,'mercearia'],['Bombril',5,'mercearia'],['Esponja',1.5,'mercearia'],['Bucha',1.5,'mercearia']
 ].map(([n,p,s])=>({n,p,s}));
+// catálogo online (tabela do Supabase alimentada pelo ERP e pelo balcão), com cópia guardada para jogar sem internet
+function aplicarCatalogo(d){
+  if(!d||!Array.isArray(d.itens)||!d.itens.length) return false;
+  const l=d.itens.filter(p=>p&&p.n&&p.p>0&&EST[p.s]); if(!l.length) return false;
+  CATALOGO.length=0; l.forEach(p=>CATALOGO.push({n:p.n,p:+p.p,s:p.s}));
+  if(d.atualizado){ const dt=new Date(d.atualizado); if(!isNaN(dt)) CATALOGO_DATA=dt.toLocaleDateString('pt-BR'); }
+  return true;
+}
+try{ aplicarCatalogo(JSON.parse(localStorage.getItem('adegaEdu.catalogo')||'null')); }catch(e){}
+let catBuscado=0;
+async function buscarCatalogo(){
+  if(!rankingAtivo()||Date.now()-catBuscado<5*60*1000) return; catBuscado=Date.now();
+  try{ const d=await rpc('catalogo_publico',{}); if(aplicarCatalogo(d)){ try{ localStorage.setItem('adegaEdu.catalogo',JSON.stringify(d)); }catch(e){} if(!$('#telaCatalogo').hidden) renderCatalogo(); } }catch(e){ catBuscado=0; }
+}
+setTimeout(buscarCatalogo,2500);
 const semAcento=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 const reaisCat=v=>'R$ '+v.toFixed(2).replace('.',',');
 const produtosDoSetor=id=>CATALOGO.filter(p=>p.s===id);
@@ -4055,11 +4070,13 @@ function renderCatalogo(){
   let h='';
   if(!lista.length) h=`<p class="fiado-vazio">Não encontramos “${$('#catBusca').value.trim()}” no catálogo do jogo. Pergunte no balcão da Adega do Edu: pode ser que tenha na loja.</p>`;
   lista.forEach(p=>{ const e=EST[p.s]; h+=`<div class="cat-linha"><span class="cat-ic">${e.ic}</span><span class="bol-tx"><b>${p.n}</b><small>${CAT_SETOR[p.s]} · no jogo: ${e.nome}</small></span><b class="cat-preco">${reaisCat(p.p)}</b></div>`; });
+  $('#catNota').textContent=`Preços atualizados em ${CATALOGO_DATA}. Eles podem mudar: confira no balcão. Bebidas alcoólicas não aparecem no jogo.`;
   $('#catLista').innerHTML=h; $('#catQtd').textContent=`${lista.length} ${lista.length===1?'produto':'produtos'}`;
 }
 function abrirCatalogo(setor){
   catFiltro=setor&&CAT_SETOR[setor]?setor:''; $('#catBusca').value='';
-  $('#catFiltros').innerHTML=`<button type="button" data-s="">Todos</button>`+Object.keys(CAT_SETOR).map(s=>`<button type="button" data-s="${s}">${EST[s].ic} ${CAT_SETOR[s]}</button>`).join('');
+  buscarCatalogo();
+  $('#catFiltros').innerHTML=`<button type="button" data-s="">Todos</button>`+Object.keys(CAT_SETOR).filter(s=>CATALOGO.some(p=>p.s===s)).map(s=>`<button type="button" data-s="${s}">${EST[s].ic} ${CAT_SETOR[s]}</button>`).join('');
   $('#catFiltros').querySelectorAll('button').forEach(b=>b.onclick=()=>{ catFiltro=b.dataset.s; renderCatalogo(); });
   fecharPainel(); renderCatalogo(); $('#telaCatalogo').hidden=false; SOM.abrir();
 }
