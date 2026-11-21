@@ -346,6 +346,20 @@ body:not(.jogando) .alerta{display:none}
 .compra-nota{font-size:.78rem;color:var(--sub);font-weight:700;margin:6px 2px 0;line-height:1.35}
 .compra-box .btn{margin-top:6px}
 .licao-nota{font-size:.72rem;color:var(--sub);margin:4px 0 0}
+/* lista do atacarejo */
+.atac-lista{margin:8px 0}
+.atac-item{display:flex;align-items:center;gap:8px;padding:7px 2px;border-bottom:2px dashed var(--trilho)}
+.atac-item.cheio{opacity:.55}
+.atac-ic{font-size:1.5rem;width:1.8rem;text-align:center}
+.atac-passo{display:flex;align-items:center;gap:6px}
+.atac-passo b{min-width:1.4rem;text-align:center;font-size:1.1rem}
+.atac-passo button{width:38px;height:38px;border-radius:50%;border:3px solid var(--contorno);background:var(--amarelo);font:900 1.3rem 'Nunito',sans-serif;color:var(--contorno);box-shadow:0 3px 0 var(--contorno);cursor:pointer;padding:0;line-height:1}
+.atac-passo button:disabled{background:#E4DED3;box-shadow:none;cursor:default;opacity:.6}
+.atac-espaco{margin:8px 0;font-size:.92rem}
+.atac-comp{font-weight:900;font-size:.88rem;margin:8px 2px}
+.atac-comp.bom{color:var(--verde-esc)} .atac-comp.ruim{color:#B3362B}
+.atac-kombi{margin-top:12px;padding:10px;border:3px dashed var(--contorno);border-radius:14px;font-size:.88rem;background:#F3F8FF}
+.atac-kombi .btn{margin-top:8px}
 /* contas do mês */
 .boletos{margin:8px 0}
 .boleto,.dez-linha{display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:2px dashed var(--trilho)}
@@ -584,6 +598,13 @@ body:not(.jogando) .alerta{display:none}
   <div class="caixa">
     <div class="papo-topo"><h2 class="titulo" style="font-size:1.7rem">📒 Caderninho</h2><button class="pilula" id="btnCadernoFechar" type="button" aria-label="Fechar">✕</button></div>
     <div id="cadernoConteudo"></div>
+  </div>
+</section>
+
+<section class="tela" id="telaAtac" hidden>
+  <div class="caixa">
+    <div class="papo-topo"><h2 class="titulo" style="font-size:1.6rem">🛒 Lista do atacarejo</h2><button class="pilula" id="btnAtacFechar" type="button" aria-label="Fechar">✕</button></div>
+    <div id="atacConteudo"></div>
   </div>
 </section>
 
@@ -1649,7 +1670,7 @@ function atualizarClientes(dt){
 // ================= Estoque e fornecedor =================
 function cap(id,n){n=n||S.est[id].nivel;return 20+2*(n-1);}
 function custoUnit(id){return Math.max(1,Math.round(valorEst(id)/multEvento()*0.4*fatorFornecedor()));}
-function faltando(id){const e=S.est[id];return Math.max(0,cap(id)-e.estoque-e.pedido-(S.atac&&S.atac.id===id?S.atac.q:0));}
+function faltando(id){const e=S.est[id], a=S.atac?(S.atac.itens?(S.atac.itens[id]||0):(S.atac.id===id?S.atac.q:0)):0;return Math.max(0,cap(id)-e.estoque-e.pedido-a);}
 function custoPedido(id){return faltando(id)*custoUnit(id);}
 const autoRepor=()=>false; // reposição sempre manual: o jogador faz os pedidos
 function atualizarProdutos(id){
@@ -1674,7 +1695,7 @@ const rodas=[];
 const entregador=pessoa({preset:'entregador'}); entregador.visible=false; scene.add(entregador);
 const caixaEntrega=new THREE.Group(); caixaEntrega.position.set(0,0.6,0.3); entregador.userData.corpo.add(caixaEntrega);
 [0,0.26].forEach(y=>{contorno(malha(geoArred(0.42,0.24,0.32,0.03),toon(0xC8935A),caixaEntrega,0,y,0),0.015); malha(new THREE.BoxGeometry(0.08,0.245,0.325),toon(0xE8D2A8),caixaEntrega,0,y,0,false);});
-const PARADA_X=2.6, Z_RUA=9.6, DESCARGA=new THREE.Vector3(1.4,0,8.3), CALCADA_PT=new THREE.Vector3(1.4,0,7.0);
+const PARADA_X=2.6, Z_RUA=9.6, DESCARGA=new THREE.Vector3(2.15,0,8.3), CALCADA_PT=new THREE.Vector3(2.15,0,7.0);
 const FORN={estado:'ocioso',fila:[],ent:{g:entregador,caminho:[],lista:[],estado:'',t:0,passo:0,vel:2.6}};
 IDS.forEach(id=>{ if(S.est[id].pedido>0) FORN.fila.push(id); });
 function qtdPossivel(id){return Math.min(faltando(id),Math.floor(S.din/custoUnit(id)));}
@@ -2559,7 +2580,7 @@ function atualizarPdr(dt){
   if(tSpawnPdr<=0){ tSpawnPdr=rnd(4,9); if(p.estante-pdrEmRota>0) novoClienteRetirada(); }
 }
 // ---------- Recebimento da van: o Edu ou o gerente busca os pacotes e guarda na estante ----------
-const VAN_PT=new THREE.Vector3(-0.45,0,9.95), VAN_CALCADA=new THREE.Vector3(-0.6,0,7.6), PDR_ENTREGA=new THREE.Vector3(-3.05,0,-3.5);
+const VAN_PT=new THREE.Vector3(-1.3,0,9.95), VAN_CALCADA=new THREE.Vector3(-1.6,0,7.6), PDR_ENTREGA=new THREE.Vector3(-3.05,0,-3.5);
 function vanNaRua(){ return VAN.estado!=='ocioso'; }
 function iniciarRecebimentoVan(p,quem){
   G.g=p; G.quem=quem; G.posto=p.position.clone(); G.passo=0; G.tipo='van';
@@ -3564,64 +3585,157 @@ $('#btnConta').addEventListener('click',()=>abrirConta());
 setTimeout(checarWhats,1500);
 
 // ================= Compras: distribuidor x atacarejo x rede de supermercado =================
-// Educativo: quem compra pouco paga mais caro por unidade. A adega compra de fardo em fardo.
-const ATAC_FATOR=0.87, REDE_FATOR=0.74, ATAC_FRETE=6, ATAC_MIN=12, ATAC_TEMPO=45;
+// Educativo: quem compra pouco paga mais caro por unidade. O atacarejo só vende caixa fechada,
+// a gasolina é a mesma para a viagem toda e o carro tem espaço limitado.
+const ATAC_FATOR=0.87, REDE_FATOR=0.74, CAIXA_UN=12, ATAC_TEMPO=45;
+const VEICULOS={carro:{nome:'Carro',ic:'🚗',caixas:6,gas:6},kombi:{nome:'Kombi',ic:'🚐',caixas:14,gas:7.5}};
 const atacLiberado=()=>!!(S&&!S.falido&&(S.pedidos||0)>=2);
-const freteAtac=id=>custoUnit(id)*ATAC_FRETE;
 const unitAtac=id=>Math.max(1,Math.round(custoUnit(id)*ATAC_FATOR));
-const custoAtac=(id,q)=>q*unitAtac(id)+freteAtac(id);
-const qtdAtac=id=>faltando(id);
+const caixaAtac=id=>CAIXA_UN*unitAtac(id);
+const veiculo=()=>VEICULOS[S.kombi?'kombi':'carro'];
+const custoMedio=()=>{ const ab=IDS.filter(i=>S.est[i].aberta); return ab.length?ab.reduce((t,i)=>t+custoUnit(i),0)/ab.length:1; };
+const custoBase=()=>{ const ab=IDS.filter(i=>S.est[i].aberta); return ab.length?Math.min(...ab.map(custoUnit)):1; };
+const gasolinaViagem=()=>Math.round(custoBase()*veiculo().gas);
+const precoKombi=()=>Math.round(custoMedio()*400);
+const maxCaixas=id=>Math.floor(faltando(id)/CAIXA_UN);
+const atacQtd=id=>(S.atac&&S.atac.itens&&S.atac.itens[id])||0;
 const eduOcupado=()=>G.estado!=='livre'&&G.g===eduDono;
 const candRecebe=()=>{ const c=[]; if(!S.atac) c.push(eduDono); if(S.gerente) c.push(gerente); return c; };
 function Cmp(){ if(!S.compras) S.compras={viagens:0,un:0,gasto:0,economia:0}; return S.compras; }
+// compatibilidade com a versão anterior (uma viagem = um setor)
+if(S.atac&&S.atac.id&&!S.atac.itens){ S.atac.itens={[S.atac.id]:S.atac.q}; S.atac.entregues=[]; }
+// ---------- quadro de comparação no painel do setor ----------
 function compararCompra(k){
   if(!atacLiberado()) return '';
-  const q=faltando(k); if(q<=0&&!(S.atac&&S.atac.id===k)) return '';
-  const U=custoUnit(k), ta=custoAtac(k,Math.max(q,ATAC_MIN)), td=q*U, ua=q>0?ta/q:0, rede=Math.max(1,Math.round(U*REDE_FATOR));
-  const atacMelhor=q>=ATAC_MIN&&ta<td;
-  let h=`<div class="compra-box"><div class="compra-tit">🧾 Onde comprar ${q>0?q+' un.':''}?</div>
-   <div class="compra-linha${!atacMelhor?' melhor':''}"><span>🚚 <b>Distribuidor</b><small>entrega na porta, fardo a fardo</small></span><span><b>${fmt(U)}</b><small>por unidade</small></span></div>
-   <div class="compra-linha${atacMelhor?' melhor':''}"><span>🚗 <b>Atacarejo</b><small>o Edu vai buscar · gasolina e tempo ${fmt(freteAtac(k))}</small></span><span><b>${fmt(unitAtac(k))}</b><small>${q>=ATAC_MIN?'com a gasolina: '+fmt(ua):'mínimo '+ATAC_MIN+' un.'}</small></span></div>
+  const q=faltando(k); if(q<=0&&!atacQtd(k)) return '';
+  const U=custoUnit(k), rede=Math.max(1,Math.round(U*REDE_FATOR));
+  let h=`<div class="compra-box"><div class="compra-tit">🧾 Onde comprar?</div>
+   <div class="compra-linha"><span>🚚 <b>Distribuidor</b><small>entrega na porta, fardo a fardo</small></span><span><b>${fmt(U)}</b><small>por unidade</small></span></div>
+   <div class="compra-linha"><span>🚗 <b>Atacarejo</b><small>caixa fechada de ${CAIXA_UN} · o Edu vai buscar</small></span><span><b>${fmt(unitAtac(k))}</b><small>+ gasolina da viagem</small></span></div>
    <div class="compra-linha trancada"><span>🏭 <b>Rede de supermercado</b><small>caminhões direto da fábrica</small></span><span><b>${fmt(rede)}</b><small>a adega não chega lá</small></span></div>`;
-  if(S.atac) h+=`<p class="compra-nota">🚗 O Edu está no atacarejo buscando ${S.atac.q} ${EST[S.atac.id].ic}. Enquanto isso, ${S.gerente?'o gerente recebe o fornecedor.':'ninguém recebe o caminhão do fornecedor.'}</p>`;
-  else if(eduOcupado()) h+='<p class="compra-nota">O Edu está ocupado recebendo mercadoria agora.</p>';
-  else if(q<ATAC_MIN) h+=`<p class="compra-nota">No atacarejo só se compra caixa fechada: faltam pelo menos ${ATAC_MIN} unidades na geladeira.</p>`;
-  else h+=btnCusto(custoAtac(k,q),`🚗 Buscar ${q} no atacarejo`,'bAtac');
-  h+=`<p class="compra-nota">${q>=ATAC_MIN&&!atacMelhor?'Para essa quantidade, a gasolina e o tempo deixam o atacarejo mais caro. ':''}A gasolina custa o mesmo para 12 ou para 100 unidades: o atacarejo só compensa em compras grandes.${!S.gerente?' Sem gerente, quando o Edu sai, ninguém recebe o fornecedor.':''}</p>`;
+  if(S.atac) h+=`<p class="compra-nota">🚗 O Edu está no atacarejo. ${S.gerente?'O gerente recebe o fornecedor enquanto isso.':'Enquanto isso, ninguém recebe o caminhão do fornecedor.'}</p>`;
+  else h+=`<button class="btn azul" id="bAtac" type="button">🛒 Montar a lista do atacarejo</button>`;
+  h+=`<p class="compra-nota">A gasolina custa o mesmo para 1 ou para ${veiculo().caixas} caixas: junte vários setores numa viagem só.</p>`;
   const C=Cmp(); if(C.viagens) h+=`<p class="compra-nota">Você foi ${C.viagens}× ao atacarejo: ${C.economia>=0?'economizou':'gastou a mais'} 💵 ${fmt(Math.abs(C.economia))} em relação ao distribuidor.</p>`;
   return h+'</div>';
 }
-function irAtacarejo(k){
-  const q=faltando(k), c=custoAtac(k,q);
-  if(S.atac||eduOcupado()||q<ATAC_MIN||S.din<c) return false;
-  S.din-=c; S.atac={id:k,q,volta:(S.tempoJogo||0)+ATAC_TEMPO,custo:c,distrib:q*custoUnit(k),saiu:(S.tempoJogo||0)};
-  atacFase=null; S.pedidos=(S.pedidos||0)+1; missaoEvento('repor',1);
-  pop(eduDono.position.clone().setY(2.2),'🚗 Fui ao atacarejo!',''); SOM.comprar(); atualizarHUD(true); salvar(); return true;
+// ---------- lista de compras ----------
+let listaAtac={};
+function abrirListaAtac(pre){
+  listaAtac={};
+  if(pre&&maxCaixas(pre)>0) listaAtac[pre]=Math.min(maxCaixas(pre),veiculo().caixas);
+  fecharPainel(); renderListaAtac(); $('#telaAtac').hidden=false; SOM.abrir();
 }
-let atacFase=null, avisoForn=false;
-function atualizarAtacarejo(dt){ // devolve true enquanto o Edu está fora da rotina normal
-  const A=S.atac, E=EDU, g=E.g; if(!A){ if(atacFase){ atacFase=null; g.visible=true; } return false; }
-  const t=S.tempoJogo||0;
-  if(!atacFase){
-    E.vel=2.2;
-    if(t-A.saiu<2){ atacFase='saindo'; E.caminho=rota(g.position,PORTA).concat([FORA_PORTA.clone(),SAIDA.clone()]); }
-    else { atacFase='fora'; g.visible=false; }
+function resumoLista(){
+  let cx=0,prod=0,dist=0; for(const id in listaAtac){ const n=listaAtac[id]; cx+=n; prod+=n*caixaAtac(id); dist+=n*CAIXA_UN*custoUnit(id); }
+  const gas=cx?gasolinaViagem():0; return {cx,prod,dist,gas,total:prod+gas};
+}
+function renderListaAtac(){
+  const V=veiculo(), R=resumoLista(), el=$('#atacConteudo');
+  if(S.atac){ el.innerHTML='<p class="txt">🚗 O Edu já está no atacarejo. Espere ele voltar para fazer outra lista.</p>'; return; }
+  let h=`<p class="txt" style="font-size:.9rem">O atacarejo só vende <b>caixa fechada de ${CAIXA_UN} unidades</b>. A gasolina é a mesma para a viagem toda: quanto mais coisa você trouxer de uma vez, mais ela se dilui.</p><div class="atac-lista">`;
+  IDS.filter(id=>S.est[id].aberta).forEach(id=>{
+    const mx=maxCaixas(id), n=listaAtac[id]||0;
+    h+=`<div class="atac-item${mx?'':' cheio'}"><span class="atac-ic">${EST[id].ic}</span><span class="bol-tx"><b>${EST[id].nome}</b><small>${mx?`cabem ${mx} ${mx>1?'caixas':'caixa'} · caixa 💵 ${fmt(caixaAtac(id))} (distribuidor: ${fmt(CAIXA_UN*custoUnit(id))})`:'geladeira cheia: não cabe uma caixa'}</small></span>
+      <span class="atac-passo"><button type="button" data-id="${id}" data-d="-1" ${n?'':'disabled'} aria-label="Menos uma caixa">−</button><b>${n}</b><button type="button" data-id="${id}" data-d="1" ${n<mx&&R.cx<V.caixas?'':'disabled'} aria-label="Mais uma caixa">+</button></span></div>`;
+  });
+  h+=`</div><div class="atac-espaco"><span>${V.ic} ${V.nome}: <b>${R.cx} de ${V.caixas} caixas</b></span><div class="missao-barra"><i style="width:${100*R.cx/V.caixas}%"></i></div></div>`;
+  if(R.cx){
+    const dif=R.dist-R.total;
+    h+=`<div class="stats"><div class="stat"><span>Produtos (${R.cx*CAIXA_UN} un.)</span><b>${fmt(R.prod)}</b></div><div class="stat"><span>⛽ Gasolina e tempo</span><b>${fmt(R.gas)}</b></div><div class="stat destaque"><span>Total no atacarejo</span><b>${fmt(R.total)}</b></div></div>`;
+    h+=`<p class="atac-comp ${dif>=0?'bom':'ruim'}">No distribuidor, a mesma compra sairia 💵 ${fmt(R.dist)}. ${dif>=0?`Você economiza 💵 ${fmt(dif)}.`:`O atacarejo sai 💵 ${fmt(-dif)} mais caro: a gasolina pesou numa compra pequena.`}</p>`;
+    const pode=!eduOcupado()&&S.din>=R.total;
+    h+=`<button class="btn" id="bIrAtac" type="button" ${pode?'':'disabled'}>${V.ic} Ir ao atacarejo ${NOTA} ${fmt(R.total)}</button>`;
+    if(eduOcupado()) h+='<p class="compra-nota">O Edu está recebendo mercadoria. Espere ele terminar.</p>';
+    else if(S.din<R.total) h+='<p class="compra-nota">Falta dinheiro no caixa para essa lista.</p>';
+  } else h+='<p class="compra-nota">Toque em + para colocar caixas na lista.</p>';
+  if(!S.kombi) h+=`<div class="atac-kombi"><span>🚐 <b>Kombi</b>: leva ${VEICULOS.kombi.caixas} caixas por viagem (gasta um pouco mais de gasolina).</span>${btnCusto(precoKombi(),'Comprar a Kombi','bKombi')}</div>`;
+  el.innerHTML=h;
+  el.querySelectorAll('.atac-passo button').forEach(b=>b.onclick=()=>{ const id=b.dataset.id; listaAtac[id]=Math.max(0,Math.min(maxCaixas(id),(listaAtac[id]||0)+(+b.dataset.d))); if(!listaAtac[id]) delete listaAtac[id]; SOM.abrir(); renderListaAtac(); });
+  const bi=$('#bIrAtac'); if(bi) bi.onclick=irAtacarejo;
+  const bk=$('#bKombi'); if(bk) bk.onclick=()=>{ const c=precoKombi(); if(S.din<c) return; S.din-=c; S.kombi=true; montarCarroEdu(); SOM.marco(); toastMissao('🚐 A Kombi chegou! Agora cabem 14 caixas por viagem.'); atualizarHUD(true); salvar(); renderListaAtac(); };
+}
+$('#btnAtacFechar').addEventListener('click',()=>{ $('#telaAtac').hidden=true; });
+function irAtacarejo(){
+  const R=resumoLista(); if(!R.cx||S.atac||eduOcupado()||S.din<R.total) return false;
+  const itens={}; for(const id in listaAtac) itens[id]=listaAtac[id]*CAIXA_UN;
+  S.din-=R.total; S.atac={itens,entregues:[],custo:R.total,distrib:R.dist,volta:(S.tempoJogo||0)+ATAC_TEMPO,saiu:(S.tempoJogo||0)};
+  atacFase=null; S.pedidos=(S.pedidos||0)+1; missaoEvento('repor',1);
+  $('#telaAtac').hidden=true; pop(eduDono.position.clone().setY(2.2),'🚗 Fui ao atacarejo!',''); toastMissao(`${veiculo().ic} O Edu saiu para o atacarejo com a lista. Volta em 1 minutinho!`); SOM.comprar(); atualizarHUD(true); salvar(); return true;
+}
+// ---------- o carro do Edu na rua ----------
+const CARRO_PARADO=new THREE.Vector3(0.45,0,7.95), CARRO_PT=new THREE.Vector3(0.2,0,7.05);
+const carroEdu=new THREE.Group(); scene.add(carroEdu); carroEdu.visible=false;
+const rodasCarro=[];
+function montarCarroEdu(){
+  while(carroEdu.children.length) carroEdu.remove(carroEdu.children[0]); rodasCarro.length=0;
+  const g=carroEdu;
+  if(S&&S.kombi){
+    contorno(malha(geoArred(2.4,1.1,1.15,0.2),toon(0x3D8BD9),g,0,0.75,0),0.03);
+    contorno(malha(geoArred(2.4,0.55,1.15,0.18),toon(0xF4F4F0),g,0,1.55,0),0.03);
+    bloco(0.05,0.4,0.9,toon(0x9FD3EA),g,1.21,1.55,0); bloco(1.9,0.36,0.04,toon(0x9FD3EA),g,0,1.57,0.58); bloco(1.9,0.36,0.04,toon(0x9FD3EA),g,0,1.57,-0.58);
+  } else {
+    contorno(malha(geoArred(2.0,0.6,1.05,0.18),toon(0xD93F35),g,0,0.6,0),0.03);
+    contorno(malha(geoArred(1.15,0.5,0.95,0.18),toon(0xD93F35),g,-0.15,1.1,0),0.03);
+    bloco(0.05,0.36,0.8,toon(0x9FD3EA),g,0.44,1.12,0); bloco(0.95,0.3,0.04,toon(0x9FD3EA),g,-0.15,1.12,0.48); bloco(0.95,0.3,0.04,toon(0x9FD3EA),g,-0.15,1.12,-0.48);
   }
-  if(atacFase==='saindo'){ if(mover(E,dt)){ g.visible=false; atacFase='fora'; } }
+  const L=S&&S.kombi?0.8:0.68, W=S&&S.kombi?0.56:0.5;
+  [[-L,W],[L,W],[-L,-W],[L,-W]].forEach(p=>{ const r=malha(new THREE.CylinderGeometry(0.25,0.25,0.16,14),toon(0x22252A),g,p[0],0.25,p[1]); r.rotation.x=Math.PI/2; rodasCarro.push(r); });
+}
+montarCarroEdu();
+const caixaEdu=new THREE.Group(); caixaEdu.position.set(0,0.6,0.3); caixaEdu.visible=false; eduDono.userData.corpo.add(caixaEdu);
+[0,0.26].forEach(y=>{contorno(malha(geoArred(0.42,0.24,0.32,0.03),toon(0xC8935A),caixaEdu,0,y,0),0.015); malha(new THREE.BoxGeometry(0.08,0.245,0.325),toon(0xE8D2A8),caixaEdu,0,y,0,false);});
+function carroNaVaga(){ carroEdu.position.copy(CARRO_PARADO); carroEdu.rotation.y=0; carroEdu.visible=!!(S&&S.atac); } // o carro só fica na frente da adega durante a viagem
+carroNaVaga();
+// ---------- a viagem ----------
+let atacFase=null, avisoForn=false, atacAlvo=null;
+function andarCarro(dt,alvoX,dir){ carroEdu.position.x+=dir*6*dt; carroEdu.rotation.y=dir>0?0:Math.PI; rodasCarro.forEach(r=>r.rotation.y-=dt*12*dir); return dir>0?carroEdu.position.x>=alvoX:carroEdu.position.x<=alvoX; }
+function proximaCaixa(){
+  const A=S.atac, E=EDU, g=E.g;
+  const pend=Object.keys(A.itens).filter(id=>!A.entregues.includes(id));
+  if(!pend.length) return false;
+  atacAlvo=pend[0]; caixaEdu.visible=true;
+  const desde=g.position.distanceTo(CARRO_PT)<0.6?[FORA_PORTA.clone(),PORTA.clone()]:rota(g.position,PORTA).concat([FORA_PORTA.clone(),CARRO_PT.clone(),FORA_PORTA.clone(),PORTA.clone()]);
+  E.caminho=desde.concat(rota(PORTA,pontoEst(atacAlvo,1))); atacFase='levando'; return true;
+}
+function concluirAtacarejo(){
+  const A=S.atac, C=Cmp(), E=EDU;
+  let un=0; for(const id in A.itens) un+=A.itens[id];
+  C.viagens++; C.un+=un; C.gasto+=A.custo; C.economia+=A.distrib-A.custo;
+  toastMissao(A.distrib-A.custo>=0?`🚗 Viagem ao atacarejo: economia de 💵 ${fmt(A.distrib-A.custo)}`:`🚗 Viagem ao atacarejo: 💵 ${fmt(A.custo-A.distrib)} mais caro que o distribuidor`);
+  S.atac=null; atacFase=null; avisoForn=false; caixaEdu.visible=false; E.vel=1.2; E.estado='parado'; E.t=1.5; E.caminho=[];
+  const u=E.g.userData; u.pE.rotation.x=u.pD.rotation.x=0; u.corpo.position.y=0;
+  salvar(); oferecerLicao('compras');
+}
+function atualizarAtacarejo(dt){ // devolve true enquanto o Edu está fora da rotina normal
+  const A=S.atac, E=EDU, g=E.g;
+  if(!A){ if(atacFase){ atacFase=null; g.visible=true; caixaEdu.visible=false; carroNaVaga(); } return false; }
+  const t=S.tempoJogo||0;
+  if(!atacFase){ // começo da viagem, ou jogo reaberto no meio dela
+    E.vel=2.2; carroEdu.visible=true;
+    if(A.entregues.length||(t>=A.volta&&A.chegou)){ carroNaVaga(); g.visible=true; g.position.copy(CARRO_PT); if(!proximaCaixa()){ concluirAtacarejo(); return false; } }
+    else if(t-A.saiu<2){ carroNaVaga(); atacFase='indoCarro'; E.caminho=rota(g.position,PORTA).concat([FORA_PORTA.clone(),CARRO_PT.clone()]); }
+    else { atacFase='fora'; g.visible=false; carroEdu.visible=false; }
+  }
+  if(atacFase==='indoCarro'){ if(mover(E,dt)){ g.visible=false; atacFase='partindo'; } }
+  else if(atacFase==='partindo'){ if(andarCarro(dt,-18,-1)){ carroEdu.visible=false; atacFase='fora'; } }
   else if(atacFase==='fora'){
     if(!S.gerente&&FORN.estado==='parado'&&!avisoForn){ avisoForn=true; toastMissao('🚚 O fornecedor chegou, mas o Edu está no atacarejo. Ninguém para receber!'); }
-    if(t>=A.volta){ g.visible=true; g.position.copy(SAIDA); E.caminho=[FORA_PORTA.clone(),PORTA.clone()].concat(rota(PORTA,pontoEst(A.id,1))); atacFase='voltando'; }
+    if(t>=A.volta){ carroEdu.visible=true; carroEdu.position.set(-18,0,CARRO_PARADO.z); atacFase='chegando'; }
   }
-  else if(atacFase==='voltando'){
+  else if(atacFase==='chegando'){
+    if(andarCarro(dt,CARRO_PARADO.x,1)){ carroNaVaga(); A.chegou=true; g.visible=true; g.position.copy(CARRO_PT); pop(CARRO_PT.clone().setY(2.2),'🚗 Voltei com as caixas!',''); toastMissao(`${veiculo().ic} O Edu voltou! Agora ele leva as caixas para cada setor.`); salvar(); if(!proximaCaixa()) concluirAtacarejo(); }
+  }
+  else if(atacFase==='levando'){
     if(mover(E,dt)){
-      const e=S.est[A.id]; e.estoque=Math.min(cap(A.id),e.estoque+A.q); atualizarProdutos(A.id);
-      const C=Cmp(); C.viagens++; C.un+=A.q; C.gasto+=A.custo; C.economia+=A.distrib-A.custo;
-      pop(objEst[A.id].g.position.clone().setY(2.7),`📦 +${A.q} do atacarejo`,'grande'); SOM.marco();
-      S.atac=null; atacFase=null; avisoForn=false; E.vel=1.2; E.estado='parado'; E.t=1.5; E.caminho=[];
-      g.userData.pE.rotation.x=g.userData.pD.rotation.x=0; g.userData.corpo.position.y=0;
-      salvar(); if(painelAtual===A.id) renderPainel(); oferecerLicao('compras');
+      const id=atacAlvo, e=S.est[id]; e.estoque=Math.min(cap(id),e.estoque+A.itens[id]); atualizarProdutos(id);
+      A.entregues.push(id); caixaEdu.visible=false; SOM.marco();
+      pop(objEst[id].g.position.clone().setY(2.7),`📦 +${A.itens[id]} do atacarejo`,'grande'); salvar(); if(painelAtual===id) renderPainel();
+      if(Object.keys(A.itens).every(x=>A.entregues.includes(x))) concluirAtacarejo();
+      else { E.caminho=rota(g.position,PORTA).concat([FORA_PORTA.clone(),CARRO_PT.clone()]); atacFase='buscando'; }
     }
   }
+  else if(atacFase==='buscando'){ if(mover(E,dt)){ E.caminho=[]; proximaCaixa(); } }
   return true;
 }
 
@@ -4261,9 +4375,9 @@ function renderPainel(){
       <div class="stats">
         ${k==='carvao'?`<div class="stat"><span>Saco 2 kg / 4 kg</span><b>${fmt(valorEst(k))} / ${fmt(valorEst(k)*FATOR_4KG)} <span class="prox">→ ${fmt(valorEst(k,e.nivel+1))} / ${fmt(valorEst(k,e.nivel+1)*FATOR_4KG)}</span></b></div>`:`<div class="stat"><span>Valor por venda</span><b>${fmt(valorEst(k))} <span class="prox">→ ${fmt(valorEst(k,e.nivel+1))}</span></b></div>`}
         <div class="stat"><span>Tempo para pegar</span><b>${tempoEst(k).toFixed(1).replace('.',',')} s</b></div>
-        <div class="stat"><span>Estoque</span><b>${e.estoque} / ${cap(k)}${e.pedido>0?` <span class="prox">🚚 +${e.pedido} a caminho</span>`:''}${S.atac&&S.atac.id===k?` <span class="prox">🚗 +${S.atac.q} do atacarejo</span>`:''}</b></div>
+        <div class="stat"><span>Estoque</span><b>${e.estoque} / ${cap(k)}${e.pedido>0?` <span class="prox">🚚 +${e.pedido} a caminho</span>`:''}${atacQtd(k)?` <span class="prox">🚗 +${atacQtd(k)} do atacarejo</span>`:''}</b></div>
         <div class="stat"><span>Custo por unidade</span><b>${fmt(custoUnit(k))}</b></div>
-      </div>`+(faltando(k)>0?(qtdPossivel(k)>0&&qtdPossivel(k)<faltando(k)?btnCusto(qtdPossivel(k)*custoUnit(k),`🚚 Pedir +${qtdPossivel(k)} un.`,'bPedir'):btnCusto(custoPedido(k),`🚚 Pedir +${faltando(k)} un.`,'bPedir')):`<button class="btn azul" disabled>${e.pedido>0||(S.atac&&S.atac.id===k)?'Pedido a caminho':'Estoque completo'}</button>`)+compararCompra(k)+
+      </div>`+(faltando(k)>0?(qtdPossivel(k)>0&&qtdPossivel(k)<faltando(k)?btnCusto(qtdPossivel(k)*custoUnit(k),`🚚 Pedir +${qtdPossivel(k)} un.`,'bPedir'):btnCusto(custoPedido(k),`🚚 Pedir +${faltando(k)} un.`,'bPedir')):`<button class="btn azul" disabled>${e.pedido>0||atacQtd(k)?'Pedido a caminho':'Estoque completo'}</button>`)+compararCompra(k)+
       `<p style="margin:8px 2px 0;color:var(--sub);font-size:.85rem;font-weight:700;line-height:1.35">Fique de olho no estoque: quando ele zera, os clientes não compram. Faça o pedido ao fornecedor antes de acabar.</p>`+(prox?`<div class="marcos"><span>Nv ${prox}: valor x2 e mais rápido</span><div class="trilho"><i style="width:${100*(e.nivel-ant)/(prox-ant)}%"></i></div></div>`:'')+
       `<div class="duas">${btnCusto(custoEst(k),'Melhorar','bAcao')}<button class="btn amarelo" id="bMax">Máximo<small id="bMaxTxt"></small></button></div>`;
     }
@@ -4295,7 +4409,7 @@ function renderPainel(){
   const ba=$('#bAcao'); if(ba) ba.onclick=()=>acao(k);
   const bc=$('#bCaixa'); if(bc) bc.onclick=()=>{const c=CUSTO_CAIXA[S.caixas]*multPrest(); if(S.din<c) return; S.din-=c; S.caixas++; comprado(); atualizarEquipe();};
   const bp=$('#bPedir'); if(bp) bp.onclick=()=>{ if(pedir(k)) renderPainel(); };
-  const bat=$('#bAtac'); if(bat) bat.onclick=()=>{ if(irAtacarejo(k)) renderPainel(); };
+  const bat=$('#bAtac'); if(bat) bat.onclick=()=>abrirListaAtac(k);
   const bx=$('#bExtra'); if(bx) bx.onclick=()=>{ liberarExtras(); renderPainel(); renderSelos(); };
   const bmn=$('#bMesaNova'); if(bmn) bmn.onclick=()=>{const c=CUSTO_MESA[S.mesas.n]*multPrest(); if(S.din<c) return; S.din-=c; S.mesas.n++; atualizarMesas(); atualizarEquipe(); festa(mesasObj[S.mesas.n-1].g.position); comprado();};
   const bgc=$('#bGarcom'); if(bgc) bgc.onclick=()=>{const c=CUSTO_GARCOM*multPrest(); if(S.din<c) return; S.din-=c; S.mesas.garcom=true; atualizarEquipe(); comprado();};
@@ -4477,7 +4591,6 @@ function renderPainelLeve(){
   else if(k==='letreiro'&&S.letreiro<MAX_LETREIRO) c=custoLetreiro();
   else if(k==='mesas'&&S.mesas.n) c=custoMesaNivel();
   const bp=$('#bPedir'); if(bp&&IDS.includes(k)) bp.disabled=S.din<custoUnit(k);
-  const bat=$('#bAtac'); if(bat&&IDS.includes(k)) bat.disabled=S.din<custoAtac(k,faltando(k));
   const bmn=$('#bMesaNova'); if(bmn) bmn.disabled=S.din<CUSTO_MESA[S.mesas.n]*multPrest();
   const bgc=$('#bGarcom'); if(bgc) bgc.disabled=S.din<CUSTO_GARCOM*multPrest();
   if(c!==null) b.disabled=S.din<c;
