@@ -346,6 +346,20 @@ body:not(.jogando) .alerta{display:none}
 .compra-nota{font-size:.78rem;color:var(--sub);font-weight:700;margin:6px 2px 0;line-height:1.35}
 .compra-box .btn{margin-top:6px}
 .licao-nota{font-size:.72rem;color:var(--sub);margin:4px 0 0}
+/* contas do mês */
+.boletos{margin:8px 0}
+.boleto,.dez-linha{display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:2px dashed var(--trilho)}
+.bol-ic{font-size:1.5rem;width:1.8rem;text-align:center}
+.bol-tx{flex:1;display:flex;flex-direction:column;font-size:.92rem}
+.bol-tx small{font-size:.74rem;color:var(--sub);font-weight:700}
+.bol-v{font-size:.95rem;color:#B3362B;white-space:nowrap}
+.bol-aviso{color:#B3362B;font-weight:900;font-size:.88rem;margin:8px 0}
+.bol-ok{color:var(--verde-esc);font-weight:900;font-size:.9rem;margin:8px 0}
+.bol-nota{font-size:.78rem;color:var(--sub);margin:6px 0 10px}
+.dez-barra{display:flex;height:30px;border:3px solid var(--contorno);border-radius:10px;overflow:hidden;margin:10px 0}
+.dez-barra i{display:block;height:100%}
+.dez-cor{width:16px;height:16px;border-radius:4px;border:2px solid var(--contorno);flex:none}
+.dez-linha.lucro{background:#DFF5E3;border-radius:10px;border-bottom:none;margin-top:4px}
 /* carregando */
 #carregandoAdega{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#46736D;color:#fff;font-weight:900}
 #carregandoAdega .titulo{font-size:2.6rem}
@@ -570,6 +584,20 @@ body:not(.jogando) .alerta{display:none}
   <div class="caixa">
     <div class="papo-topo"><h2 class="titulo" style="font-size:1.7rem">📒 Caderninho</h2><button class="pilula" id="btnCadernoFechar" type="button" aria-label="Fechar">✕</button></div>
     <div id="cadernoConteudo"></div>
+  </div>
+</section>
+
+<section class="tela" id="telaBoletos" hidden>
+  <div class="caixa">
+    <h2 class="titulo centro" style="font-size:1.7rem">📬 Chegaram os boletos do mês</h2>
+    <div id="boletosConteudo"></div>
+  </div>
+</section>
+
+<section class="tela" id="telaDez" hidden>
+  <div class="caixa">
+    <div class="papo-topo"><h2 class="titulo" style="font-size:1.45rem">📊 Para onde vão os seus R$ 10</h2><button class="pilula" id="btnDezFechar" type="button" aria-label="Fechar">✕</button></div>
+    <div id="dezConteudo"></div>
   </div>
 </section>
 
@@ -3597,6 +3625,75 @@ function atualizarAtacarejo(dt){ // devolve true enquanto o Edu está fora da ro
   return true;
 }
 
+// ================= As contas do mês (o que o cliente não vê) =================
+const MES_ADEGA=1200, MULTA_ATRASO=0.02;
+const contasLiberadas=()=>!!(S&&S.perfil&&!S.falido&&S.tarefa>=5);
+const GELADAS=['refri','agua','gelo'];
+function Ct(){ if(!S.contas) S.contas={inicio:S.tempoJogo||0,fat:0,aberto:0,meses:0,ultimo:null}; return S.contas; }
+function calcularBoletos(F){
+  const gel=GELADAS.filter(id=>S.est[id].aberta).length;
+  return [
+    {ic:'🧾',nome:'Impostos (Simples Nacional)',info:'uma parte de toda venda vai para o governo',v:F*0.04},
+    {ic:'🏠',nome:'Aluguel do ponto',info:'a loja paga para ficar aqui na rua',v:F*0.02},
+    {ic:'⚡',nome:'Conta de luz',info:`${gel} ${gel===1?'geladeira ligada':'geladeiras e freezers ligados'} dia e noite`,v:F*(0.008+0.0025*gel)},
+    {ic:'💳',nome:'Taxa da maquininha',info:'cartão de crédito cobra mais; Pix não tem taxa',v:F*0.013},
+    {ic:'🍾',nome:'Perdas',info:'garrafa quebrada e produto que venceu',v:F*0.005}
+  ].map(b=>({...b,v:Math.round(b.v)}));
+}
+function gerarBoletos(){
+  const C=Ct(), F=Math.round(C.fat), lista=calcularBoletos(F), total=lista.reduce((t,b)=>t+b.v,0);
+  const pago=Math.min(total,Math.max(0,Math.floor(S.din))), falta=total-pago;
+  S.din-=pago; if(falta>0) C.aberto+=Math.round(falta*(1+MULTA_ATRASO));
+  C.meses++; C.ultimo={mes:C.meses,fat:F,lista,total,pago,falta}; C.inicio=S.tempoJogo||0; C.fat=0;
+  salvar(); atualizarHUD(true); return C.ultimo;
+}
+function renderBoletos(B){
+  const pct=B.fat>0?Math.round(100*B.total/B.fat):0;
+  let h=`<p class="txt">Neste mês a adega faturou <b>💵 ${fmt(B.fat)}</b>. Antes de sobrar alguma coisa, ela paga:</p><div class="boletos">`;
+  B.lista.forEach(b=>{ h+=`<div class="boleto"><span class="bol-ic">${b.ic}</span><span class="bol-tx"><b>${b.nome}</b><small>${b.info}</small></span><b class="bol-v">${fmt(b.v)}</b></div>`; });
+  h+=`</div><div class="stat destaque"><span>Total das contas (${pct}% do faturamento)</span><b>${fmt(B.total)}</b></div>`;
+  h+=B.falta>0?`<p class="bol-aviso">⚠️ Faltou dinheiro no caixa: 💵 ${fmt(B.falta)} ficou em aberto, com multa de 2%. Ela será paga assim que entrar dinheiro.</p>`:'<p class="bol-ok">✔ Tudo pago com o dinheiro do caixa.</p>';
+  h+=`<p class="bol-nota">E isso sem contar o principal: o que a adega já pagou ao fornecedor pelos produtos.</p>`;
+  h+=`<button class="btn azul peq" id="btnVerDez" type="button">📊 Para onde vão os seus R$ 10?</button><button class="btn" id="btnBoletosOk" type="button" style="margin-top:10px">Entendi</button>`;
+  $('#boletosConteudo').innerHTML=h;
+  $('#btnBoletosOk').onclick=()=>{ $('#telaBoletos').hidden=true; oferecerLicao('contas'); };
+  $('#btnVerDez').onclick=()=>{ $('#telaBoletos').hidden=true; abrirDezReais(); };
+}
+function abrirBoletos(B){ B=B||(S.contas&&S.contas.ultimo); if(!B) return; renderBoletos(B); $('#telaBoletos').hidden=false; SOM.abrir(); }
+let tContas=0;
+function atualizarContas(dt){
+  tContas+=dt; if(tContas<1) return; tContas=0;
+  if(!contasLiberadas()) return;
+  const C=Ct(), t=S.tempoJogo||0;
+  if(C.aberto>0&&S.din>=C.aberto){ S.din-=C.aberto; toastMissao(`🧾 Conta atrasada paga: 💵 ${fmt(C.aberto)} (com multa)`); C.aberto=0; salvar(); atualizarHUD(true); }
+  if(t-C.inicio<MES_ADEGA) return;
+  if(document.querySelector('.tela:not([hidden])')||!$('#telaMapa').hidden||painelAtual) return;
+  SOM.erro(); abrirBoletos(gerarBoletos());
+}
+// ---------- Para onde vão os seus R$ 10 ----------
+const DEZ_REAIS=[
+  {ic:'📦',nome:'Produto',info:'o que a adega pagou ao fornecedor',v:6.50,cor:'#8FB8DE'},
+  {ic:'🧑‍💼',nome:'Funcionários',info:'salário de quem atende você',v:0.80,cor:'#F2A65A'},
+  {ic:'🧾',nome:'Impostos',info:'vão para o governo',v:0.60,cor:'#E8433A'},
+  {ic:'🏠',nome:'Aluguel',info:'o ponto da loja',v:0.60,cor:'#9B5DE5'},
+  {ic:'⚡',nome:'Luz',info:'geladeiras ligadas dia e noite',v:0.40,cor:'#FFC93C'},
+  {ic:'💳',nome:'Maquininha',info:'taxa do cartão',v:0.15,cor:'#6EC6EA'},
+  {ic:'🍾',nome:'Perdas',info:'quebra e vencimento',v:0.15,cor:'#B5651D'},
+  {ic:'💛',nome:'Sobra para a adega',info:'é daqui que saem reformas e geladeira nova',v:0.80,cor:'#3CB371',lucro:true}
+];
+const reaisTxt=v=>'R$ '+v.toFixed(2).replace('.',',');
+function abrirDezReais(){
+  let h=`<p class="txt">Imagine que você gastou <b>R$ 10,00</b> aqui na adega. Veja para onde vai cada pedaço:</p><div class="dez-barra" aria-hidden="true">`;
+  DEZ_REAIS.forEach(d=>{ h+=`<i style="flex:${d.v};background:${d.cor}" title="${d.nome}"></i>`; });
+  h+='</div><div class="dez-lista">';
+  DEZ_REAIS.forEach(d=>{ h+=`<div class="dez-linha${d.lucro?' lucro':''}"><span class="dez-cor" style="background:${d.cor}"></span><span class="bol-tx"><b>${d.ic} ${d.nome}</b><small>${d.info}</small></span><b>${reaisTxt(d.v)}</b></div>`; });
+  h+=`</div><p class="bol-nota">Valores de exemplo, parecidos com os de uma adega de bairro de verdade.</p>`;
+  if(licaoDisponivel('contas')||licaoFeita('contas')) h+=`<button class="btn azul peq" id="btnDezLicao" type="button">🧾 ${licaoFeita('contas')?'Rever':'Fazer'} a lição do Edu</button>`;
+  $('#dezConteudo').innerHTML=h; $('#telaDez').hidden=false; SOM.abrir();
+  const bl=$('#btnDezLicao'); if(bl) bl.onclick=()=>{ $('#telaDez').hidden=true; abrirLicao('contas'); };
+}
+$('#btnDezFechar').addEventListener('click',()=>{ $('#telaDez').hidden=true; oferecerLicao('contas'); });
+
 // ================= Fiado (caderninho) e Lições do Edu =================
 // Educativo: mostra por que vender fiado atrapalha a adega (o fornecedor cobra à vista).
 const FIADO_CHANCE=0.1, FIADO_INTERVALO=90, FIADO_MAX_ABERTOS=6, FIADO_ESPERA=20, FIADO_DESISTE=0.1;
@@ -3720,7 +3817,17 @@ const LICOES={
     certo:'Isso! Quanto maior a compra, menor o preço de cada unidade. A adega compra pouco, mas está pertinho de você, aberta até tarde e com a bebida gelada na hora. 💛',
     errado:'Quase! Pense no tamanho da compra: quem leva um caminhão inteiro paga menos por garrafa.',
     nota:'Valores de exemplo, parecidos com os de verdade.',
-    libera:()=>!!((S.compras&&S.compras.viagens>0)||(S.pedidos||0)>=6)}
+    libera:()=>!!((S.compras&&S.compras.viagens>0)||(S.pedidos||0)>=6)},
+  contas:{ic:'🧾',tit:'As contas do mês',
+    falas:['Além de comprar os produtos, todo mês a adega paga <b>luz</b> das geladeiras, <b>aluguel</b>, <b>impostos</b> e a <b>taxa da maquininha</b>.',
+           'De cada R$ 10 que você paga aqui, uns <b>R$ 6,50</b> vão para o fornecedor do produto, e quase todo o resto vai para essas contas e para quem trabalha.',
+           'No fim, sobra para a adega <b>menos de R$ 1</b>. É desse pouquinho que saem reformas, a geladeira nova e o sustento do dono.'],
+    perg:'De cada R$ 10 vendidos, quanto sobra para a adega, mais ou menos?',
+    ops:[{t:'Menos de R$ 1',ok:true},{t:'Uns R$ 5'},{t:'Os R$ 10 inteiros'}],
+    certo:'Isso! A maior parte do que você paga vai para o produto, as contas e os impostos. Por isso cada venda conta, e pagar na hora faz toda a diferença. 💛',
+    errado:'Quase! Lembre: o produto, os funcionários, a luz, o aluguel, os impostos e a maquininha saem antes de sobrar alguma coisa.',
+    nota:'Valores de exemplo, parecidos com os de verdade.',
+    libera:()=>!!(S.contas&&S.contas.meses>0)}
 };
 const licaoFeita=k=>!!(S&&S.licoes&&S.licoes[k]);
 const licaoDisponivel=k=>!!(S&&LICOES[k]&&!licaoFeita(k)&&LICOES[k].libera());
@@ -3780,6 +3887,11 @@ const ETAPAS_MAPA=[
   {id:'loja',ic:'🛒',nome:'Loja completa',chip:'6 setores',zona:0,
    desc:'Abra água e suco, salgadinhos, gelo, carvão e a mercearia. Cada setor vende produtos mais caros.',
    req:'Abra os 6 setores da loja.',prog:()=>[setoresAbertos(),IDS.length]},
+  {id:'contas',ic:'🧾',nome:'As contas do mês',chip:'Lição',zona:0,
+   desc:'A cada 20 minutos de jogo chega o mês da adega: luz, aluguel, impostos, maquininha e perdas saem do caixa. Veja também para onde vão os seus R$ 10.',
+   req:'Complete 5 tarefas e espere chegarem os primeiros boletos. Depois, faça a lição do Edu.',prog:()=>[Math.min(S.tarefa,5)+(S.contas&&S.contas.meses>0?1:0)+(licaoFeita('contas')?1:0),7],
+   feito:()=>licaoFeita('contas'),acao:{txt:'📊 Para onde vão os R$ 10',fn:()=>abrirDezReais()},
+   acaoAntes:()=>licaoDisponivel('contas')?{txt:'🧾 Fazer a lição do Edu',fn:()=>abrirLicao('contas')}:null},
   {id:'nv25',ic:'🏆',nome:'Todos no nível 25',chip:'Nv 25',zona:0,
    desc:'Uma das tarefas grandes: deixar a loja inteira no nível 25.',
    req:'Leve todos os setores ao nível 25.',prog:()=>[Math.min(menorNivelSetores(),25),25],nivel:true},
@@ -3806,10 +3918,10 @@ const ETAPAS_MAPA=[
    desc:'Depois de vender, você abre uma adega nova com bônus permanente de faturamento.',
    req:'Venda a sua adega.',prog:()=>[Math.min((S&&S.prest)||0,1),1],feito:()=>((S&&S.prest)||0)>0}
 ];
-const ZONAS_MAPA=[{nome:'Bairro da Adega',cor:'#F6D29C',y:[45,713]},{nome:'Avenida do Comércio',cor:'#BFDDF0',y:[727,933]},{nome:'Centro Financeiro',cor:'#D9CDF3',y:[949,1079]},{nome:'Grandes Negócios',cor:'#F7E59A',y:[1093,1380],dir:true}];
+const ZONAS_MAPA=[{nome:'Bairro da Adega',cor:'#F6D29C',y:[45,798]},{nome:'Avenida do Comércio',cor:'#BFDDF0',y:[812,1018]},{nome:'Centro Financeiro',cor:'#D9CDF3',y:[1034,1164]},{nome:'Grandes Negócios',cor:'#F7E59A',y:[1178,1465],dir:true}];
 // posições: x em %, y em px (o caminho começa em cima e desce)
-const POS_MAPA=[[24,120],[60,200],[80,288],[52,372],[22,458],[46,545],[72,640],[46,787],[78,883],[48,1011],[22,1145],[58,1265]];
-const ALT_MAPA=1415;
+const POS_MAPA=[[24,120],[60,200],[80,288],[52,372],[22,458],[50,545],[78,630],[46,718],[46,872],[78,968],[48,1096],[22,1230],[58,1350]];
+const ALT_MAPA=1500;
 function etapaFeita(e){ if(e.breve) return false; if(e.feito) return !!e.feito(); const p=e.prog(); return p[0]>=p[1]; }
 function etapaAtual(){ const i=ETAPAS_MAPA.findIndex(e=>!e.breve&&!etapaFeita(e)); return i<0?ETAPAS_MAPA.length-1:i; }
 function estadoEtapa(i){ const e=ETAPAS_MAPA[i]; if(etapaFeita(e)) return 'feito'; if(e.breve) return 'breve'; return i===etapaAtual()?'atual':'bloq'; }
@@ -3829,7 +3941,7 @@ function montarMapa(){
   ZONAS_MAPA.forEach(z=>{ html+=`<div class="mapa-zona" style="top:${z.y[0]}px;height:${z.y[1]-z.y[0]}px;background:${z.cor}"></div>`; });
   ZONAS_MAPA.forEach(z=>{ html+=`<span class="mapa-zona-nome${z.dir?' dir':''}" style="top:${z.y[0]}px">${z.nome}</span>`; });
   // enfeites
-  [['🌳',8,60],['🏠',90,90],['🌳',6,250],['🏡',8,370],['🌳',88,430],['🛒',90,520],['🌳',8,630],['🚌',90,725],['🏢',8,855],['🌳',92,955],['🏦',84,1035],['🏙️',10,995],['🌳',90,1165],['⭐',86,1325],['🌳',6,1265]]
+  [['🌳',8,60],['🏠',90,90],['🌳',6,250],['🏡',8,370],['🌳',88,430],['🛒',90,520],['🌳',8,630],['💡',10,760],['🌳',90,745],['🚌',90,810],['🏢',8,940],['🌳',92,1040],['🏦',84,1120],['🏙️',10,1080],['🌳',90,1250],['⭐',86,1410],['🌳',6,1350]]
     .forEach(([e,x,y])=>{ html+=`<span class="mapa-enfeite" style="left:${x}%;top:${y}px">${e}</span>`; });
   html+=`<svg class="mapa-trilha" viewBox="0 0 100 ${ALT_MAPA}" preserveAspectRatio="none" aria-hidden="true"><path id="mapaTrilhaBase" d="${curvaMapa(POS_MAPA)}"/><path id="mapaTrilhaFeita" d=""/></svg>`;
   ETAPAS_MAPA.forEach((e,i)=>{ const [x,y]=POS_MAPA[i];
@@ -4024,7 +4136,7 @@ $('#btnVoltarJogar').addEventListener('click',()=>{
 
 // ================= Ganhos =================
 const ganhos=[];
-function registrarGanho(v){ganhos.push([performance.now(),v]); missaoEvento('faturar',v);}
+function registrarGanho(v){ganhos.push([performance.now(),v]); missaoEvento('faturar',v); if(S.contas) S.contas.fat+=v;}
 function taxaPorMin(){
   const agora=performance.now(); while(ganhos.length&&agora-ganhos[0][0]>60000) ganhos.shift();
   if(!ganhos.length) return 0;
@@ -4336,6 +4448,7 @@ function laco(){
     if(proxCliente<=0){ if(clientes.length<18) novoCliente(); proxCliente=intervalo()*rnd(0.75,1.25); }
     atualizarClientes(dt);
     atualizarFiado(dt);
+    atualizarContas(dt);
     atualizarFornecedor(dt);
     atualizarPdr(dt);
     atualizarOnibus(dt);
