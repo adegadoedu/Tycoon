@@ -348,6 +348,18 @@ body:not(.jogando) .alerta{display:none}
 .compra-nota{font-size:.78rem;color:var(--sub);font-weight:700;margin:6px 2px 0;line-height:1.35}
 .compra-box .btn{margin-top:6px}
 .licao-nota{font-size:.72rem;color:var(--sub);margin:4px 0 0}
+/* catálogo */
+.cat-busca{width:100%;box-sizing:border-box;padding:11px 14px;border:3px solid var(--contorno);border-radius:14px;font:800 1rem 'Nunito',sans-serif;background:#fff;color:var(--texto);margin:4px 0 8px}
+.cat-filtros{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.cat-filtros button{font:900 .8rem 'Nunito',sans-serif;border:3px solid var(--contorno);border-radius:999px;background:#fff;color:var(--texto);padding:4px 10px;cursor:pointer}
+.cat-filtros button.ativo{background:var(--amarelo)}
+.cat-qtd{font-size:.78rem;color:var(--sub);font-weight:800;margin:2px 2px 4px}
+.cat-linha{display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:2px dashed var(--trilho)}
+.cat-ic{font-size:1.4rem;width:1.7rem;text-align:center}
+.cat-preco{white-space:nowrap;font-size:1rem;color:var(--verde-esc)}
+.cat-real{margin:8px 0 0;padding:8px 10px;border:3px solid var(--contorno);border-radius:12px;background:#F3FFF5;font-size:.84rem}
+.cat-real .link-btn{margin-top:4px;padding:2px;font-size:.85rem}
+.mapa-topo .mapa-btns{display:flex;gap:6px}
 /* lista do atacarejo */
 .atac-lista{margin:8px 0}
 .atac-item{display:flex;align-items:center;gap:8px;padding:7px 2px;border-bottom:2px dashed var(--trilho)}
@@ -603,6 +615,18 @@ body:not(.jogando) .alerta{display:none}
   </div>
 </section>
 
+<section class="tela" id="telaCatalogo" hidden>
+  <div class="caixa">
+    <div class="papo-topo"><h2 class="titulo" style="font-size:1.55rem">🔎 Catálogo da Adega</h2><button class="pilula" id="btnCatFechar" type="button" aria-label="Fechar">✕</button></div>
+    <p class="txt" style="font-size:.88rem;margin:6px 0">Produtos que você encontra na <b>Adega do Edu de verdade</b>, com o preço do balcão.</p>
+    <input id="catBusca" class="cat-busca" type="search" placeholder="Buscar produto, por exemplo: Coca, miojo, bala" autocomplete="off" aria-label="Buscar produto">
+    <div class="cat-filtros" id="catFiltros"></div>
+    <div class="cat-qtd" id="catQtd"></div>
+    <div id="catLista"></div>
+    <p class="bol-nota">Preços de 21/11/2026. Eles podem mudar: confira no balcão. Bebidas alcoólicas não aparecem no jogo.</p>
+  </div>
+</section>
+
 <section class="tela" id="telaAtac" hidden>
   <div class="caixa">
     <div class="papo-topo"><h2 class="titulo" style="font-size:1.6rem">🛒 Lista do atacarejo</h2><button class="pilula" id="btnAtacFechar" type="button" aria-label="Fechar">✕</button></div>
@@ -632,7 +656,7 @@ body:not(.jogando) .alerta{display:none}
 </section>
 
 <section class="tela-mapa" id="telaMapa" hidden aria-label="Mapa da Adega">
-  <div class="mapa-topo"><h2 class="titulo">🗺️ Mapa da Adega</h2><button class="pilula" id="btnMapaFechar" type="button" aria-label="Fechar">✕</button></div>
+  <div class="mapa-topo"><h2 class="titulo">🗺️ Mapa da Adega</h2><span class="mapa-btns"><button class="pilula" id="btnMapaCat" type="button" aria-label="Catálogo da Adega">🔎</button><button class="pilula" id="btnMapaFechar" type="button" aria-label="Fechar">✕</button></span></div>
   <p class="mapa-dica">O nível é o dos <b>setores da loja</b>: todos precisam chegar lá. Toque numa etapa para ver o que falta.</p>
   <div class="mapa-rolagem" id="mapaRolagem"><div class="mapa-mundo" id="mapaMundo"></div></div>
   <div class="mapa-painel" id="mapaPainel"></div>
@@ -1635,7 +1659,7 @@ function atualizarClientes(dt){
           vagasEst[c.est][c.slot]=null; c.lista.shift();
           if(S.est[c.est].estoque>0){ S.est[c.est].estoque--; (c.pegou=c.pegou||{})[c.est]=(c.pegou[c.est]||0)+1; atualizarProdutos(c.est); missaoEvento('vender',1,c.est);
             if(c.est==='carvao'){ const g4=Math.random()<0.45; c.valor+=valorEst('carvao')*(g4?FATOR_4KG:1); pop(c.g.position.clone().setY(1.7),'+🔥 '+(g4?'4 kg':'2 kg'),''); }
-            else { c.valor+=valorEst(c.est); pop(c.g.position.clone().setY(1.7),'+'+EST[c.est].ic,''); }
+            else { c.valor+=valorEst(c.est); const pn=nomeProdutoVendido(c.est); pop(c.g.position.clone().setY(1.7),'+'+EST[c.est].ic+(pn?' '+pn:''),''); }
             c.g.userData.sacola.visible=true; }
           else { pop(c.g.position.clone().setY(1.8),'😕 Acabou '+EST[c.est].ic,'ruim'); faltaComFiado(c.est); }
           c.est=null; proximoAlvo(c);
@@ -3992,6 +4016,61 @@ function responderLicao(b){
 $('#btnLicaoFechar').addEventListener('click',()=>{ $('#telaLicao').hidden=true; });
 setInterval(()=>{ if(S){ checarLicaoPendente(); atualizarBtnFiado(); } },1000);
 
+// ================= Catálogo da Adega do Edu (produtos e preços reais de venda) =================
+// Só preço de venda. Custos e margens da loja nunca vão para o jogo. Sem bebidas alcoólicas.
+const CATALOGO_DATA='21/11/2026';
+const CAT_SETOR={refri:'Refrigerantes',salgadinho:'Doces e salgadinhos',mercearia:'Mercearia'};
+const CATALOGO=[
+ ['Coca-Cola 2 L',12,'refri'],['Guaraná 2 L',11,'refri'],
+ ['Trento',3.5,'salgadinho'],['Trento Máximo',2.5,'salgadinho'],['Bala Fini',2,'salgadinho'],['Fini Amoras',2,'salgadinho'],['Fini Tubes Morango',2,'salgadinho'],
+ ['Fini Tubes Morango Azedo',2,'salgadinho'],['Fini Tubes Tutti Frutti',2,'salgadinho'],['Caixa de Bala Fini',24,'salgadinho'],['Halls',2.5,'salgadinho'],['Halls Blueberry',2.5,'salgadinho'],
+ ['Trident',3,'salgadinho'],['Trident Menta',3,'salgadinho'],['Trident Tutti Frutti',3,'salgadinho'],['Mentos',2.5,'salgadinho'],['Pé de Moça',2,'salgadinho'],['Pé de Moleque',2,'salgadinho'],
+ ['Paçoca',2,'salgadinho'],['Paçoquinha',0.6,'salgadinho'],['Cocada',2.5,'salgadinho'],['Amendoleite',2.5,'salgadinho'],['Doce de Abóbora',2,'salgadinho'],['Doce de Banana',2,'salgadinho'],
+ ['Doce de Batata',2,'salgadinho'],['Doce de Leite',2,'salgadinho'],['Geleia',2,'salgadinho'],['Pipoca',2,'salgadinho'],['Tri Bala',0.25,'salgadinho'],['Bala de Iogurte',0.25,'salgadinho'],
+ ['Bala de Maçã',0.25,'salgadinho'],['Bala de Hortelã',0.25,'salgadinho'],['Bala de Chiclete',0.25,'salgadinho'],['Chiclete',0.25,'salgadinho'],['Bala de Café',0.5,'salgadinho'],
+ ['Pirulito',0.5,'salgadinho'],['Pirulito de Coração',0.75,'salgadinho'],['Passatempo',4,'salgadinho'],['Wafer Bauducco Morango',5.5,'salgadinho'],['Wafer Bauducco Chocolate',5.5,'salgadinho'],
+ ['Barra de Cereal 22 g',2.5,'salgadinho'],['Barra de Cereal 30 g',6,'salgadinho'],['Caixa de Barra de Cereal 30 g',60,'salgadinho'],['Nutry Whey 40 g',11,'salgadinho'],['Whey Soft 24 g',11,'salgadinho'],
+ ['Miojo',4.5,'mercearia'],['Macarrão',5.5,'mercearia'],['Arroz 1 kg',6,'mercearia'],['Feijão',10,'mercearia'],['Açúcar 1 kg',5.5,'mercearia'],['Sal',4,'mercearia'],['Sal Grosso',5,'mercearia'],
+ ['Farinha de Trigo',7.5,'mercearia'],['Flocão',4,'mercearia'],['Maisena 200 g',8.5,'mercearia'],['Canjica',12,'mercearia'],['Tapioca 500 g',9,'mercearia'],['Milho de Pipoca',7.5,'mercearia'],
+ ['Fermento',6,'mercearia'],['Fermento em Pó',5,'mercearia'],['Óleo de Soja Liza',10,'mercearia'],['Óleo de Soja Soya',10,'mercearia'],['Vinagre',5.5,'mercearia'],['Sazon',8,'mercearia'],
+ ['Molho de Tomate',3,'mercearia'],['Molho Predilecta',2.5,'mercearia'],['Molho de Pimenta',4,'mercearia'],['Ketchup Bonare 390 g',13,'mercearia'],['Ketchup Cepêra 400 g',15.5,'mercearia'],
+ ['Sardinha',8,'mercearia'],['Milho Verde',5,'mercearia'],['Batata Palha',10,'mercearia'],['Farofa Yoki 400 g',7.5,'mercearia'],['Farofa da Terrinha',7,'mercearia'],['Queijo Ralado',6.5,'mercearia'],
+ ['Creme de Leite',5,'mercearia'],['Leite Condensado Italac',8.5,'mercearia'],['Leite Condensado Moça',11,'mercearia'],['Leite Italac Integral 1 L',7,'mercearia'],['Leite Italac Desnatado 1 L',7,'mercearia'],
+ ['Leite em Pó 400 g',24,'mercearia'],['Nescau 350 g',12,'mercearia'],['Café Pilão 500 g',30,'mercearia'],['Café 3 Corações 500 g',30,'mercearia'],['Café Melitta',31,'mercearia'],['Chá',4.5,'mercearia'],
+ ['Chá Leão',5,'mercearia'],['Margarina',11,'mercearia'],['Margarina 500 g',12,'mercearia'],['Pão Pullman',12,'mercearia'],['Bolacha Água e Sal',8,'mercearia'],['Bolacha Maisena',8,'mercearia'],
+ ['Ovo (unidade)',1,'mercearia'],['Dúzia de Ovos',12,'mercearia'],['Cartela de Ovos',26,'mercearia'],
+ ['Papel Higiênico',10.5,'mercearia'],['Papel Toalha',7.5,'mercearia'],['Guardanapo',4,'mercearia'],['Sabonete',4,'mercearia'],['Creme Dental',6.5,'mercearia'],['Absorvente',6.5,'mercearia'],
+ ['Detergente Ypê',4,'mercearia'],['Desinfetante Ypê',7,'mercearia'],['Desinfetante 2 L',10,'mercearia'],['Candida 1 L',5,'mercearia'],['Candida 2 L',8,'mercearia'],['Sabão em Pó 800 g',15,'mercearia'],
+ ['Amaciante Ypê',13,'mercearia'],['Veja Multiuso',6.5,'mercearia'],['Bombril',5,'mercearia'],['Esponja',1.5,'mercearia'],['Bucha',1.5,'mercearia']
+].map(([n,p,s])=>({n,p,s}));
+const semAcento=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const reaisCat=v=>'R$ '+v.toFixed(2).replace('.',',');
+const produtosDoSetor=id=>CATALOGO.filter(p=>p.s===id);
+function nomeProdutoVendido(id){ const l=produtosDoSetor(id); return l.length?pega(l).n:''; }
+let catFiltro='';
+function renderCatalogo(){
+  const q=semAcento($('#catBusca').value.trim());
+  const lista=CATALOGO.filter(p=>(!catFiltro||p.s===catFiltro)&&(!q||semAcento(p.n).includes(q))).sort((a,b)=>a.n.localeCompare(b.n,'pt-BR'));
+  $('#catFiltros').querySelectorAll('button').forEach(b=>b.classList.toggle('ativo',b.dataset.s===catFiltro));
+  let h='';
+  if(!lista.length) h=`<p class="fiado-vazio">Não encontramos “${$('#catBusca').value.trim()}” no catálogo do jogo. Pergunte no balcão da Adega do Edu: pode ser que tenha na loja.</p>`;
+  lista.forEach(p=>{ const e=EST[p.s]; h+=`<div class="cat-linha"><span class="cat-ic">${e.ic}</span><span class="bol-tx"><b>${p.n}</b><small>${CAT_SETOR[p.s]} · no jogo: ${e.nome}</small></span><b class="cat-preco">${reaisCat(p.p)}</b></div>`; });
+  $('#catLista').innerHTML=h; $('#catQtd').textContent=`${lista.length} ${lista.length===1?'produto':'produtos'}`;
+}
+function abrirCatalogo(setor){
+  catFiltro=setor&&CAT_SETOR[setor]?setor:''; $('#catBusca').value='';
+  $('#catFiltros').innerHTML=`<button type="button" data-s="">Todos</button>`+Object.keys(CAT_SETOR).map(s=>`<button type="button" data-s="${s}">${EST[s].ic} ${CAT_SETOR[s]}</button>`).join('');
+  $('#catFiltros').querySelectorAll('button').forEach(b=>b.onclick=()=>{ catFiltro=b.dataset.s; renderCatalogo(); });
+  fecharPainel(); renderCatalogo(); $('#telaCatalogo').hidden=false; SOM.abrir();
+}
+$('#catBusca').addEventListener('input',renderCatalogo);
+$('#btnCatFechar').addEventListener('click',()=>{ $('#telaCatalogo').hidden=true; });
+function catalogoNoPainel(k){
+  const l=produtosDoSetor(k); if(!l.length) return '';
+  const ex=l.slice().sort((a,b)=>b.p-a.p).slice(0,1).concat(l.slice(0,2)).filter((p,i,a)=>a.indexOf(p)===i).slice(0,2);
+  return `<div class="cat-real">🏪 <b>Na Adega de verdade:</b> ${ex.map(p=>`${p.n} ${reaisCat(p.p)}`).join(' · ')}${l.length>2?` e mais ${l.length-2}`:''}.<button type="button" class="link-btn" id="bCatSetor">🔎 Ver os produtos reais deste setor</button></div>`;
+}
+
 // ================= Mapa da Adega (etapas do jogo e quando liberam) =================
 const menorNivelSetores=()=>Math.min(...IDS.map(id=>S.est[id].aberta?S.est[id].nivel:0));
 const setoresAbertos=()=>IDS.filter(id=>S.est[id].aberta).length;
@@ -4133,6 +4212,7 @@ function trocarTextosRetorno(mapa){
 }
 $('#btnMapa').addEventListener('click',()=>abrirMapa());
 $('#btnMapaFechar').addEventListener('click',fecharMapa);
+$('#btnMapaCat').addEventListener('click',()=>irDoMapa(()=>abrirCatalogo()));
 
 // ================= Papo da Adega (conversa rápida, ideias e chat) =================
 const FRASES_PAPO=['Boa noite, turma! 👋','Bom dia, pessoal! ☀️','Bati 1 milhão! 🎉','Bora pro top 10! 🏆','Entrega perfeita! 🛵','Quem tá jogando agora? 🙋',
@@ -4392,7 +4472,7 @@ function renderPainel(){
         <div class="stat"><span>Tempo para pegar</span><b>${tempoEst(k).toFixed(1).replace('.',',')} s</b></div>
         <div class="stat"><span>Estoque</span><b>${e.estoque} / ${cap(k)}${e.pedido>0?` <span class="prox">🚚 +${e.pedido} a caminho</span>`:''}${atacQtd(k)?` <span class="prox">🚗 +${atacQtd(k)} do atacarejo</span>`:''}</b></div>
         <div class="stat"><span>Custo por unidade</span><b>${fmt(custoUnit(k))}</b></div>
-      </div>`+(faltando(k)>0?(qtdPossivel(k)>0&&qtdPossivel(k)<faltando(k)?btnCusto(qtdPossivel(k)*custoUnit(k),`🚚 Pedir +${qtdPossivel(k)} un.`,'bPedir'):btnCusto(custoPedido(k),`🚚 Pedir +${faltando(k)} un.`,'bPedir')):`<button class="btn azul" disabled>${e.pedido>0||atacQtd(k)?'Pedido a caminho':'Estoque completo'}</button>`)+compararCompra(k)+
+      </div>`+catalogoNoPainel(k)+(faltando(k)>0?(qtdPossivel(k)>0&&qtdPossivel(k)<faltando(k)?btnCusto(qtdPossivel(k)*custoUnit(k),`🚚 Pedir +${qtdPossivel(k)} un.`,'bPedir'):btnCusto(custoPedido(k),`🚚 Pedir +${faltando(k)} un.`,'bPedir')):`<button class="btn azul" disabled>${e.pedido>0||atacQtd(k)?'Pedido a caminho':'Estoque completo'}</button>`)+compararCompra(k)+
       `<p style="margin:8px 2px 0;color:var(--sub);font-size:.85rem;font-weight:700;line-height:1.35">Fique de olho no estoque: quando ele zera, os clientes não compram. Faça o pedido ao fornecedor antes de acabar.</p>`+(prox?`<div class="marcos"><span>Nv ${prox}: valor x2 e mais rápido</span><div class="trilho"><i style="width:${100*(e.nivel-ant)/(prox-ant)}%"></i></div></div>`:'')+
       `<div class="duas">${btnCusto(custoEst(k),'Melhorar','bAcao')}<button class="btn amarelo" id="bMax">Máximo<small id="bMaxTxt"></small></button></div>`;
     }
@@ -4425,6 +4505,7 @@ function renderPainel(){
   const bc=$('#bCaixa'); if(bc) bc.onclick=()=>{const c=CUSTO_CAIXA[S.caixas]*multPrest(); if(S.din<c) return; S.din-=c; S.caixas++; comprado(); atualizarEquipe();};
   const bp=$('#bPedir'); if(bp) bp.onclick=()=>{ if(pedir(k)) renderPainel(); };
   const bat=$('#bAtac'); if(bat) bat.onclick=()=>abrirListaAtac(k);
+  const bcat=$('#bCatSetor'); if(bcat) bcat.onclick=()=>abrirCatalogo(k);
   const bx=$('#bExtra'); if(bx) bx.onclick=()=>{ liberarExtras(); renderPainel(); renderSelos(); };
   const bmn=$('#bMesaNova'); if(bmn) bmn.onclick=()=>{const c=CUSTO_MESA[S.mesas.n]*multPrest(); if(S.din<c) return; S.din-=c; S.mesas.n++; atualizarMesas(); atualizarEquipe(); festa(mesasObj[S.mesas.n-1].g.position); comprado();};
   const bgc=$('#bGarcom'); if(bgc) bgc.onclick=()=>{const c=CUSTO_GARCOM*multPrest(); if(S.din<c) return; S.din-=c; S.mesas.garcom=true; atualizarEquipe(); comprado();};
