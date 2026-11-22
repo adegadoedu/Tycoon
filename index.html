@@ -356,11 +356,13 @@ body:not(.jogando) .alerta{display:none}
 .vitrine.madeira .vit-porta{border-color:#C8965A;background:#F6E7CC}
 .vit-led{height:8px;margin:6px 18%;border-radius:6px;background:#fff;box-shadow:0 0 18px 8px rgba(255,255,255,.9)}
 .vit-interior{max-height:55vh;overflow-y:auto;padding:6px 6px 0;-webkit-overflow-scrolling:touch}
-.vit-prat{display:flex;justify-content:flex-start;align-items:flex-end;gap:3px;padding:8px 4px 0;border-bottom:7px solid #FFFFFF;box-shadow:0 3px 0 #C9CDD6;margin-bottom:22px;min-height:50px}
+.vit-prat{display:flex;justify-content:flex-start;align-items:flex-end;gap:3px;padding:8px 4px 0;border-bottom:7px solid #FFFFFF;box-shadow:0 3px 0 #C9CDD6;margin-bottom:38px;min-height:50px}
 .vitrine.madeira .vit-prat{border-bottom:13px solid #E4BF86;box-shadow:0 4px 0 #B98A4E,inset 0 -1px 0 #F3D7A8}
 .vitrine.madeira .vit-porta{border:none;border-radius:6px;background:#EFEDE8;box-shadow:inset 12px 0 0 #E4BF86,inset -12px 0 0 #E4BF86,inset 14px 0 0 #B98A4E,inset -14px 0 0 #B98A4E}
 .vitrine.madeira .vit-interior{padding:6px 18px 0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.02) 0 2px,transparent 2px 9px)}
-.vit-etq{position:relative;top:9px;margin-top:-6px;background:#FFF;color:#2A1A12;border:1.5px solid #2A1A12;border-radius:3px;font:900 .62rem/1.2 'Nunito',sans-serif;padding:0 3px;white-space:nowrap;z-index:1;box-shadow:0 1px 0 rgba(0,0,0,.2)}
+.vit-etq{position:relative;top:11px;margin-top:-6px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;background:#FFF;color:#2A1A12;border:1.5px solid #2A1A12;border-radius:3px;padding:1px 3px 1px;z-index:1;box-shadow:0 1px 0 rgba(0,0,0,.2);text-align:center}
+.vit-etq b{font:800 .56rem/1.12 'Nunito',sans-serif;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;width:100%;word-break:break-word}
+.vit-etq span{font:900 .7rem/1.15 'Nunito',sans-serif;white-space:nowrap;border-top:1px dashed #9A8A7A;width:100%;margin-top:1px}
 .vitrine:not(.madeira) .vit-etq{background:#FFE14D}
 .vit-prod{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;background:none;border:2px solid transparent;border-radius:8px;padding:2px 2px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;font-family:'Nunito',sans-serif;position:relative;min-width:44px}
 .vit-prod svg{display:block;filter:drop-shadow(0 2px 0 rgba(0,0,0,.12))}
@@ -482,6 +484,15 @@ body:not(.jogando) .alerta{display:none}
   .hud #taxa{font-size:.62rem;line-height:1.05;white-space:normal;max-width:48px;text-align:center;padding:2px 4px}
 }
 @media (max-width:359px){ .hud #taxa{display:none} }
+.meta-selo{font-size:3.4rem;line-height:1;margin:4px 0 6px;animation:metaPulo .9s ease-out}
+@keyframes metaPulo{0%{transform:scale(.3) rotate(-20deg);opacity:0}60%{transform:scale(1.2) rotate(6deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+.meta-premio{background:#E7F8EC;color:#24804F;border:2.5px solid #2A1A12;border-radius:14px;padding:10px 14px;font-weight:900;font-size:1.25rem;margin:10px auto;display:inline-block}
+.meta-prox{font-size:.9rem;color:var(--sub)}
+.meta-lista{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0}
+.meta-lista span{background:#FFF3C4;border:2px solid #2A1A12;border-radius:999px;padding:3px 10px;font-weight:900;font-size:.85rem}
+.meta-lista span.ok{background:#BDF2CB}
+.tarefa.meta .barra i{background:#F2B21B}
+.mapa-no.meta .mapa-bola{background:#FFE58A}
 </style>
 </head>
 <body>
@@ -833,7 +844,7 @@ body:not(.jogando) .alerta{display:none}
 <section class="tela" id="telaCupom" hidden>
   <div class="caixa">
     <div class="cabeca"><h2 class="titulo" style="font-size:1.8rem">Trocar por desconto</h2><span class="pilula" id="cpSaldo"></span></div>
-    <p class="txt">Cada <b>1 milhão</b> no jogo vira <b>R$ 1,00</b> de cupom. O cupom dá <b>10% de desconto</b> na compra de produtos não alcoólicos da Adega do Edu, <b>até o valor dele</b>. Limite de <b>R$ 10,00 por mês</b>.</p>
+    <p class="txt">Cada <b>R$ 1.000</b> no caixa do jogo vira <b>R$ 1,00</b> de cupom. O cupom dá <b>10% de desconto</b> na compra de produtos não alcoólicos da Adega do Edu, <b>até o valor dele</b>. Limite de <b>R$ 10,00 por mês</b>.</p>
     <div class="stats"><div class="stat"><span>Dá para trocar agora</span><b id="cpPode">R$ 0,00</b></div><div class="stat"><span>Usado este mês</span><b id="cpMes">R$ 0,00 de R$ 10,00</b></div></div>
     <div class="seletor"><button type="button" id="cpMenos" aria-label="Diminuir valor">−</button><b id="cpValor">R$ 1,00</b><button type="button" id="cpMais" aria-label="Aumentar valor">+</button></div>
     <p class="txt" id="cpDica" style="font-size:.85rem;margin:6px 0 0"></p>
@@ -880,6 +891,26 @@ body:not(.jogando) .alerta{display:none}
   </div>
 </section>
 
+<section class="tela" id="telaMeta" hidden>
+  <div class="caixa centro">
+    <div class="meta-selo" id="metaSelo">🎯</div>
+    <h2 class="titulo" id="metaTitulo">Meta batida!</h2>
+    <p class="txt" id="metaTexto"></p>
+    <div class="meta-premio" id="metaPremio"></div>
+    <p class="txt meta-prox" id="metaProx"></p>
+    <button class="btn amarelo" id="btnMetaOk">Continuar</button>
+  </div>
+</section>
+<section class="tela" id="telaT2" hidden>
+  <div class="caixa centro">
+    <h2 class="titulo">Temporada 2: dinheiro de verdade</h2>
+    <p class="txt">Agora a Adega funciona como uma adega real: <b>uma Coca-Cola 2 L custa R$ 12,00</b>, um guaraná R$ 11,00, e cada produto vendido entra no caixa pelo preço do balcão da Adega do Edu.</p>
+    <p class="txt">Por isso todo mundo recomeça do zero. O seu nome, o seu personagem e as lições do Edu continuam com você. A Temporada 1 fica guardada nos registros da Adega.</p>
+    <div class="meta-lista" id="t2Metas"></div>
+    <p class="txt" style="font-size:.9rem;color:var(--sub)">Cada meta de faturamento batida dá um prêmio de 5% dela. 🎟️ Os cupons agora valem <b>R$ 1,00 a cada R$ 1.000</b> no caixa do jogo.</p>
+    <button class="btn amarelo" id="btnT2Ok">Bora abrir a adega!</button>
+  </div>
+</section>
 <section class="tela" id="telaPrestigio" hidden>
   <div class="caixa centro">
     <h2 class="titulo" style="font-size:2rem">Adega completa!</h2>
@@ -904,45 +935,52 @@ const C='#2A1A12';
 const NOTA=`<svg viewBox="0 0 30 20"><rect x="1.5" y="1.5" width="27" height="17" rx="3" fill="#5FCB7E" stroke="${C}" stroke-width="2.5"/><circle cx="15" cy="10" r="4.5" fill="#BDF2CB" stroke="${C}" stroke-width="1.8"/><path d="M6 5.5v9M24 5.5v9" stroke="#2E8B57" stroke-width="2"/></svg>`;
 $('#icDin').innerHTML=NOTA;
 
+// Temporada 2: todo o dinheiro do jogo é em reais (R$ 12,00 = uma Coca 2 L)
 function fmt(n){
-  n=Math.floor(n);
-  if(n<1000) return String(n);
-  const u=[[1e18,' quint'],[1e15,' quatri'],[1e12,' tri'],[1e9,' bi'],[1e6,' mi'],[1e3,' mil']];
-  for(const [v,s] of u) if(n>=v){ const x=n/v; return (x<100?x.toFixed(1):String(Math.floor(x))).replace('.',',').replace(/,0$/,'')+s; }
-  return String(n);
+  n=+n||0; const neg=n<0; n=Math.abs(n); let r;
+  if(n<999.995) r=(n>=100&&Math.abs(n-Math.round(n))<0.005)?String(Math.round(n)):n.toFixed(2).replace('.',',');   // R$ 12,00 · R$ 300
+  else if(n<100000) r=Math.floor(n).toLocaleString('pt-BR');
+  else if(n<1e6) r=(n/1e3).toFixed(1).replace('.',',').replace(/,0$/,'')+' mil';
+  else if(n<1e9) r=(n/1e6).toFixed(2).replace('.',',').replace(/,?0+$/,'')+' mi';
+  else r=(n/1e9).toFixed(2).replace('.',',').replace(/,?0+$/,'')+' bi';
+  return (neg?'-':'')+'R$ '+r;
 }
 
 // ================= Dados do jogo =================
 const EST={
-  refri:{nome:'Geladeira de refri',ic:'🥤',valor:4,abrir:0,custo:8,tempo:2.0,pos:[-4.0,0,-2.4],face:[1,0,0],cor:0xE8433A},
-  agua:{nome:'Geladeira de água e suco',ic:'💧',valor:9,abrir:120,custo:50,tempo:2.2,pos:[-4.0,0,0.9],face:[1,0,0],cor:0x2F8FD8},
-  salgadinho:{nome:'Prateleira de salgadinhos',ic:'🍿',valor:20,abrir:900,custo:320,tempo:2.4,pos:[-1.5,0,-4.0],face:[0,0,1],cor:0xFFB020},
-  gelo:{nome:'Freezer de gelo',ic:'🧊',valor:45,abrir:5000,custo:1600,tempo:2.6,pos:[1.6,0,-4.0],face:[0,0,1],cor:0x6EC6EA},
-  carvao:{nome:'Carvão (sacos de 2 kg e 4 kg)',ic:'🔥',valor:28,abrir:12000,custo:3500,tempo:2.4,pos:[4.15,0,3.1],face:[-1,0,0],cor:0xB5651D},
-  mercearia:{nome:'Mercearia',ic:'🛒',valor:110,abrir:25000,custo:7000,tempo:3.0,pos:[3.95,0,-1.8],face:[-1,0,0],cor:0x9B5DE5}
+  refri:{nome:'Geladeira de refri',ic:'🥤',valor:9,abrir:0,custo:2,tempo:2.0,pos:[-4.0,0,-2.4],face:[1,0,0],cor:0xE8433A},
+  agua:{nome:'Geladeira de água e suco',ic:'💧',valor:5,abrir:1500,custo:2.5,tempo:2.2,pos:[-4.0,0,0.9],face:[1,0,0],cor:0x2F8FD8},
+  salgadinho:{nome:'Prateleira de salgadinhos',ic:'🍿',valor:3.5,abrir:3000,custo:3,tempo:2.4,pos:[-1.5,0,-4.0],face:[0,0,1],cor:0xFFB020},
+  gelo:{nome:'Freezer de gelo',ic:'🧊',valor:12,abrir:6000,custo:3.5,tempo:2.6,pos:[1.6,0,-4.0],face:[0,0,1],cor:0x6EC6EA},
+  carvao:{nome:'Carvão (sacos de 2 kg e 4 kg)',ic:'🔥',valor:22,abrir:10000,custo:3.5,tempo:2.4,pos:[4.15,0,3.1],face:[-1,0,0],cor:0xB5651D},
+  mercearia:{nome:'Mercearia',ic:'🛒',valor:8,abrir:18000,custo:4,tempo:3.0,pos:[3.95,0,-1.8],face:[-1,0,0],cor:0x9B5DE5}
 };
 const IDS=['refri','agua','salgadinho','gelo','carvao','mercearia'];
-const FATOR_4KG=1.9;
 const MARCOS=[10,25,50,100];
-const CUSTO_CAIXA=[0,5000], MAX_CAIXAS=2;
-const CUSTO_GERENTE=10000;
-const CUSTO_OPERADOR=[1500,15000,90000];
-const CUSTO_MESA=[2500,6000,15000,40000,80000,150000], CUSTO_GARCOM=12000, TEMPO_MESA=7, CHANCE_MESA=0.55;
-function valorMesa(n){n=n||S.mesas.nivel;return 30*n*Math.pow(2,marcosAte(n))*multPrest();}
-function custoMesaNivel(){return Math.ceil(1200*Math.pow(1.2,S.mesas.nivel-1));}
-const MAX_CLIENTES_MIN=30, MAX_CAIXA_V=12;
-// o letreiro sobe até o nível em que atinge 30 clientes por minuto
-const MAX_LETREIRO=(()=>{let l=1;while(4.5*Math.pow(0.85,l-1)>60/MAX_CLIENTES_MIN+1e-9) l++;return l;})();
+const CUSTO_CAIXA=[0,2500], MAX_CAIXAS=2;
+const CUSTO_GERENTE=4000;
+const CUSTO_OPERADOR=[1200,6000,15000];
+const CUSTO_MESA=[300,500,800,1200,2000,3000], CUSTO_GARCOM=2500, TEMPO_MESA=7, CHANCE_MESA=0.55;
+function valorMesa(n){n=n||S.mesas.nivel;return Math.round((2+0.25*n)*multPrest()*100)/100;}   // o que o cliente consome a mais sentado, em reais
+function custoMesaNivel(){return Math.ceil(40*Math.pow(S.mesas.nivel,1.5)*multPrest());}
+const MAX_CLIENTES_MIN=24, MAX_CAIXA_V=12;
+// o letreiro sobe até o nível em que atinge 24 clientes por minuto (movimento de uma adega de bairro cheia)
+const MAX_LETREIRO=(()=>{let l=1;while(5.5*Math.pow(0.85,l-1)>60/MAX_CLIENTES_MIN+1e-9) l++;return l;})();
 
-const CHAVE='adegaEdu.tycoon.v1';
+const CHAVE='adegaEdu.tycoon.v2', CHAVE_T1='adegaEdu.tycoon.v1', TEMPORADA=2;
 function estadoNovo(prest){
-  return {din:0,total:0,prest:prest||0,
+  return {temporada:TEMPORADA,din:0,total:0,prest:prest||0,
     est:{refri:{aberta:true,nivel:1},agua:{aberta:false,nivel:1},salgadinho:{aberta:false,nivel:1},gelo:{aberta:false,nivel:1},carvao:{aberta:false,nivel:1},mercearia:{aberta:false,nivel:1}},
     caixas:1,operadores:0,cobrados:0,mesas:{n:0,nivel:1,garcom:false},caixaV:1,letreiro:1,gerente:false,tarefa:0,coletou:0,taxa:0,salvo:Date.now(),viuInicio:false};
 }
 let S;
 try{S=JSON.parse(localStorage.getItem(CHAVE));}catch(e){}
-if(!S||!S.est) S=estadoNovo();
+if(!S||!S.est||S.temporada!==TEMPORADA){
+  // Temporada 2: a adega recomeça com a economia em reais; perfil, personagem e lições continuam
+  let ant=null; try{ ant=JSON.parse(localStorage.getItem(CHAVE_T1)); }catch(e){}
+  S=estadoNovo();
+  if(ant&&ant.est){ ['perfil','visual','licoes','licoesVistas','guiaCorrVisto','viuVitrine','regrasChat','som'].forEach(k=>{ if(ant[k]!==undefined) S[k]=ant[k]; }); S.viuInicio=!!ant.viuInicio; S.avisoT2=true; }
+}
 if(S.operadores===undefined){S.operadores=0;S.cobrados=0;}
 const MAX_OPERADORES=1;
 if(S.operadores>MAX_OPERADORES) S.operadores=MAX_OPERADORES;
@@ -950,7 +988,7 @@ if(S.letreiro>MAX_LETREIRO) S.letreiro=MAX_LETREIRO;
 if(!S.est.carvao){S.est.carvao={aberta:false,nivel:1};}
 if(!S.est.mercearia){S.est.mercearia={aberta:false,nivel:1};}
 if(!S.mesas){S.mesas={n:0,nivel:1,garcom:false};}
-if(S.mesas.n>4){ let dev=0; for(let k=4;k<S.mesas.n;k++) dev+=[2500,6000,15000,40000,80000,150000][k]||0; S.din+=dev; S.mesas.n=4; }
+if(S.mesas.n>4){ S.mesas.n=4; }
 if(!S.mesasExtra) S.mesasExtra={}; if(typeof S.tempoJogo!=='number') S.tempoJogo=0;
 IDS.forEach(id=>{const e=S.est[id]; if(e.estoque===undefined){e.estoque=20+2*(e.nivel-1); e.pedido=0;}}); if(S.pedidos===undefined) S.pedidos=0;
 S.caixas=Math.min(S.caixas,2); S.operadores=Math.min(S.operadores,S.caixas);
@@ -958,35 +996,45 @@ var trocandoConta=false;
 function salvar(){if(trocandoConta)return;S.salvo=Date.now();if(typeof taxaPorMin==='function'){const t=taxaPorMin();if(t>0)S.taxa=t;}try{localStorage.setItem(CHAVE,JSON.stringify(S));}catch(e){}}
 
 const multPrest=()=>1+0.25*((S&&S.prest)||0);
+var precosCache={};   // preço médio de cada setor no catálogo da Adega real (o catálogo preenche)
 function marcosAte(n){return MARCOS.filter(m=>n>=m).length;}
-function valorEst(id,n){n=n||S.est[id].nivel;return EST[id].valor*n*Math.pow(2,marcosAte(n))*multPrest()*multNivel()*multEvento();}
+function valorEst(id){ return precosCache[id]||EST[id].valor; }   // preço médio real do setor (não sobe com o nível)
+// o nível do setor, o prestígio, a experiência e os eventos fazem o cliente levar 2 unidades mais vezes
+function chanceExtra(id,n){ n=n||S.est[id].nivel; return Math.max(0,Math.min(0.9,(n-1)/150+(multPrest()-1)*0.4+(multNivel()-1)+(multEvento()-1))); }
+function produtoVendido(id){ const l=CATALOGO.filter(p=>p.s===id); if(l.length){ const p=pega(l); return {n:p.n,p:p.p}; } return {n:EST[id].nome.split(' ')[0],p:EST[id].valor}; }
 function tempoEst(id,n){n=n||S.est[id].nivel;return EST[id].tempo/(1+0.35*marcosAte(n));}
-// Preço das melhorias: +20% por nível até o 40; depois, +5% por nível (para a venda no nível 100 ser alcançável)
-const NIVEL_CURVA=40, CRESC_ANTES=1.2, CRESC_DEPOIS=1.05;
-function custoNivelSetor(id,n){ return Math.ceil(EST[id].custo*Math.pow(CRESC_ANTES,Math.min(n,NIVEL_CURVA)-1)*Math.pow(CRESC_DEPOIS,Math.max(0,n-NIVEL_CURVA))); }
+// Preço das melhorias em reais: cresce devagar (n^1,5), como um investimento de verdade numa adega
+function custoNivelSetor(id,n){ return Math.ceil(EST[id].custo*(4+Math.pow(n,1.5))); }
 function custoEst(id){ return custoNivelSetor(id,S.est[id].nivel); }
-function custoCaixaV(){return Math.ceil(2500*Math.pow(1.6,S.caixaV-1));}
+function custoCaixaV(){return Math.ceil(400*Math.pow(1.4,S.caixaV-1));}
 function tempoPagar(v){return 2.4*Math.pow(0.86,(v||S.caixaV)-1);}
-function custoLetreiro(){return Math.ceil(20*Math.pow(1.62,S.letreiro-1));}
-function intervalo(l){return Math.max(60/MAX_CLIENTES_MIN,4.5*Math.pow(0.85,(l||S.letreiro)-1));}
+function custoLetreiro(){return Math.ceil(60*Math.pow(1.8,S.letreiro-1));}
+function intervalo(l){return Math.max(60/MAX_CLIENTES_MIN,5.5*Math.pow(0.85,(l||S.letreiro)-1));}
 
+// ================= Metas de faturamento (Temporada 2, em reais) =================
+const METAS=[1000,5000,10000,50000,100000,500000,1000000];
+const fatTemporada=()=>Math.floor(((S&&S.total)||0)+((S&&S.totalBase)||0));
+const nomeMeta=m=>m>=1e6?'R$ '+(m/1e6)+(m===1e6?' milhão':' milhões'):m>=1e5?'R$ '+(m/1e3)+' mil':'R$ '+m.toLocaleString('pt-BR');
+const premioMeta=m=>Math.round(m*0.05);
+const metaBatida=m=>!!(S&&S.metas&&S.metas.includes(m));
+const proximaMeta=()=>METAS.find(m=>!metaBatida(m));
 const TAREFAS=[
-  {txt:'Cobre 5 clientes no caixa tocando no balão',ic:'💳',meta:()=>[Math.min(S.cobrados,5),5],premio:20},
-  {txt:'Peça reposição de produtos ao fornecedor',ic:'🚚',meta:()=>[Math.min(S.pedidos||0,1),1],premio:30},
-  {txt:'Melhore a geladeira de refri até o nível 5',ic:'🥤',meta:()=>[Math.min(S.est.refri.nivel,5),5],premio:40},
-  {txt:'Abra a geladeira de água e suco',ic:'💧',meta:()=>[S.est.agua.aberta?1:0,1],premio:80},
-  {txt:'Melhore o letreiro da calçada até o nível 4',ic:'📣',meta:()=>[Math.min(S.letreiro,4),4],premio:150},
-  {txt:'Abra a prateleira de salgadinhos',ic:'🍿',meta:()=>[S.est.salgadinho.aberta?1:0,1],premio:300},
-  {txt:'Contrate um operador de caixa',ic:'🧑‍💼',meta:()=>[Math.min(S.operadores,1),1],premio:500},
-  {txt:'Leve a geladeira de refri ao nível 10',ic:'⭐',meta:()=>[Math.min(S.est.refri.nivel,10),10],premio:400},
-  {txt:'Abra as mesas para consumo no local',ic:'🍽️',meta:()=>[Math.min(S.mesas.n,1),1],premio:800},
-  {txt:'Abra o segundo caixa',ic:'🧾',meta:()=>[Math.min(S.caixas,2)-1,1],premio:1500},
-  {txt:'Abra o freezer de gelo',ic:'🧊',meta:()=>[S.est.gelo.aberta?1:0,1],premio:1500},
-  {txt:'Contrate o gerente para recolher o dinheiro sozinho',ic:'👔',meta:()=>[S.gerente?1:0,1],premio:3000},
-  {txt:'Abra o setor de carvão',ic:'🔥',meta:()=>[S.est.carvao.aberta?1:0,1],premio:3000},
-  {txt:'Abra a mercearia',ic:'🛒',meta:()=>[S.est.mercearia.aberta?1:0,1],premio:6000},
-  {txt:'Leve todos os setores da loja ao nível 25',ic:'🏆',meta:()=>[IDS.filter(i=>S.est[i].aberta&&S.est[i].nivel>=25).length,IDS.length],premio:10000},
-  {txt:'Fature 150 mil nesta adega',ic:'💰',meta:()=>[Math.min(S.total,150000*multPrest()),150000*multPrest()],premio:15000}
+  {txt:'Cobre 5 clientes no caixa tocando no balão',ic:'💳',meta:()=>[Math.min(S.cobrados,5),5],premio:10},
+  {txt:'Peça reposição de produtos ao fornecedor',ic:'🚚',meta:()=>[Math.min(S.pedidos||0,1),1],premio:15},
+  {txt:'Melhore a geladeira de refri até o nível 5',ic:'🥤',meta:()=>[Math.min(S.est.refri.nivel,5),5],premio:20},
+  {txt:'Abra a geladeira de água e suco',ic:'💧',meta:()=>[S.est.agua.aberta?1:0,1],premio:40},
+  {txt:'Melhore o letreiro da calçada até o nível 4',ic:'📣',meta:()=>[Math.min(S.letreiro,4),4],premio:60},
+  {txt:'Abra a prateleira de salgadinhos',ic:'🍿',meta:()=>[S.est.salgadinho.aberta?1:0,1],premio:100},
+  {txt:'Contrate um operador de caixa',ic:'🧑‍💼',meta:()=>[Math.min(S.operadores,1),1],premio:150},
+  {txt:'Leve a geladeira de refri ao nível 10',ic:'⭐',meta:()=>[Math.min(S.est.refri.nivel,10),10],premio:150},
+  {txt:'Abra as mesas para consumo no local',ic:'🍽️',meta:()=>[Math.min(S.mesas.n,1),1],premio:200},
+  {txt:'Abra o segundo caixa',ic:'🧾',meta:()=>[Math.min(S.caixas,2)-1,1],premio:300},
+  {txt:'Abra o freezer de gelo',ic:'🧊',meta:()=>[S.est.gelo.aberta?1:0,1],premio:400},
+  {txt:'Contrate o gerente para recolher o dinheiro sozinho',ic:'👔',meta:()=>[S.gerente?1:0,1],premio:600},
+  {txt:'Abra o setor de carvão',ic:'🔥',meta:()=>[S.est.carvao.aberta?1:0,1],premio:700},
+  {txt:'Abra a mercearia',ic:'🛒',meta:()=>[S.est.mercearia.aberta?1:0,1],premio:1000},
+  {txt:'Leve todos os setores da loja ao nível 25',ic:'🏆',meta:()=>[IDS.filter(i=>S.est[i].aberta&&S.est[i].nivel>=25).length,IDS.length],premio:2000},
+  {txt:'Fature R$ 100 mil nesta adega',ic:'💰',meta:()=>[Math.min(S.total,100000*multPrest()),100000*multPrest()],premio:3000}
 ];
 
 // ================= Som =================
@@ -1686,7 +1734,7 @@ function cobrar(c,modo){
   const topo=c.g.position.clone().setY(2.0);
   S.total+=c.valor; registrarGanho(c.valor); missaoEvento('cobrar',1); if(modo==='manual') missaoEvento('cobrarManual',1);
   if(modo==='manual'){
-    const gorjeta=Math.round(c.valor*0.3*Math.max(0,1-c.t/JANELA_GORJETA));
+    const gorjeta=Math.round(c.valor*30*Math.max(0,1-c.t/JANELA_GORJETA))/100;
     S.din+=c.valor+gorjeta; S.cobrados++; S.total+=gorjeta;
     SOM.maquininha(); voarNotas(topo,Math.min(6,2+Math.floor(Math.log10(c.valor+1))));
     pop(topo,'+'+fmt(c.valor),'grande');
@@ -1761,8 +1809,9 @@ function atualizarClientes(dt){
           c.g.userData.corpo.rotation.x=0;
           vagasEst[c.est][c.slot]=null; c.lista.shift();
           if(S.est[c.est].estoque>0){ S.est[c.est].estoque--; (c.pegou=c.pegou||{})[c.est]=(c.pegou[c.est]||0)+1; atualizarProdutos(c.est); missaoEvento('vender',1,c.est);
-            if(c.est==='carvao'){ const g4=Math.random()<0.45; c.valor+=valorEst('carvao')*(g4?FATOR_4KG:1); pop(c.g.position.clone().setY(1.7),'+🔥 '+(g4?'4 kg':'2 kg'),''); }
-            else { c.valor+=valorEst(c.est); const pn=nomeProdutoVendido(c.est); pop(c.g.position.clone().setY(1.7),'+'+EST[c.est].ic+(pn?' '+pn:''),''); }
+            if(false){}
+            else { const pr=produtoVendido(c.est), q2=S.est[c.est].estoque>0&&Math.random()<chanceExtra(c.est)?2:1; if(q2>1){ S.est[c.est].estoque--; c.pegou[c.est]++; missaoEvento('vender',1,c.est); }
+              c.valor=Math.round((c.valor+pr.p*q2)*100)/100; pop(c.g.position.clone().setY(1.7),'+'+EST[c.est].ic+' '+(q2>1?'2× ':'')+pr.n,''); }
             c.g.userData.sacola.visible=true; }
           else { pop(c.g.position.clone().setY(1.8),'😕 Acabou '+EST[c.est].ic,'ruim'); faltaComFiado(c.est); }
           c.est=null; proximoAlvo(c);
@@ -1798,7 +1847,7 @@ function atualizarClientes(dt){
 
 // ================= Estoque e fornecedor =================
 function cap(id,n){n=n||S.est[id].nivel;return 20+2*(n-1);}
-function custoUnit(id){return Math.max(1,Math.round(valorEst(id)/multEvento()*0.4*fatorFornecedor()));}
+function custoUnit(id){return Math.max(0.05,Math.round(valorEst(id)*0.7*fatorFornecedor()*100)/100);}   // custo de exemplo: margem média de 30%
 function faltando(id){const e=S.est[id], a=S.atac?(S.atac.itens?(S.atac.itens[id]||0):(S.atac.id===id?S.atac.q:0)):0;return Math.max(0,cap(id)-e.estoque-e.pedido-a);}
 function custoPedido(id){return faltando(id)*custoUnit(id);}
 const autoRepor=()=>false; // reposição sempre manual: o jogador faz os pedidos
@@ -1957,7 +2006,7 @@ async function sincronizar(forcar){
   if(!S.falido){
     const k=Math.floor(S.total)+'|'+S.mes;
     if(k!==ultimoEnvio){
-      try{ await rpc('enviar_faturamento',{p_id:S.perfil.id,p_token:S.perfil.token,p_total:Math.floor(S.total+(S.totalBase||0)),p_mes:S.mes,p_valor_mes:Math.floor(fatMes())}); ultimoEnvio=k; }
+      try{ await rpc('enviar_faturamento',{p_id:S.perfil.id,p_token:S.perfil.token,p_total:Math.floor(S.total+(S.totalBase||0)),p_mes:S.mes,p_valor_mes:Math.floor(fatMes()),p_temporada:TEMPORADA}); ultimoEnvio=k; }
       catch(e){ if(/jogador_invalido/.test(e.message)){ S.perfil.id=null; S.perfil.token=null; salvar(); return; } }
     }
   }
@@ -2053,7 +2102,8 @@ $('#btnEntrar').addEventListener('click',async()=>{
   try{
     const r=await rpc('entrar',{p_apelido:nome,p_senha:senha}); const l=Array.isArray(r)?r[0]:r;
     if(!l||l.status!=='ok'){ err.textContent=msgLogin[l&&l.status]||msgLogin.invalido; return; }
-    let novo=(l.estado&&typeof l.estado==='object'&&l.estado.est)?l.estado:estadoNovo();
+    let novo=(l.estado&&typeof l.estado==='object'&&l.estado.est&&l.estado.temporada===TEMPORADA)?l.estado:estadoNovo();
+    if(novo.temporada!==TEMPORADA) novo.temporada=TEMPORADA;
     novo.perfil={apelido:l.apelido,idade:l.idade,id:l.jogador_id,token:l.chave,temSenha:true,visual:(l.estado&&l.estado.perfil&&l.estado.perfil.visual)||null};
     novo.viuInicio=true; novo.saiu=false; novo.salvo=Date.now();
     if(l.falido){ novo.falido=true; novo.falidoApelido=l.apelido; }
@@ -2096,7 +2146,7 @@ function atualizarAlerta(){
   if(!pior){ el.hidden=true; return; }
   const e=S.est[pior], qp=qtdPossivel(pior), c=qp>0?qp*custoUnit(pior):custoPedido(pior);
   const rua=qp<=0&&S.fiado?fiadoNaRua():0;
-  $('#alertaTxt').textContent=`${EST[pior].ic} ${EST[pior].nome}: ${e.estoque?'estoque acabando ('+e.estoque+'/'+cap(pior)+')':'acabou o estoque!'}`+(rua>0?` · falta caixa, e 💵 ${fmt(rua)} está no fiado 📒${textoRepor(rua,pior)?' (repunha '+textoRepor(rua,pior)+')':''}`:'');
+  $('#alertaTxt').textContent=`${EST[pior].ic} ${EST[pior].nome}: ${e.estoque?'estoque acabando ('+e.estoque+'/'+cap(pior)+')':'acabou o estoque!'}`+(rua>0?` · falta caixa, e ${fmt(rua)} está no fiado 📒${textoRepor(rua,pior)?' (repunha '+textoRepor(rua,pior)+')':''}`:'');
   if(rua>0) oferecerLicao('fiado');
   const b=$('#alertaBtn'); const html='🚚 Pedir '+NOTA+' '+fmt(c); if(b._h!==html){b._h=html;b.innerHTML=html;}
   b.disabled=qp<=0; b.dataset.id=pior; el.hidden=false;
@@ -2160,7 +2210,7 @@ function novaAdega(){
 $('#btnRecomecar').addEventListener('click',novaAdega);
 
 // ================= Cupons de desconto =================
-const MOEDAS_POR_REAL=1000000, LIMITE_MES_REAIS=10;
+const MOEDAS_POR_REAL=1000, LIMITE_MES_REAIS=10;   // R$ 1.000 no caixa do jogo = R$ 1,00 de cupom
 const cp={usadoMes:0,valor:1,online:false};
 const reais=c=>'R$ '+(c/100).toFixed(2).replace('.',',');
 const dataBR=d=>new Date(d).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
@@ -2176,7 +2226,7 @@ function renderCupom(){
   $('#cpMenos').disabled=cp.valor<=1; $('#cpMais').disabled=cp.valor>=m;
   const g=$('#cpGerar');
   g.disabled=!cp.online||m<1;
-  g.textContent=!cp.online?'Cupons indisponíveis':m>=1?`Gerar cupom de até ${reais(cp.valor*100)}`:(cp.usadoMes>=LIMITE_MES_REAIS*100?'Limite do mês atingido':'Junte 1 milhão para trocar');
+  g.textContent=!cp.online?'Cupons indisponíveis':m>=1?`Gerar cupom de até ${reais(cp.valor*100)}`:(cp.usadoMes>=LIMITE_MES_REAIS*100?'Limite do mês atingido':'Junte R$ 1.000 para trocar');
 }
 const cpPct={};
 const textoCupom=(pct,c)=>pct?`${pct}% até ${reais(c)}`:reais(c);
@@ -2221,7 +2271,7 @@ $('#cpGerar').addEventListener('click',async()=>{
   g.disabled=true; g.textContent='Gerando cupom…'; err.textContent='';
   try{
     ultimoEnvio=''; await sincronizar();
-    const r=await rpc('trocar_por_cupom',{p_id:S.perfil.id,p_token:S.perfil.token,p_reais:v}); const l=Array.isArray(r)?r[0]:r;
+    const r=await rpc('trocar_por_cupom',{p_id:S.perfil.id,p_token:S.perfil.token,p_reais:v,p_temporada:TEMPORADA}); const l=Array.isArray(r)?r[0]:r;
     S.din-=v*MOEDAS_POR_REAL; salvar(); atualizarHUD(true); SOM.marco();
     const box=document.createElement('div'); box.className='cupom-novo';
     const t1=document.createElement('div'); t1.textContent='Seu cupom: 10% de desconto, até '+reais(l.cupom_centavos)+':';
@@ -2237,7 +2287,7 @@ $('#cpGerar').addEventListener('click',async()=>{
 });
 
 // ---------- Cupom de conclusão (todas as tarefas) ----------
-const msgConclusao={conta_nova:'Contas novas precisam esperar 1 dia para gerar cupons. Continue jogando!',pouco_tempo_jogo:'Para gerar cupons, é preciso ter pelo menos 2 horas de jogo registradas. Continue jogando!',cupons_bloqueados:'Os cupons desta conta estão bloqueados pela Adega do Edu. Fale com a loja.',conclusao_incompleta:'O seu faturamento registrado ainda não chegou a 150 mil. Jogue mais um pouco e tente de novo.',conclusao_ja_pega:'Você já pegou o seu cupom de conclusão. Ele é único, um por jogador.',limite_mensal:'Você já usou o limite de R$ 10,00 em cupons este mês. Volte no mês que vem!',jogador_falido:'Essa adega faliu e não pode gerar cupons.'};
+const msgConclusao={conta_nova:'Contas novas precisam esperar 1 dia para gerar cupons. Continue jogando!',pouco_tempo_jogo:'Para gerar cupons, é preciso ter pelo menos 2 horas de jogo registradas. Continue jogando!',cupons_bloqueados:'Os cupons desta conta estão bloqueados pela Adega do Edu. Fale com a loja.',conclusao_incompleta:'O seu faturamento registrado ainda não chegou a R$ 100 mil. Jogue mais um pouco e tente de novo.',conclusao_ja_pega:'Você já pegou o seu cupom de conclusão. Ele é único, um por jogador.',limite_mensal:'Você já usou o limite de R$ 10,00 em cupons este mês. Volte no mês que vem!',jogador_falido:'Essa adega faliu e não pode gerar cupons.'};
 $('#btnConclusao').addEventListener('click',async()=>{
   const btn=$('#btnConclusao'), err=$('#conclErro'); if(btn.disabled) return;
   if(!rankingAtivo()||!S.perfil||!S.perfil.id){ err.textContent='Para pegar o cupom, o jogo precisa estar conectado à internet com o seu cadastro.'; return; }
@@ -2489,8 +2539,8 @@ function novoPedido(){
   if(total<2) return null;
   const n=Math.min(total,2+Math.floor(Math.random()*3)), itens={};
   for(let k=0;k<n;k++){ const ok=disp.filter(id=>(itens[id]||0)<S.est[id].estoque); if(!ok.length) break; const id=ok[Math.floor(Math.random()*ok.length)]; itens[id]=(itens[id]||0)+1; }
-  let valor=0; Object.keys(itens).forEach(id=>valor+=valorEst(id)*itens[id]*(id==='carvao'&&Math.random()<0.45?FATOR_4KG:1));
-  return {itens,valor:Math.round(valor*FATOR_ENTREGA)};
+  let valor=0; Object.keys(itens).forEach(id=>{ for(let u=0;u<itens[id];u++) valor+=produtoVendido(id).p; });
+  return {itens,valor:Math.round(valor*FATOR_ENTREGA*100)/100};
 }
 function textoStatsEntregas(){
   const e=S.entregas||{feitas:0,perdidas:0}, f=e.feitas||0, p=e.perdidas||0;
@@ -2625,18 +2675,18 @@ addEventListener('keydown',e=>{ if(!ENT.ativo) return; const k=e.key;
 
 // ================= Ponto de Retirada (Mercado Livre, Shopee e Amazon) =================
 const PARCEIROS={
-  ml:{nome:'Mercado Livre',cor:'#FFE14D',txt:'#2D3277',fator:18,ativar:0},
-  shopee:{nome:'Shopee',cor:'#EE4D2D',txt:'#FFFFFF',fator:15,ativar:2000},
-  amazon:{nome:'Amazon',cor:'#232F3E',txt:'#FF9900',fator:22,ativar:4000}
+  ml:{nome:'Mercado Livre',cor:'#FFE14D',txt:'#2D3277',fator:1.5,ativar:0},
+  shopee:{nome:'Shopee',cor:'#EE4D2D',txt:'#FFFFFF',fator:1.2,ativar:800},
+  amazon:{nome:'Amazon',cor:'#232F3E',txt:'#FF9900',fator:2,ativar:1500}
 };
 const pdrNovo=()=>({liberado:false,nivel:1,estante:0,parceiros:{ml:true,shopee:false,amazon:false},recebidos:0,retirados:0,ganho:0});
 function PDR(){ if(!S.pdr) S.pdr=pdrNovo(); return S.pdr; }
 const NIVEL_PDR=40;
 const pdrPodeLiberar=()=>IDS.every(id=>S.est[id].aberta&&S.est[id].nivel>=NIVEL_PDR);
 const capPdr=n=>8+4*((n||PDR().nivel)-1);
-const custoPdr=()=>Math.round(valorEst('refri')*400*Math.pow(1.35,PDR().nivel-1));
-const taxaPdr=k=>Math.max(1,Math.round(valorEst('refri')*PARCEIROS[k].fator));
-const custoAtivarPdr=k=>Math.round(valorEst('refri')*PARCEIROS[k].ativar);
+const custoPdr=()=>Math.round(150*Math.pow(1.35,PDR().nivel-1));   // reais
+const taxaPdr=k=>PARCEIROS[k].fator*multPrest();   // comissão por pacote retirado, em reais
+const custoAtivarPdr=k=>PARCEIROS[k].ativar;
 let pdrEmRota=0, tSpawnPdr=5;
 
 // ---------- Estante no canto do fundo ----------
@@ -2797,12 +2847,12 @@ function renderPdr(){
     const linha=document.createElement('div'); linha.className='stat';
     linha.innerHTML=`<span>${P.nome}<br><small>${fmt(taxaPdr(k))} por pacote</small></span>`;
     if(at){ const s=document.createElement('b'); s.textContent='✔ Ativo'; linha.appendChild(s); }
-    else { const c=custoAtivarPdr(k), bt=document.createElement('button'); bt.type='button'; bt.className='btn peq'; bt.innerHTML='Ativar · 💵 '+fmt(c); bt.disabled=S.din<c;
+    else { const c=custoAtivarPdr(k), bt=document.createElement('button'); bt.type='button'; bt.className='btn peq'; bt.innerHTML='Ativar · '+fmt(c); bt.disabled=S.din<c;
       bt.addEventListener('click',()=>{ if(S.din<c) return; S.din-=c; p.parceiros[k]=true; salvar(); SOM.marco(); atualizarHUD(true); renderPdr(); }); linha.appendChild(bt); }
     b.appendChild(linha);
   });
   const c=custoPdr(), bt=document.createElement('button'); bt.type='button'; bt.className='btn'; bt.style.marginTop='12px';
-  bt.innerHTML=`Ampliar estante (+4 lugares) · 💵 ${fmt(c)}`; bt.disabled=S.din<c;
+  bt.innerHTML=`Ampliar estante (+4 lugares) · ${fmt(c)}`; bt.disabled=S.din<c;
   bt.addEventListener('click',()=>{ if(S.din<c) return; S.din-=c; p.nivel++; salvar(); SOM.comprar&&SOM.comprar(); atualizarHUD(true); atualizarCaixasPdr(); renderPdr(); });
   b.appendChild(bt);
   add('<p class="txt" style="font-size:.85rem;color:var(--sub);margin-top:8px">Se a estante estiver cheia quando a van chegar, os pacotes que não couberem são recusados e a Adega deixa de ganhar por eles.</p>');
@@ -2814,21 +2864,18 @@ atualizarCaixasPdr();
 // ================= Venda da Adega (valuation, propostas e recomeço com bônus) =================
 var NIVEL_VENDA=100;
 const COMPRADORES=[
-  {nome:'Rede Bairro Bom',fator:0.95,cond:'Paga à vista',vant:'A nova adega começa com um capital inicial maior.',capital:60000,brinde:''},
+  {nome:'Rede Bairro Bom',fator:0.95,cond:'Paga à vista',vant:'A nova adega começa com um capital inicial maior.',capital:3000,brinde:''},
   {nome:'Grupo Gelado',fator:1.10,cond:'Paga mais, em parcelas',vant:'Dá o maior bônus permanente, mas a nova adega começa sem capital.',capital:0,brinde:''},
   {nome:'Investidor Anjo',fator:1.00,cond:'Vira seu sócio investidor',vant:'A nova adega já começa com um operador de caixa contratado.',capital:15000,brinde:'operador'}
 ];
-function vendaLiberada(){ return !!(S&&!S.falido&&IDS.every(id=>S.est[id].aberta&&S.est[id].nivel>=100)); }
-const pontosVenda=v=>Math.max(0.5,Math.log10(Math.max(v,1))-6);
+function vendaLiberada(){ return !!(S&&!S.falido&&IDS.every(id=>S.est[id].aberta&&S.est[id].nivel>=100)&&(S.total+(S.totalBase||0))>=1000000); }
+const pontosVenda=v=>Math.max(0.5,Math.log10(Math.max(v,1))-5);   // em reais: R$ 1 mi = 1 ponto, R$ 10 mi = 2
 const bonusPct=p=>Math.round(25*p);
-function investidoSetor(id){ const n=S.est[id].nivel, c=EST[id].custo, m=Math.min(n,NIVEL_CURVA), topo=Math.pow(CRESC_ANTES,NIVEL_CURVA-1);
-  let tot=c*(Math.pow(CRESC_ANTES,m-1)-1)/(CRESC_ANTES-1);
-  if(n>NIVEL_CURVA) tot+=c*topo*(Math.pow(CRESC_DEPOIS,n-NIVEL_CURVA)-1)/(CRESC_DEPOIS-1);
-  return EST[id].abrir*multPrest()+tot; }
+function investidoSetor(id){ const e=S.est[id]; if(!e.aberta) return 0; let tot=EST[id].abrir*multPrest(); for(let k=1;k<e.nivel;k++) tot+=custoNivelSetor(id,k); return tot; }
 function valuation(){
   const mediaVenda=IDS.reduce((a,id)=>a+valorEst(id),0)/IDS.length;
   const rendaMin=Math.max(taxaPorMin(),mediaVenda*25);
-  const receita=rendaMin*60*10*300;
+  const receita=rendaMin*60*0.25*300;
   let margem=0.25; const mm=[];
   if(S.gerente){ margem+=0.05; mm.push('gerente +5%'); }
   if(S.operadores){ margem+=0.03*Math.min(2,S.operadores); mm.push('caixa automático +'+(3*Math.min(2,S.operadores))+'%'); }
@@ -2904,7 +2951,7 @@ async function aceitarProposta(i){
   const N=estadoNovo((ant.prest||0)+pts);
   Object.assign(N,{perfil:ant.perfil,viuInicio:true,mes:ant.mes,totalBase:(ant.totalBase||0)+ant.total,totalInicioMes:-fatMes(),
     conclusaoMes:ant.conclusaoMes,regrasChat:ant.regrasChat,entregas:ant.entregas,apelidosFalidos:ant.apelidosFalidos,
-    nivelJ:ant.nivelJ,xp:ant.xp,vendas:(ant.vendas||[]).concat([venda]),adegaNum:num+1,certificado:venda});
+    nivelJ:ant.nivelJ,xp:ant.xp,metas:ant.metas,vendas:(ant.vendas||[]).concat([venda]),adegaNum:num+1,certificado:venda});
   N.din=Math.round(c.capital*(1+0.25*N.prest));
   if(c.brinde==='operador') N.operadores=1;
   trocandoConta=true;
@@ -3043,7 +3090,7 @@ function avisarEvento(){
 }
 function adicionarMissaoEvento(M){
   const ev=eventoAtual(); if(!ev||!M||M.lista.some(m=>m.evento===ev.id)) return;
-  M.lista.push({tipo:'cobrar',setor:null,n:pega([60,80,100]),prog:0,pega:false,premio:Math.max(1000,Math.round(rendaRefMissao()*4*(M.fator||1))),evento:ev.id,evNome:ev.nome,evIc:ev.ic});
+  M.lista.push({tipo:'cobrar',setor:null,n:pega([60,80,100]),prog:0,pega:false,premio:Math.max(40,Math.round(rendaRefMissao()*4*(M.fator||1))),evento:ev.id,evNome:ev.nome,evIc:ev.ic});
   salvar();
 }
 setInterval(()=>{ if(S&&document.body.classList.contains('jogando')){ atualizarDecor(); avisarEvento(); } },30000);
@@ -3063,8 +3110,8 @@ function somarXP(g,silencioso){
 }
 function ganharXP(tipo,q){ somarXP((XP_EVENTO[tipo]||0)*(q||1)); }
 function subiuNivel(sub){
-  const p=Math.max(500,Math.round(rendaRefMissao()*2*sub)); S.din+=p; SOM.marco();
-  toastMissao('⭐ Nível '+S.nivelJ+'! +1% em todas as vendas e 💵 '+fmt(p)); salvar(); atualizarHUD(true);
+  const p=Math.max(20,Math.round(rendaRefMissao()*2*sub)); S.din+=p; SOM.marco();
+  toastMissao('⭐ Nível '+S.nivelJ+'! +1% em todas as vendas e '+fmt(p)); salvar(); atualizarHUD(true);
 }
 function renderNivelBox(){
   const el=$('#persNivel'); if(!el||!S) return;
@@ -3092,14 +3139,14 @@ const POOL_MISSOES=[
   {tipo:'vender',ic:'🛒',setor:true,txt:(n,id)=>`Venda ${n} ${NOMES_VENDA[id]||'produtos'}`,n:()=>metaClientes(14/Math.max(1,IDS.filter(i=>S.est[i].aberta).length))},
   {tipo:'melhorar',ic:'⬆️',txt:n=>`Faça ${n} melhorias nos setores`,n:()=>pega([3,5,8])},
   {tipo:'repor',ic:'🚚',txt:n=>`Peça reposição ao fornecedor ${n} vezes`,n:()=>pega([3,4])},
-  {tipo:'faturar',ic:'💵',txt:n=>`Fature ${fmt(n)} hoje`,n:()=>Math.max(5000,Math.round(rendaRefMissao()*25/1000)*1000)},
+  {tipo:'faturar',ic:'💵',txt:n=>`Fature ${fmt(n)} hoje`,n:()=>Math.max(300,Math.round(rendaRefMissao()*25/100)*100)},
   {tipo:'mesa',ic:'🍽️',req:()=>S.mesas&&S.mesas.n>0,txt:n=>`Sirva ${n} clientes nas mesas`,n:()=>pega([10,20])},
   {tipo:'entrega',ic:'🛵',req:()=>entregasLiberadas(),txt:n=>`Faça ${n} entregas de moto`,n:()=>pega([2,3,5])}
 ];
 const diaSP=t=>new Date(t).toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});
-function clientesPorMin(){ const ab=IDS.filter(i=>S.est[i].aberta); const m=ab.length?ab.reduce((a,i)=>a+valorEst(i),0)/ab.length:4; const t=taxaPorMin(); return t>0?Math.min(30,Math.max(4,t/m)):8; }
+function clientesPorMin(){ const ab=IDS.filter(i=>S.est[i].aberta); const m=ab.length?ab.reduce((a,i)=>a+valorEst(i),0)/ab.length:9; const t=taxaPorMin(); return t>0?Math.min(30,Math.max(4,t/m)):8; }
 function metaClientes(min){ return Math.max(10,Math.round(clientesPorMin()*min/5)*5); }
-function rendaRefMissao(){ const ab=IDS.filter(i=>S.est[i].aberta); const m=ab.length?ab.reduce((a,i)=>a+valorEst(i),0)/ab.length:4; return Math.max(taxaPorMin(),m*10); }
+function rendaRefMissao(){ const ab=IDS.filter(i=>S.est[i].aberta); const m=ab.length?ab.reduce((a,i)=>a+valorEst(i),0)/ab.length:9; return Math.max(taxaPorMin(),m*10); }
 function missoesLiberadas(){ return !!(S&&S.perfil&&S.tarefa>=3&&!S.falido); }
 const CICLO_MISSOES=6*3600e3;
 const inicioMissoes=M=>M?(M.inicio||(M.dia?new Date(M.dia+'T00:00:00-03:00').getTime():0)):0;
@@ -3111,7 +3158,7 @@ function garantirMissoes(){
     const disp=POOL_MISSOES.filter(p=>!p.req||p.req()).sort(()=>Math.random()-0.5).slice(0,3);
     const hojeR=diaSP(agora); S.rodadasDia=(S.rodadasDia&&S.rodadasDia.dia===hojeR)?{dia:hojeR,n:S.rodadasDia.n+1}:{dia:hojeR,n:1};
     const fator=S.rodadasDia.n<=2?1:0.5;
-    const premio=Math.max(300,Math.round(rendaRefMissao()*1.5*fator));
+    const premio=Math.max(10,Math.round(rendaRefMissao()*1.5*fator));
     const lista=disp.map(p=>({tipo:p.tipo,setor:p.setor?pega(IDS.filter(i=>S.est[i].aberta)):null,n:p.n(),prog:0,pega:false,premio}));
     S.missoes=M={inicio:agora,dia:diaSP(agora),lista,bauPego:false,seq,fator,rodada:S.rodadasDia.n};
     salvar();
@@ -3151,7 +3198,7 @@ function renderMissoes(){
     const p=m.evento?{ic:m.evIc}:(POOL_MISSOES.find(x=>x.tipo===m.tipo)||{ic:'⭐'}), feito=m.prog>=m.n, pct=Math.round(100*m.prog/m.n);
     const d=document.createElement('div'); d.className='missao'+(m.pega?' pega':'');
     const prog=m.tipo==='faturar'?fmt(m.prog)+' / '+fmt(m.n):m.prog+' / '+m.n;
-    d.innerHTML=`<div class="missao-ic">${p.ic}</div><div class="missao-corpo"><div class="missao-txt">${m.evento?'<span class="ev-tag">'+m.evNome+'</span> ':''}${textoMissao(m)}</div><div class="missao-barra"><i style="width:${pct}%"></i></div><div class="missao-info">${prog} · prêmio 💵 ${fmt(m.premio)}</div></div>`;
+    d.innerHTML=`<div class="missao-ic">${p.ic}</div><div class="missao-corpo"><div class="missao-txt">${m.evento?'<span class="ev-tag">'+m.evNome+'</span> ':''}${textoMissao(m)}</div><div class="missao-barra"><i style="width:${pct}%"></i></div><div class="missao-info">${prog} · prêmio ${fmt(m.premio)}</div></div>`;
     const bt=document.createElement('button'); bt.type='button'; bt.className='btn peq missao-btn';
     if(m.pega){ bt.textContent='✔'; bt.disabled=true; }
     else if(feito){ bt.textContent='Pegar'; bt.addEventListener('click',()=>{ m.pega=true; S.din+=m.premio; ganharXP('missao',1); SOM.coletar(); salvar(); atualizarHUD(true); atualizarBtnMissoes(); renderMissoes(); }); }
@@ -3160,7 +3207,7 @@ function renderMissoes(){
   });
   const todas=M.lista.filter(m=>!m.evento).every(m=>m.pega), pb=premioBau(M);
   const bau=document.createElement('div'); bau.className='bau'+(M.bauPego?' aberto':'');
-  bau.innerHTML=`<div class="bau-ic">${M.bauPego?'🎉':'🎁'}</div><div class="missao-corpo"><div class="missao-txt">Baú do dia</div><div class="missao-info">${M.bauPego?'Aberto! Volte quando as próximas missões chegarem para manter a sequência.':'Complete as 3 missões para abrir · 💵 '+fmt(pb)}</div><div class="missao-info">🔥 Sequência: ${M.seq||0} ${M.seq===1?'baú':'baús'} seguidos · bônus +${5*Math.min(6,M.seq||0)}%</div></div>`;
+  bau.innerHTML=`<div class="bau-ic">${M.bauPego?'🎉':'🎁'}</div><div class="missao-corpo"><div class="missao-txt">Baú do dia</div><div class="missao-info">${M.bauPego?'Aberto! Volte quando as próximas missões chegarem para manter a sequência.':'Complete as 3 missões para abrir · '+fmt(pb)}</div><div class="missao-info">🔥 Sequência: ${M.seq||0} ${M.seq===1?'baú':'baús'} seguidos · bônus +${5*Math.min(6,M.seq||0)}%</div></div>`;
   const bb=document.createElement('button'); bb.type='button'; bb.className='btn amarelo peq missao-btn';
   if(M.bauPego){ bb.textContent='✔'; bb.disabled=true; }
   else if(todas){ bb.textContent='Abrir'; bb.addEventListener('click',()=>{ M.bauPego=true; M.seq=(M.seq||0)+1; S.din+=pb; ganharXP('bau',1); SOM.marco(); salvar(); atualizarHUD(true); atualizarBtnMissoes(); renderMissoes(); }); }
@@ -3177,7 +3224,7 @@ setTimeout(()=>{ if(S){ garantirMissoes(); atualizarBtnMissoes(); } },2500);
 
 // ================= Corretora da Adega (parte 1 do IPO) =================
 function corretoraLiberadaLocal(){ return !!(S&&S.perfil&&S.perfil.id&&!S.falido&&IDS.every(id=>S.est[id].aberta&&S.est[id].nivel>=40)); }
-const MSG_CORR={corretora_bloqueada:'A corretora libera quando todos os setores da sua adega chegam ao nível 40.',valor_minimo:'O valor mínimo é de 1 mil.',saldo_insuficiente:'Você não tem esse saldo na corretora.',limite_diario:'Esse valor passa do seu limite de aportes de hoje.',jogador_falido:'Adegas falidas não podem investir.',jogador_invalido:'Sua conta não foi reconhecida. Entre de novo.'};
+const MSG_CORR={corretora_bloqueada:'A corretora libera quando todos os setores da sua adega chegam ao nível 40.',valor_minimo:'O valor mínimo é R$ 10.',saldo_insuficiente:'Você não tem esse saldo na corretora.',limite_diario:'Esse valor passa do seu limite de aportes de hoje.',jogador_falido:'Adegas falidas não podem investir.',jogador_invalido:'Sua conta não foi reconhecida. Entre de novo.'};
 let corrStatus=null;
 const lerValor=t=>Math.floor(Number(String(t).replace(/\D/g,''))||0);
 async function carregarCorretora(){
@@ -3189,7 +3236,7 @@ async function carregarCorretora(){
 function renderCorretora(){
   const C=corrStatus, b=$('#corrConteudo'); b.innerHTML='';
   const add=h=>{ const d=document.createElement('div'); d.innerHTML=h; while(d.firstChild) b.appendChild(d.firstChild); };
-  add(`<div class="corr-saldo"><span>Saldo na corretora</span><b>💵 ${fmt(Number(C.saldo))}</b></div>`);
+  add(`<div class="corr-saldo"><span>Saldo na corretora</span><b>${fmt(Number(C.saldo))}</b></div>`);
   const bg=document.createElement('button'); bg.type='button'; bg.className='pilula guia-btn'; bg.textContent='❓ Como funciona a corretora'; bg.addEventListener('click',abrirGuiaCorr); b.appendChild(bg);
   add('<p class="txt">A corretora é onde fica o dinheiro que você separa para <b>investir</b>. Em breve, você poderá comprar ações das adegas de outros jogadores quando elas abrirem capital na bolsa (IPO).</p>');
   const saldo=Number(C.saldo);
@@ -3207,7 +3254,7 @@ function renderCorretora(){
     const brs=document.createElement('button'); brs.type='button'; brs.className='btn amarelo'; brs.textContent='Resgatar';
     brs.addEventListener('click',async()=>{
       const v=lerValor(ri.value);
-      if(v<1000) return alert('O resgate mínimo é de 1 mil.');
+      if(v<10) return alert('O resgate mínimo é de R$ 10.');
       if(v>saldo) return alert(MSG_CORR.saldo_insuficiente);
       if(!confirm('Resgatar '+fmt(v)+' da corretora para o caixa da adega?')) return;
       brs.disabled=true;
@@ -3234,7 +3281,7 @@ function renderCorretora(){
   const bt=document.createElement('button'); bt.type='button'; bt.className='btn'; bt.textContent='Aportar'; bt.disabled=!disp;
   bt.addEventListener('click',async()=>{
     const v=lerValor(inp.value);
-    if(v<1000) return alert('O aporte mínimo é de 1 mil.');
+    if(v<10) return alert('O aporte mínimo é de R$ 10.');
     if(v>S.din) return alert('Você não tem esse dinheiro no caixa da adega.');
     if(v>disp) return alert(MSG_CORR.limite_diario);
     bt.disabled=true;
@@ -3243,7 +3290,7 @@ function renderCorretora(){
     catch(e){ const k=Object.keys(MSG_CORR).find(x=>e.message.indexOf(x)>=0); alert(k?MSG_CORR[k]:'Não foi possível fazer o aporte agora. Confira a internet.'); bt.disabled=false; }
   });
   box.appendChild(bt);
-  add('<p class="txt" style="font-size:.82rem;color:var(--sub)">O limite diário é de 5% de todo o faturamento da sua adega (mínimo de 100 mil). Você pode resgatar o saldo para o caixa da adega quando quiser. O resgate volta para o caixa, mas não conta como faturamento no ranking.</p>');
+  add('<p class="txt" style="font-size:.82rem;color:var(--sub)">O limite diário é de 5% de todo o faturamento da sua adega (mínimo de R$ 500). Você pode resgatar o saldo para o caixa da adega quando quiser. O resgate volta para o caixa, mas não conta como faturamento no ranking.</p>');
   mostrarExtratoCorr(C,add);
   add('<p class="txt" style="font-size:.78rem;color:var(--sub);margin-top:8px">Simulação educativa com dinheiro fictício do jogo. Não é recomendação de investimento.</p>');
 }
@@ -3724,8 +3771,8 @@ const caixaAtac=id=>CAIXA_UN*unitAtac(id);
 const veiculo=()=>VEICULOS[S.kombi?'kombi':'carro'];
 const custoMedio=()=>{ const ab=IDS.filter(i=>S.est[i].aberta); return ab.length?ab.reduce((t,i)=>t+custoUnit(i),0)/ab.length:1; };
 const custoBase=()=>{ const ab=IDS.filter(i=>S.est[i].aberta); return ab.length?Math.min(...ab.map(custoUnit)):1; };
-const gasolinaViagem=()=>Math.round(custoBase()*veiculo().gas);
-const precoKombi=()=>Math.round(custoMedio()*400);
+const gasolinaViagem=()=>Math.round(veiculo().gas*4);   // ida e volta ao atacarejo, em reais
+const precoKombi=()=>Math.round(25000*multPrest());
 const maxCaixas=id=>Math.floor(faltando(id)/CAIXA_UN);
 const atacQtd=id=>(S.atac&&S.atac.itens&&S.atac.itens[id])||0;
 const eduOcupado=()=>G.estado!=='livre'&&G.g===eduDono;
@@ -3745,7 +3792,7 @@ function compararCompra(k){
   if(S.atac) h+=`<p class="compra-nota">🚗 O Edu está no atacarejo. ${S.gerente?'O gerente recebe o fornecedor enquanto isso.':'Enquanto isso, ninguém recebe o caminhão do fornecedor.'}</p>`;
   else h+=`<button class="btn azul" id="bAtac" type="button">🛒 Montar a lista do atacarejo</button>`;
   h+=`<p class="compra-nota">A gasolina custa o mesmo para 1 ou para ${veiculo().caixas} caixas: junte vários setores numa viagem só.</p>`;
-  const C=Cmp(); if(C.viagens) h+=`<p class="compra-nota">Você foi ${C.viagens}× ao atacarejo: ${C.economia>=0?'economizou':'gastou a mais'} 💵 ${fmt(Math.abs(C.economia))} em relação ao distribuidor.</p>`;
+  const C=Cmp(); if(C.viagens) h+=`<p class="compra-nota">Você foi ${C.viagens}× ao atacarejo: ${C.economia>=0?'economizou':'gastou a mais'} ${fmt(Math.abs(C.economia))} em relação ao distribuidor.</p>`;
   return h+'</div>';
 }
 // ---------- lista de compras ----------
@@ -3765,14 +3812,14 @@ function renderListaAtac(){
   let h=`<p class="txt" style="font-size:.9rem">O atacarejo só vende <b>caixa fechada de ${CAIXA_UN} unidades</b>. A gasolina é a mesma para a viagem toda: quanto mais coisa você trouxer de uma vez, mais ela se dilui.</p><div class="atac-lista">`;
   IDS.filter(id=>S.est[id].aberta).forEach(id=>{
     const mx=maxCaixas(id), n=listaAtac[id]||0;
-    h+=`<div class="atac-item${mx?'':' cheio'}"><span class="atac-ic">${EST[id].ic}</span><span class="bol-tx"><b>${EST[id].nome}</b><small>${mx?`cabem ${mx} ${mx>1?'caixas':'caixa'} · caixa 💵 ${fmt(caixaAtac(id))} (distribuidor: ${fmt(CAIXA_UN*custoUnit(id))})`:'geladeira cheia: não cabe uma caixa'}</small></span>
+    h+=`<div class="atac-item${mx?'':' cheio'}"><span class="atac-ic">${EST[id].ic}</span><span class="bol-tx"><b>${EST[id].nome}</b><small>${mx?`cabem ${mx} ${mx>1?'caixas':'caixa'} · caixa ${fmt(caixaAtac(id))} (distribuidor: ${fmt(CAIXA_UN*custoUnit(id))})`:'geladeira cheia: não cabe uma caixa'}</small></span>
       <span class="atac-passo"><button type="button" data-id="${id}" data-d="-1" ${n?'':'disabled'} aria-label="Menos uma caixa">−</button><b>${n}</b><button type="button" data-id="${id}" data-d="1" ${n<mx&&R.cx<V.caixas?'':'disabled'} aria-label="Mais uma caixa">+</button></span></div>`;
   });
   h+=`</div><div class="atac-espaco"><span>${V.ic} ${V.nome}: <b>${R.cx} de ${V.caixas} caixas</b></span><div class="missao-barra"><i style="width:${100*R.cx/V.caixas}%"></i></div></div>`;
   if(R.cx){
     const dif=R.dist-R.total;
     h+=`<div class="stats"><div class="stat"><span>Produtos (${R.cx*CAIXA_UN} un.)</span><b>${fmt(R.prod)}</b></div><div class="stat"><span>⛽ Gasolina e tempo</span><b>${fmt(R.gas)}</b></div><div class="stat destaque"><span>Total no atacarejo</span><b>${fmt(R.total)}</b></div></div>`;
-    h+=`<p class="atac-comp ${dif>=0?'bom':'ruim'}">No distribuidor, a mesma compra sairia 💵 ${fmt(R.dist)}. ${dif>=0?`Você economiza 💵 ${fmt(dif)}.`:`O atacarejo sai 💵 ${fmt(-dif)} mais caro: a gasolina pesou numa compra pequena.`}</p>`;
+    h+=`<p class="atac-comp ${dif>=0?'bom':'ruim'}">No distribuidor, a mesma compra sairia ${fmt(R.dist)}. ${dif>=0?`Você economiza ${fmt(dif)}.`:`O atacarejo sai ${fmt(-dif)} mais caro: a gasolina pesou numa compra pequena.`}</p>`;
     const pode=!eduOcupado()&&S.din>=R.total;
     h+=`<button class="btn" id="bIrAtac" type="button" ${pode?'':'disabled'}>${V.ic} Ir ao atacarejo ${NOTA} ${fmt(R.total)}</button>`;
     if(eduOcupado()) h+='<p class="compra-nota">O Edu está recebendo mercadoria. Espere ele terminar.</p>';
@@ -3831,7 +3878,7 @@ function concluirAtacarejo(){
   const A=S.atac, C=Cmp(), E=EDU;
   let un=0; for(const id in A.itens) un+=A.itens[id];
   C.viagens++; C.un+=un; C.gasto+=A.custo; C.economia+=A.distrib-A.custo;
-  toastMissao(A.distrib-A.custo>=0?`🚗 Viagem ao atacarejo: economia de 💵 ${fmt(A.distrib-A.custo)}`:`🚗 Viagem ao atacarejo: 💵 ${fmt(A.custo-A.distrib)} mais caro que o distribuidor`);
+  toastMissao(A.distrib-A.custo>=0?`🚗 Viagem ao atacarejo: economia de ${fmt(A.distrib-A.custo)}`:`🚗 Viagem ao atacarejo: ${fmt(A.custo-A.distrib)} mais caro que o distribuidor`);
   S.atac=null; atacFase=null; avisoForn=false; caixaEdu.visible=false; E.vel=1.2; E.estado='parado'; E.t=1.5; E.caminho=[];
   const u=E.g.userData; u.pE.rotation.x=u.pD.rotation.x=0; u.corpo.position.y=0;
   salvar(); oferecerLicao('compras');
@@ -3881,7 +3928,7 @@ function calcularBoletos(F){
     {ic:'⚡',nome:'Conta de luz',info:`${gel} ${gel===1?'geladeira ligada':'geladeiras e freezers ligados'} dia e noite`,v:F*(0.008+0.0025*gel)},
     {ic:'💳',nome:'Taxa da maquininha',info:'cartão de crédito cobra mais; Pix não tem taxa',v:F*0.013},
     {ic:'🍾',nome:'Perdas',info:'garrafa quebrada e produto que venceu',v:F*0.005}
-  ].map(b=>({...b,v:Math.round(b.v)}));
+  ].map(b=>({...b,v:Math.round(b.v*100)/100}));
 }
 function gerarBoletos(){
   const C=Ct(), F=Math.round(C.fat), lista=calcularBoletos(F), total=lista.reduce((t,b)=>t+b.v,0);
@@ -3892,10 +3939,10 @@ function gerarBoletos(){
 }
 function renderBoletos(B){
   const pct=B.fat>0?Math.round(100*B.total/B.fat):0;
-  let h=`<p class="txt">Neste mês a adega faturou <b>💵 ${fmt(B.fat)}</b>. Antes de sobrar alguma coisa, ela paga:</p><div class="boletos">`;
+  let h=`<p class="txt">Neste mês a adega faturou <b>${fmt(B.fat)}</b>. Antes de sobrar alguma coisa, ela paga:</p><div class="boletos">`;
   B.lista.forEach(b=>{ h+=`<div class="boleto"><span class="bol-ic">${b.ic}</span><span class="bol-tx"><b>${b.nome}</b><small>${b.info}</small></span><b class="bol-v">${fmt(b.v)}</b></div>`; });
   h+=`</div><div class="stat destaque"><span>Total das contas (${pct}% do faturamento)</span><b>${fmt(B.total)}</b></div>`;
-  h+=B.falta>0?`<p class="bol-aviso">⚠️ Faltou dinheiro no caixa: 💵 ${fmt(B.falta)} ficou em aberto, com multa de 2%. Ela será paga assim que entrar dinheiro.</p>`:'<p class="bol-ok">✔ Tudo pago com o dinheiro do caixa.</p>';
+  h+=B.falta>0?`<p class="bol-aviso">⚠️ Faltou dinheiro no caixa: ${fmt(B.falta)} ficou em aberto, com multa de 2%. Ela será paga assim que entrar dinheiro.</p>`:'<p class="bol-ok">✔ Tudo pago com o dinheiro do caixa.</p>';
   h+=`<p class="bol-nota">E isso sem contar o principal: o que a adega já pagou ao fornecedor pelos produtos.</p>`;
   h+=`<button class="btn azul peq" id="btnVerDez" type="button">📊 Para onde vão os seus R$ 10?</button><button class="btn" id="btnBoletosOk" type="button" style="margin-top:10px">Entendi</button>`;
   $('#boletosConteudo').innerHTML=h;
@@ -3908,7 +3955,7 @@ function atualizarContas(dt){
   tContas+=dt; if(tContas<1) return; tContas=0;
   if(!contasLiberadas()) return;
   const C=Ct(), t=S.tempoJogo||0;
-  if(C.aberto>0&&S.din>=C.aberto){ S.din-=C.aberto; toastMissao(`🧾 Conta atrasada paga: 💵 ${fmt(C.aberto)} (com multa)`); C.aberto=0; salvar(); atualizarHUD(true); }
+  if(C.aberto>0&&S.din>=C.aberto){ S.din-=C.aberto; toastMissao(`🧾 Conta atrasada paga: ${fmt(C.aberto)} (com multa)`); C.aberto=0; salvar(); atualizarHUD(true); }
   if(t-C.inicio<MES_ADEGA) return;
   if(document.querySelector('.tela:not([hidden])')||!$('#telaMapa').hidden||painelAtual) return;
   SOM.erro(); abrirBoletos(gerarBoletos());
@@ -3960,7 +4007,7 @@ function abrirPedidoFiado(c){
   fiadoCliente=c; SOM.abrir();
   $('#fiadoFala').innerHTML=`<b>${c.nomeFiado}:</b> “Ô Edu, pendura pra mim? Eu pago ${c.quandoFiado}.”`;
   $('#fiadoValor').textContent=fmt(c.valor);
-  const r=fiadoNaRua(); $('#fiadoRua').textContent=r>0?`Já tem 💵 ${fmt(r)} pendurado no caderninho.`:'';
+  const r=fiadoNaRua(); $('#fiadoRua').textContent=r>0?`Já tem ${fmt(r)} pendurado no caderninho.`:'';
   $('#telaFiado').hidden=false;
 }
 function fecharPedidoFiado(){ $('#telaFiado').hidden=true; fiadoCliente=null; }
@@ -4002,7 +4049,7 @@ function atualizarFiado(dt){
     f.lista.splice(i,1); mudou=true;
     if(e.saida==='calote'){ f.perdido+=e.valor; f.hist.unshift({nome:e.nome,valor:e.valor,ok:false,clientes:e.clientes||0,vendas:e.vendas||0}); SOM.erro(); toastMissao(`👻 ${e.nome} sumiu sem pagar ${fmt(e.valor)}. Prejuízo da adega.`); oferecerLicao('fiado'); }
     else { f.recebido+=e.valor; S.din+=e.valor; S.total+=e.valor; registrarGanho(e.valor); f.hist.unshift({nome:e.nome,valor:e.valor,ok:true,atraso:t>e.vence+5,clientes:e.clientes||0,vendas:e.vendas||0,min:Math.max(0,Math.round((t-e.vence)/60))});
-      if(t>e.vence+5) setTimeout(()=>toastMissao(e.clientes?`📒 ${e.nome} pagou com ${minTxt(t-e.vence)} de atraso. Enquanto isso, ${e.clientes} ${e.clientes>1?'clientes saíram':'cliente saiu'} sem produto: 💵 ${fmt(e.vendas)} em vendas perdidas.`:`📒 ${e.nome} pagou com ${minTxt(t-e.vence)} de atraso.`),2700);
+      if(t>e.vence+5) setTimeout(()=>toastMissao(e.clientes?`📒 ${e.nome} pagou com ${minTxt(t-e.vence)} de atraso. Enquanto isso, ${e.clientes} ${e.clientes>1?'clientes saíram':'cliente saiu'} sem produto: ${fmt(e.vendas)} em vendas perdidas.`:`📒 ${e.nome} pagou com ${minTxt(t-e.vence)} de atraso.`),2700);
       SOM.maquininha(); pop(new THREE.Vector3(CX.x,2.2,CX.z+1.0),`📒 ${e.nome} pagou +${fmt(e.valor)}`,'grande'); atualizarHUD(true); }
     f.hist.length=Math.min(f.hist.length,8);
   }
@@ -4032,13 +4079,13 @@ function lembrarFiado(id){
 function renderCaderninho(){
   const f=F(), t=tJogo(), C=$('#cadernoConteudo');
   let h=`<div class="fiado-nums"><div><b>${fmt(fiadoNaRua())}</b><span>na rua agora</span></div><div><b>${fmt(f.recebido)}</b><span>já pagaram</span></div><div class="ruim"><b>${fmt(f.perdido)}</b><span>calote</span></div></div>`;
-  h+=`<p class="fiado-resumo">Você pendurou ${f.aceitos} ${f.aceitos===1?'compra':'compras'} e recusou ${f.recusados}. ${f.vendido>0?`De cada 💵 100 vendidos no fiado, voltaram 💵 ${Math.round(100*f.recebido/f.vendido)} até agora.`:''}</p>${f.vendasPerdidas?`<p class="fiado-resumo ruim">🔒 Faltou produto enquanto o fiado atrasava: <b>💵 ${fmt(f.vendasPerdidas)} em vendas perdidas</b>.</p>`:''}`;
+  h+=`<p class="fiado-resumo">Você pendurou ${f.aceitos} ${f.aceitos===1?'compra':'compras'} e recusou ${f.recusados}. ${f.vendido>0?`De cada 💵 100 vendidos no fiado, voltaram 💵 ${Math.round(100*f.recebido/f.vendido)} até agora.`:''}</p>${f.vendasPerdidas?`<p class="fiado-resumo ruim">🔒 Faltou produto enquanto o fiado atrasava: <b>${fmt(f.vendasPerdidas)} em vendas perdidas</b>.</p>`:''}`;
   if(f.lista.length){ h+='<div class="fiado-tit">Pendurados</div>';
     f.lista.slice().sort((a,b)=>a.vence-b.vence).forEach(e=>{ const atras=t>=e.vence;
       const rep=atras?textoRepor(e.valor):'';
-      h+=`<div class="fiado-linha${atras?' atrasado':''}"><span class="fiado-nome">${e.nome}</span><b>${fmt(e.valor)}</b><span class="fiado-st">${atras?'atrasado há '+minTxt(t-e.vence):'vence em '+minTxt(e.vence-t)}</span>${atras&&!e.lembrete?`<button type="button" class="fiado-cobrar" data-id="${e.id}">📲 Cobrar</button>`:atras?'<span class="fiado-st">cobrado</span>':''}${atras?`<span class="fiado-trava">🔒 Esse dinheiro parado repunha <b>${rep||'parte do estoque'}</b> no fornecedor.${e.clientes?` Enquanto ele não paga, <b>${e.clientes} ${e.clientes>1?'clientes saíram':'cliente saiu'}</b> sem produto (💵 ${fmt(e.vendas)} em vendas perdidas).`:''}</span>`:''}</div>`; }); }
+      h+=`<div class="fiado-linha${atras?' atrasado':''}"><span class="fiado-nome">${e.nome}</span><b>${fmt(e.valor)}</b><span class="fiado-st">${atras?'atrasado há '+minTxt(t-e.vence):'vence em '+minTxt(e.vence-t)}</span>${atras&&!e.lembrete?`<button type="button" class="fiado-cobrar" data-id="${e.id}">📲 Cobrar</button>`:atras?'<span class="fiado-st">cobrado</span>':''}${atras?`<span class="fiado-trava">🔒 Esse dinheiro parado repunha <b>${rep||'parte do estoque'}</b> no fornecedor.${e.clientes?` Enquanto ele não paga, <b>${e.clientes} ${e.clientes>1?'clientes saíram':'cliente saiu'}</b> sem produto (${fmt(e.vendas)} em vendas perdidas).`:''}</span>`:''}</div>`; }); }
   else h+='<p class="fiado-vazio">Ninguém está devendo agora.</p>';
-  if(f.hist.length){ h+='<div class="fiado-tit">Últimos</div>'; f.hist.forEach(x=>{ h+=`<div class="fiado-linha ${x.ok?'pago':'calote'}"><span class="fiado-nome">${x.nome}</span><b>${fmt(x.valor)}</b><span class="fiado-st">${x.ok?(x.atraso?'✔ pagou atrasado':'✔ pagou'):'👻 sumiu'}</span>${x.clientes?`<span class="fiado-trava">Na espera, ${x.clientes} ${x.clientes>1?'clientes saíram':'cliente saiu'} sem produto: 💵 ${fmt(x.vendas)} em vendas perdidas.</span>`:''}</div>`; }); }
+  if(f.hist.length){ h+='<div class="fiado-tit">Últimos</div>'; f.hist.forEach(x=>{ h+=`<div class="fiado-linha ${x.ok?'pago':'calote'}"><span class="fiado-nome">${x.nome}</span><b>${fmt(x.valor)}</b><span class="fiado-st">${x.ok?(x.atraso?'✔ pagou atrasado':'✔ pagou'):'👻 sumiu'}</span>${x.clientes?`<span class="fiado-trava">Na espera, ${x.clientes} ${x.clientes>1?'clientes saíram':'cliente saiu'} sem produto: ${fmt(x.vendas)} em vendas perdidas.</span>`:''}</div>`; }); }
   h+=`<div class="fiado-real">💛 <b>Na Adega do Edu de verdade não vendemos fiado.</b> O fornecedor cobra à vista, então é o seu pagamento na hora que mantém a geladeira cheia e o preço justo para todo mundo. Obrigado por entender!</div>`;
   if(licaoDisponivel('fiado')||licaoFeita('fiado')) h+=`<button type="button" class="btn azul peq" id="btnCadLicao">📒 ${licaoFeita('fiado')?'Rever':'Ver'} a lição do Edu</button>`;
   if(C._h===h) return; C._h=h; C.innerHTML=h;
@@ -4087,7 +4134,7 @@ const LICOES={
 };
 const licaoFeita=k=>!!(S&&S.licoes&&S.licoes[k]);
 const licaoDisponivel=k=>!!(S&&LICOES[k]&&!licaoFeita(k)&&LICOES[k].libera());
-const premioLicao=()=>Math.max(300,Math.round(rendaRefMissao()*3));
+const premioLicao=()=>Math.max(15,Math.round(rendaRefMissao()*3));
 let licaoAtual=null, licaoPendente=null;
 function oferecerLicao(k){ if(!licaoDisponivel(k)||(S.licoesVistas&&S.licoesVistas[k])) return; licaoPendente=k; }
 function checarLicaoPendente(){
@@ -4103,7 +4150,7 @@ function abrirLicao(k){
   h+=`<div class="licao-perg">${L.perg}</div><div class="licao-ops">${ops.map(o=>`<button type="button" class="licao-op" data-ok="${o.ok?1:0}">${o.t}</button>`).join('')}</div>`;
   if(L.nota) h+=`<p class="licao-nota">${L.nota}</p>`;
   h+=`<p class="licao-res" id="licaoRes" aria-live="polite"></p>`;
-  h+=feita?'<p class="licao-premio">✔ Você já fez esta lição.</p>':`<p class="licao-premio">Acerte e ganhe 💵 ${fmt(premioLicao())} e ⭐ experiência.</p>`;
+  h+=feita?'<p class="licao-premio">✔ Você já fez esta lição.</p>':`<p class="licao-premio">Acerte e ganhe ${fmt(premioLicao())} e ⭐ experiência.</p>`;
   $('#licaoTitulo').textContent=L.ic+' Lição do Edu: '+L.tit; $('#licaoConteudo').innerHTML=h; $('#telaLicao').hidden=false; SOM.abrir();
   $('#licaoConteudo').querySelectorAll('.licao-op').forEach(b=>b.addEventListener('click',()=>responderLicao(b)));
 }
@@ -4113,7 +4160,7 @@ function responderLicao(b){
   $('#licaoConteudo').querySelectorAll('.licao-op').forEach(x=>x.disabled=true); b.classList.add('certa');
   res.className='licao-res bom'; res.textContent=L.certo;
   if(!licaoFeita(k)){ const p=premioLicao(); S.licoes=S.licoes||{}; S.licoes[k]=true; S.din+=p; somarXP(XP_EVENTO.licao||40);
-    res.textContent+=` +💵 ${fmt(p)}`; SOM.marco(); salvar(); atualizarHUD(true); if(typeof atualizarBadgeMapa==='function') atualizarBadgeMapa(); }
+    res.textContent+=` +${fmt(p)}`; SOM.marco(); salvar(); atualizarHUD(true); if(typeof atualizarBadgeMapa==='function') atualizarBadgeMapa(); }
   const pr=$('#licaoConteudo .licao-premio'); if(pr) pr.textContent='✔ Lição concluída!';
 }
 $('#btnLicaoFechar').addEventListener('click',()=>{ $('#telaLicao').hidden=true; });
@@ -4152,8 +4199,10 @@ function aplicarCatalogo(d){
   const l=d.itens.filter(p=>p&&p.n&&p.p>0&&EST[p.s]); if(!l.length) return false;
   CATALOGO.length=0; l.forEach(p=>CATALOGO.push({n:p.n,p:+p.p,s:p.s}));
   if(d.atualizado){ const dt=new Date(d.atualizado); if(!isNaN(dt)) CATALOGO_DATA=dt.toLocaleDateString('pt-BR'); }
-  return true;
+  atualizarPrecos(); return true;
 }
+// preço médio de cada setor = média dos preços reais do catálogo (setor sem produto usa o preço de referência)
+function atualizarPrecos(){ IDS.forEach(id=>{ const l=CATALOGO.filter(p=>p.s===id); precosCache[id]=l.length?Math.round(l.reduce((t,p)=>t+p.p,0)/l.length*100)/100:EST[id].valor; }); }
 try{ aplicarCatalogo(JSON.parse(localStorage.getItem('adegaEdu.catalogo')||'null')); }catch(e){}
 let catBuscado=0;
 async function buscarCatalogo(){
@@ -4164,6 +4213,7 @@ setTimeout(buscarCatalogo,2500);
 const semAcento=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 const reaisCat=v=>'R$ '+v.toFixed(2).replace('.',',');
 const produtosDoSetor=id=>CATALOGO.filter(p=>p.s===id);
+atualizarPrecos();
 function nomeProdutoVendido(id){ const l=produtosDoSetor(id); return l.length?pega(l).n:''; }
 let catFiltro='';
 function renderCatalogo(){
@@ -4448,13 +4498,13 @@ function renderVitrine(){
   const largura=($('#vitrinePrateleiras').clientWidth||320)-14;
   const frentes=itens.map(p=>({p,...(ehSeco(p)?frenteSeco(p):frenteBebida(p))}));
   const prat=[]; let atual=[], usado=0;
-  frentes.forEach(fz=>{ const w=Math.max(fz.w,44)+9; if(atual.length&&usado+w>largura){ prat.push(atual); atual=[]; usado=0; } atual.push(fz); usado+=w; });
+  frentes.forEach(fz=>{ const w=Math.max(fz.w,60)+9; if(atual.length&&usado+w>largura){ prat.push(atual); atual=[]; usado=0; } atual.push(fz); usado+=w; });
   if(atual.length) prat.push(atual);
   let h='';
-  prat.forEach(l=>{ h+='<div class="vit-prat">'+l.map(fz=>`<button type="button" class="vit-prod" data-n="${encodeURIComponent(fz.p.n)}" aria-label="${fz.p.n}, ${reaisCat(fz.p.p)}">${fz.svg}<span class="vit-etq">${reaisCat(fz.p.p).replace('R$ ','R$\u00a0')}</span></button>`).join('')+'</div>'; });
+  prat.forEach(l=>{ h+='<div class="vit-prat">'+l.map(fz=>`<button type="button" class="vit-prod" data-n="${encodeURIComponent(fz.p.n)}" aria-label="${fz.p.n}, ${reaisCat(fz.p.p)}">${fz.svg}<span class="vit-etq" style="width:${Math.max(fz.w,60)}px"><b>${fz.p.n}</b><span>${reaisCat(fz.p.p).replace('R$ ','R$\u00a0')}</span></span></button>`).join('')+'</div>'; });
   if(!itens.length) h='<p class="vit-vazio">Os produtos deste setor ainda não foram cadastrados no catálogo.</p>';
   $('#vitrinePrateleiras').innerHTML=h;
-  $('#vitrineInfo').innerHTML=`<span>Toque num produto para ver o nome e o preço.</span><small>${itens.length} ${itens.length===1?'produto':'produtos'} · preços do balcão em ${CATALOGO_DATA}</small>`;
+  $('#vitrineInfo').innerHTML=`<span>Toque num produto para ver de perto.</span><small>${itens.length} ${itens.length===1?'produto':'produtos'} · preços do balcão em ${CATALOGO_DATA}</small>`;
   $('#vitrinePrateleiras').querySelectorAll('.vit-prod').forEach(b=>b.onclick=()=>{
     $('#vitrinePrateleiras').querySelectorAll('.vit-prod.sel').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); SOM.abrir();
     const p=itens.find(x=>x.n===decodeURIComponent(b.dataset.n));
@@ -4477,6 +4527,9 @@ const ETAPAS_MAPA=[
    desc:'A cada 6 horas chegam missões novas, com prêmios e um baú no fim.',
    req:'Complete as 3 primeiras tarefas (com o cadastro online).',prog:()=>[Math.min(S.tarefa,3),3],
    feito:()=>missoesLiberadas(),acao:{txt:'Abrir missões',fn:()=>abrirMissoes()}},
+  {id:'meta1000',meta:1000,ic:'🎯',nome:'Meta: '+nomeMeta(1000),chip:nomeMeta(1000).replace('R$ ',''),zona:0,
+   desc:'Fature '+nomeMeta(1000)+' nesta temporada, vendendo com os preços reais da Adega do Edu. Prêmio: '+fmt(premioMeta(1000))+'.',
+   req:'Fature '+nomeMeta(1000)+'.',prog:()=>[Math.min(fatTemporada(),1000),1000],dinheiro:true,feito:()=>metaBatida(1000)},
   {id:'fiado',ic:'📒',nome:'O fiado',chip:'Lição',zona:0,
    desc:'Alguns clientes vão pedir para pendurar a compra. No caderninho você vê o que acontece com o caixa da adega quando o dinheiro não entra na hora.',
    req:'Aparece quando um cliente pedir fiado. Depois, faça a lição do Edu.',prog:()=>[(S.fiado&&S.fiado.pedidos>0?1:0)+(licaoFeita('fiado')?1:0),2],
@@ -4487,6 +4540,9 @@ const ETAPAS_MAPA=[
    req:'Faça 6 pedidos ao fornecedor ou vá uma vez ao atacarejo. Depois, faça a lição do Edu.',prog:()=>[Math.min((S.pedidos||0),6)+(licaoFeita('compras')?1:0),7],
    feito:()=>licaoFeita('compras'),acao:{txt:'🚗 Rever a lição',fn:()=>abrirLicao('compras')},
    acaoAntes:()=>licaoDisponivel('compras')?{txt:'🚗 Fazer a lição do Edu',fn:()=>abrirLicao('compras')}:null},
+  {id:'meta5000',meta:5000,ic:'🎯',nome:'Meta: '+nomeMeta(5000),chip:nomeMeta(5000).replace('R$ ',''),zona:0,
+   desc:'Fature '+nomeMeta(5000)+' nesta temporada, vendendo com os preços reais da Adega do Edu. Prêmio: '+fmt(premioMeta(5000))+'.',
+   req:'Fature '+nomeMeta(5000)+'.',prog:()=>[Math.min(fatTemporada(),5000),5000],dinheiro:true,feito:()=>metaBatida(5000)},
   {id:'loja',ic:'🛒',nome:'Loja completa',chip:'6 setores',zona:0,
    desc:'Abra água e suco, salgadinhos, gelo, carvão e a mercearia. Cada setor vende produtos mais caros.',
    req:'Abra os 6 setores da loja.',prog:()=>[setoresAbertos(),IDS.length]},
@@ -4495,36 +4551,58 @@ const ETAPAS_MAPA=[
    req:'Complete 5 tarefas e espere chegarem os primeiros boletos. Depois, faça a lição do Edu.',prog:()=>[Math.min(S.tarefa,5)+(S.contas&&S.contas.meses>0?1:0)+(licaoFeita('contas')?1:0),7],
    feito:()=>licaoFeita('contas'),acao:{txt:'📊 Para onde vão os R$ 10',fn:()=>abrirDezReais()},
    acaoAntes:()=>licaoDisponivel('contas')?{txt:'🧾 Fazer a lição do Edu',fn:()=>abrirLicao('contas')}:null},
+  {id:'meta10000',meta:10000,ic:'🎯',nome:'Meta: '+nomeMeta(10000),chip:nomeMeta(10000).replace('R$ ',''),zona:0,
+   desc:'Fature '+nomeMeta(10000)+' nesta temporada, vendendo com os preços reais da Adega do Edu. Prêmio: '+fmt(premioMeta(10000))+'.',
+   req:'Fature '+nomeMeta(10000)+'.',prog:()=>[Math.min(fatTemporada(),10000),10000],dinheiro:true,feito:()=>metaBatida(10000)},
   {id:'nv25',ic:'🏆',nome:'Todos no nível 25',chip:'Nv 25',zona:0,
    desc:'Uma das tarefas grandes: deixar a loja inteira no nível 25.',
    req:'Leve todos os setores ao nível 25.',prog:()=>[Math.min(menorNivelSetores(),25),25],nivel:true},
+  {id:'meta50000',meta:50000,ic:'🎯',nome:'Meta: '+nomeMeta(50000),chip:nomeMeta(50000).replace('R$ ',''),zona:0,
+   desc:'Fature '+nomeMeta(50000)+' nesta temporada, vendendo com os preços reais da Adega do Edu. Prêmio: '+fmt(premioMeta(50000))+'.',
+   req:'Fature '+nomeMeta(50000)+'.',prog:()=>[Math.min(fatTemporada(),50000),50000],dinheiro:true,feito:()=>metaBatida(50000)},
   {id:'entregas',ic:'🛵',nome:'Entregas de moto',chip:'16 tarefas',zona:0,
    desc:'Saia de moto entregando pedidos pelo bairro. Junto vem o 🎁 cupom de conclusão, de desconto real na Adega.',
    req:'Complete as 16 tarefas.',prog:()=>[Math.min(S.tarefa,TAREFAS.length),TAREFAS.length],
    feito:()=>entregasLiberadas(),acao:{txt:'Fazer entregas',fn:()=>{ const b=$('#btnEntregas'); if(b) b.click(); }}},
+  {id:'meta100000',meta:100000,ic:'🎯',nome:'Meta: '+nomeMeta(100000),chip:nomeMeta(100000).replace('R$ ',''),zona:0,
+   desc:'Fature '+nomeMeta(100000)+' nesta temporada, vendendo com os preços reais da Adega do Edu. Prêmio: '+fmt(premioMeta(100000))+'.',
+   req:'Fature '+nomeMeta(100000)+'.',prog:()=>[Math.min(fatTemporada(),100000),100000],dinheiro:true,feito:()=>metaBatida(100000)},
   {id:'pdr',ic:'📦',nome:'Ponto de Retirada',chip:'Nv 40',zona:1,
-   desc:'A Adega vira ponto de retirada do Mercado Livre, da Shopee e da Amazon. A van traz pacotes e os clientes trazem renda extra. Do nível 40 em diante, cada melhoria encarece só 5% (antes eram 20%).',
+   desc:'A Adega vira ponto de retirada do Mercado Livre, da Shopee e da Amazon. A van traz pacotes e os clientes trazem renda extra.',
    req:'Leve todos os setores ao nível 40.',prog:()=>[Math.min(menorNivelSetores(),40),40],nivel:true,
    feito:()=>PDR().liberado||pdrPodeLiberar(),acao:{txt:'Abrir o ponto',fn:()=>abrirPdr()}},
   {id:'corretora',ic:'📈',nome:'Corretora',chip:'Nv 40',zona:1,
    desc:'Separe parte do caixa para investir, aprenda como a bolsa funciona e acompanhe o seu extrato.',
    req:'Leve todos os setores ao nível 40 (com o cadastro online).',prog:()=>[Math.min(menorNivelSetores(),40),40],nivel:true,
    feito:()=>corretoraLiberadaLocal(),acao:{txt:'Abrir a corretora',fn:()=>abrirCorretora()}},
+  {id:'meta500000',meta:500000,ic:'🎯',nome:'Meta: '+nomeMeta(500000),chip:nomeMeta(500000).replace('R$ ',''),zona:1,
+   desc:'Fature '+nomeMeta(500000)+' nesta temporada, vendendo com os preços reais da Adega do Edu. Prêmio: '+fmt(premioMeta(500000))+'.',
+   req:'Fature '+nomeMeta(500000)+'.',prog:()=>[Math.min(fatTemporada(),500000),500000],dinheiro:true,feito:()=>metaBatida(500000)},
   {id:'ipo',ic:'🔔',nome:'IPO da Adega',chip:'Nv 60',zona:2,breve:true,
    desc:'Sua adega abre capital na bolsa e outros jogadores podem comprar ações dela.',
    req:'Leve todos os setores ao nível 60.',prog:()=>[Math.min(menorNivelSetores(),60),60],nivel:true},
+  {id:'meta1000000',meta:1000000,ic:'🎯',nome:'Meta: '+nomeMeta(1000000),chip:nomeMeta(1000000).replace('R$ ',''),zona:2,
+   desc:'Fature '+nomeMeta(1000000)+' nesta temporada, vendendo com os preços reais da Adega do Edu. Prêmio: '+fmt(premioMeta(1000000))+'.',
+   req:'Fature '+nomeMeta(1000000)+'.',prog:()=>[Math.min(fatTemporada(),1000000),1000000],dinheiro:true,feito:()=>metaBatida(1000000)},
   {id:'venda',ic:'💼',nome:'Venda da Adega',chip:'Nv 100',zona:3,
    desc:'Receba propostas de compradores pela sua adega e entre no ranking das maiores vendas.',
-   req:'Leve todos os setores ao nível 100.',prog:()=>[Math.min(menorNivelSetores(),100),100],nivel:true,
+   req:'Leve todos os setores ao nível 100 e fature R$ 1 milhão.',prog:()=>[Math.min(menorNivelSetores(),100),100],nivel:true,
    feito:()=>vendaLiberada(),acao:{txt:'Ver propostas',fn:()=>abrirVenda()}},
   {id:'nova',ic:'🏪',nome:'Nova Adega',chip:'Após a venda',zona:3,
    desc:'Depois de vender, você abre uma adega nova com bônus permanente de faturamento.',
    req:'Venda a sua adega.',prog:()=>[Math.min((S&&S.prest)||0,1),1],feito:()=>((S&&S.prest)||0)>0}
 ];
-const ZONAS_MAPA=[{nome:'Bairro da Adega',cor:'#F6D29C',y:[45,798]},{nome:'Avenida do Comércio',cor:'#BFDDF0',y:[812,1018]},{nome:'Centro Financeiro',cor:'#D9CDF3',y:[1034,1164]},{nome:'Grandes Negócios',cor:'#F7E59A',y:[1178,1465],dir:true}];
-// posições: x em %, y em px (o caminho começa em cima e desce)
-const POS_MAPA=[[24,120],[60,200],[80,288],[52,372],[22,458],[50,545],[78,630],[46,718],[46,872],[78,968],[48,1096],[22,1230],[58,1350]];
-const ALT_MAPA=1500;
+// posições calculadas: x em % (zigue-zague), y em px (o caminho começa em cima e desce; cada bairro novo dá um respiro)
+const ZONAS_MAPA=[{nome:'Bairro da Adega',cor:'#F6D29C'},{nome:'Avenida do Comércio',cor:'#BFDDF0'},{nome:'Centro Financeiro',cor:'#D9CDF3'},{nome:'Grandes Negócios',cor:'#F7E59A',dir:true}];
+const POS_MAPA=[]; const ALT_MAPA=(()=>{
+  const XS=[24,58,80,54,24,46,76,50]; let y=120, z=0;
+  ETAPAS_MAPA.forEach((e,i)=>{
+    if(i&&e.zona!==z){ y+=50; ZONAS_MAPA[z].y[1]=y-40; z=e.zona; ZONAS_MAPA[z].y=[y-30,0]; y+=40; }
+    else if(!i) ZONAS_MAPA[0].y=[45,0];
+    POS_MAPA.push([XS[i%XS.length],y]); y+=86;
+  });
+  ZONAS_MAPA[z].y[1]=y; return y+40;
+})();
 function etapaFeita(e){ if(e.breve) return false; if(e.feito) return !!e.feito(); const p=e.prog(); return p[0]>=p[1]; }
 function etapaAtual(){ const i=ETAPAS_MAPA.findIndex(e=>!e.breve&&!etapaFeita(e)); return i<0?ETAPAS_MAPA.length-1:i; }
 function estadoEtapa(i){ const e=ETAPAS_MAPA[i]; if(etapaFeita(e)) return 'feito'; if(e.breve) return 'breve'; return i===etapaAtual()?'atual':'bloq'; }
@@ -4545,11 +4623,11 @@ function montarMapa(){
   ZONAS_MAPA.forEach(z=>{ html+=`<span class="mapa-zona-nome${z.dir?' dir':''}" style="top:${z.y[0]}px">${z.nome}</span>`; });
   // enfeites
   [['🌳',8,60],['🏠',90,90],['🌳',6,250],['🏡',8,370],['🌳',88,430],['🛒',90,520],['🌳',8,630],['💡',10,760],['🌳',90,745],['🚌',90,810],['🏢',8,940],['🌳',92,1040],['🏦',84,1120],['🏙️',10,1080],['🌳',90,1250],['⭐',86,1410],['🌳',6,1350]]
-    .forEach(([e,x,y])=>{ html+=`<span class="mapa-enfeite" style="left:${x}%;top:${y}px">${e}</span>`; });
+    .map(([e,x,y])=>[e,x,Math.round(y*ALT_MAPA/1500)]).forEach(([e,x,y])=>{ html+=`<span class="mapa-enfeite" style="left:${x}%;top:${y}px">${e}</span>`; });
   html+=`<svg class="mapa-trilha" viewBox="0 0 100 ${ALT_MAPA}" preserveAspectRatio="none" aria-hidden="true"><path id="mapaTrilhaBase" d="${curvaMapa(POS_MAPA)}"/><path id="mapaTrilhaFeita" d=""/></svg>`;
   ETAPAS_MAPA.forEach((e,i)=>{ const [x,y]=POS_MAPA[i];
-    html+=`<button type="button" class="mapa-no" data-i="${i}" style="left:${x}%;top:${y}px" aria-label="${e.nome}"><span class="mapa-bola">${e.ic}</span><span class="mapa-marca"></span><span class="mapa-chip">${e.chip}</span></button>`; });
-  html+=`<a class="mapa-no mapa-extra" href="https://adegadoedu.github.io/motoca/?volta=mapa" style="left:84%;top:162px" aria-label="Motoca: a aventura da Adega"><span class="mapa-bola">🎮</span><span class="mapa-chip">Motoca · livre</span></a>`;
+    html+=`<button type="button" class="mapa-no${e.meta?' meta':''}" data-i="${i}" data-id="${e.id}" style="left:${x}%;top:${y}px" aria-label="${e.nome}"><span class="mapa-bola">${e.ic}</span><span class="mapa-marca"></span><span class="mapa-chip">${e.chip}</span></button>`; });
+  html+=`<a class="mapa-no mapa-extra" href="https://adegadoedu.github.io/motoca/?volta=mapa" style="left:84%;top:${POS_MAPA[1][1]-38}px" aria-label="Motoca: a aventura da Adega"><span class="mapa-bola">🎮</span><span class="mapa-chip">Motoca · livre</span></a>`;
   html+=`<div class="mapa-voce" id="mapaVoce"><span id="mapaVoceRosto">🙂</span><b>Você</b></div>`;
   W.innerHTML=html;
   W.querySelectorAll('button.mapa-no').forEach(b=>b.addEventListener('click',()=>{ mapaSel=+b.dataset.i; SOM.abrir(); renderMapa(); }));
@@ -4559,7 +4637,7 @@ function renderMapa(){
   if(!mapaMontado) montarMapa();
   const at=etapaAtual();
   document.querySelectorAll('#mapaMundo button.mapa-no').forEach(b=>{ const i=+b.dataset.i, st=estadoEtapa(i);
-    b.className='mapa-no '+st+(i===mapaSel?' sel':''); b.querySelector('.mapa-marca').textContent=st==='feito'?'✔':st==='bloq'?'🔒':st==='breve'?'⏳':''; });
+    b.className='mapa-no '+st+(ETAPAS_MAPA[i].meta?' meta':'')+(i===mapaSel?' sel':''); b.querySelector('.mapa-marca').textContent=st==='feito'?'✔':st==='bloq'?'🔒':st==='breve'?'⏳':''; });
   $('#mapaTrilhaFeita').setAttribute('d',curvaMapa(POS_MAPA.slice(0,at+1)));
   const [vx,vy]=POS_MAPA[at], V=$('#mapaVoce'); V.style.left=(vx<50?vx+17:vx-17)+'%'; V.style.top=(vy-4)+'px';
   const u=S.perfil&&S.perfil.visual&&typeof rostoURL==='function'?rostoURL(S.perfil.visual):'';
@@ -4570,7 +4648,7 @@ function renderMapa(){
   let h=`<div class="mapa-pt"><span class="mapa-pic">${e.ic}</span><div><b>${e.nome}</b><span class="mapa-st ${st}">${stTxt}</span></div></div><p class="mapa-desc">${e.desc}</p>`;
   if(st!=='feito'){
     h+=`<div class="mapa-req">🎯 ${e.req}</div><div class="missao-barra"><i style="width:${Math.min(100,100*p[0]/p[1])}%"></i></div>`;
-    h+=`<div class="mapa-prog">${e.nivel?`Seu setor mais baixo: <b>nível ${menorNivelSetores()}</b> de ${p[1]}`:`<b>${p[0]}</b> de ${p[1]}`}${e.breve&&p[0]>=p[1]?' · você já chegou! O IPO abre em breve.':''}</div>`;
+    h+=`<div class="mapa-prog">${e.nivel?`Seu setor mais baixo: <b>nível ${menorNivelSetores()}</b> de ${p[1]}`:e.dinheiro?`<b>${fmt(p[0])}</b> de ${fmt(p[1])}`:`<b>${p[0]}</b> de ${p[1]}`}${e.breve&&p[0]>=p[1]?' · você já chegou! O IPO abre em breve.':''}</div>`;
   }
   const ac=st==='feito'?e.acao:(e.acaoAntes&&e.acaoAntes());
   if(ac) h+=`<button class="btn" type="button" id="mapaAcao">${ac.txt}</button>`;
@@ -4786,14 +4864,44 @@ function atualizarHUD(pulo){
   if(pulo){const e=$('#dinheiro');e.classList.remove('pulo');void e.offsetWidth;e.classList.add('pulo');}
   renderTarefa(); renderSelos();
 }
-setInterval(()=>{$('#taxa').textContent=fmt(Math.max(taxaPorMin(),0))+'/min';},1000);
+setInterval(()=>{ const v=Math.max(taxaPorMin(),0); $('#taxa').textContent=(v<1000?'R$ '+Math.round(v):fmt(v))+'/min'; },1000);
 
 let cacheTarefa='';
 const mesAtualConclusao=()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); };
+let metaMostrando=false;
+function checarMetas(){
+  if(!S||S.falido||metaMostrando) return;
+  S.metas=S.metas||[];
+  const m=METAS.find(x=>!metaBatida(x)&&fatTemporada()>=x); if(!m) return;
+  S.metas.push(m); const p=premioMeta(m); S.din+=p; somarXP(60+20*METAS.indexOf(m),true); salvar(); atualizarHUD(true);
+  if(typeof atualizarBadgeMapa==='function') atualizarBadgeMapa();
+  if(algumaTelaAberta()||!document.body.classList.contains('jogando')){ toastMissao('🎯 Meta batida: '+nomeMeta(m)+' faturados! Prêmio de '+fmt(p)); return; }
+  metaMostrando=true; SOM.marco();
+  $('#metaSelo').textContent=['🥉','🥈','🥇','🏅','🏆','💎','👑'][METAS.indexOf(m)]||'🎯';
+  $('#metaTitulo').textContent='Meta de '+nomeMeta(m)+' batida!';
+  $('#metaTexto').innerHTML=`A sua adega já faturou <b>${fmt(fatTemporada())}</b> vendendo produtos com os preços da Adega do Edu. ${m>=50000?'Isso é o faturamento de uma adega de bairro em alguns meses de trabalho!':'Cada Coca de R$ 12,00 vendida soma aqui.'}`;
+  $('#metaPremio').textContent='🎁 Prêmio: +'+fmt(p);
+  const px=METAS.find(x=>!metaBatida(x));
+  $('#metaProx').textContent=px?'Próxima meta: '+nomeMeta(px)+' (prêmio de '+fmt(premioMeta(px))+').':'Você bateu todas as metas da temporada. Que adega!';
+  $('#telaMeta').hidden=false;
+}
+$('#btnMetaOk').addEventListener('click',()=>{ $('#telaMeta').hidden=true; metaMostrando=false; SOM.abrir(); renderTarefa(); setTimeout(checarMetas,600); });
+setInterval(checarMetas,1500);
+function avisoTemporada2(){
+  if(!S||!S.avisoT2||!document.body.classList.contains('jogando')||algumaTelaAberta()) return false;
+  $('#t2Metas').innerHTML=METAS.map(m=>`<span>🎯 ${nomeMeta(m)}</span>`).join('');
+  $('#telaT2').hidden=false; return true;
+}
+$('#btnT2Ok').addEventListener('click',()=>{ $('#telaT2').hidden=true; S.avisoT2=false; salvar(); SOM.abrir(); });
+setInterval(avisoTemporada2,2000);
 function renderTarefa(){
   const el=$('#tarefa');
-  if(S.tarefa>=TAREFAS.length&&S.conclusaoMes){ el.hidden=true; cacheTarefa='oculto'; return; }
-  el.hidden=false;
+  if(S.tarefa>=TAREFAS.length&&S.conclusaoMes){
+    const m=proximaMeta(); if(!m){ el.hidden=true; el.classList.remove('meta'); cacheTarefa='oculto'; return; }
+    const a=fatTemporada(), html=`<span class="ic">🎯</span><div class="txt">Meta: faturar ${nomeMeta(m)} <small>(${fmt(a)})</small><div class="barra"><i style="width:${Math.min(100,100*a/m).toFixed(1)}%"></i></div></div><span class="rec"><small>🎁 Prêmio</small><b>+${fmt(premioMeta(m))}</b></span>`;
+    el.hidden=false; el.classList.add('meta'); if(html!==cacheTarefa){ cacheTarefa=html; el.innerHTML=html; el.onclick=()=>{ SOM.abrir(); abrirMapa({sel:ETAPAS_MAPA.findIndex(e=>e.meta===m)}); }; } return;
+  }
+  el.hidden=false; el.classList.remove('meta'); el.onclick=null;
   if(S.tarefa>=TAREFAS.length){ if(cacheTarefa==='fim') return; cacheTarefa='fim'; el.innerHTML=`<span class="ic">🏆</span><div class="txt">Todas as tarefas concluídas! 🎁 Pegue o seu cupom de conclusão.</div><button id="btnTarefa">Ver</button>`; $('#btnTarefa').onclick=()=>{SOM.abrir();$('#telaPrestigio').hidden=false;}; return; }
   const t=TAREFAS[S.tarefa], [a,b]=t.meta(), feito=a>=b;
   const html=`<span class="ic">${t.ic}</span><div class="txt">${t.txt}<div class="barra"><i style="width:${Math.min(100,100*a/b)}%"></i></div></div>`+
@@ -4858,17 +4966,18 @@ function renderPainel(){
     if(!e.aberta){
       const c=d.abrir*multPrest();
       h+=`<div class="cab"><div class="ic">${d.ic}</div><div><h3>${d.nome}</h3><p>Ainda fechada. Abra para vender mais produtos.</p></div></div>
-      <div class="stats"><div class="stat"><span>Valor por venda</span><b>${NOTA.replace('<svg','<svg width="20"')} ${fmt(valorEst(k,1))}</b></div></div>`+btnCusto(c,'Abrir','bAcao');
+      <div class="stats"><div class="stat"><span>Preço médio (Adega real)</span><b>${fmt(valorEst(k))}</b></div></div>`+btnCusto(c,'Abrir','bAcao');
     } else {
       const prox=MARCOS.find(m=>m>e.nivel)||null, ant=[...MARCOS].reverse().find(m=>m<=e.nivel)||0;
       h+=`<div class="cab"><div class="ic">${d.ic}</div><div><h3>${d.nome}</h3><p>Nível ${e.nivel}</p></div></div>
       <div class="stats">
-        ${k==='carvao'?`<div class="stat"><span>Saco 2 kg / 4 kg</span><b>${fmt(valorEst(k))} / ${fmt(valorEst(k)*FATOR_4KG)} <span class="prox">→ ${fmt(valorEst(k,e.nivel+1))} / ${fmt(valorEst(k,e.nivel+1)*FATOR_4KG)}</span></b></div>`:`<div class="stat"><span>Valor por venda</span><b>${fmt(valorEst(k))} <span class="prox">→ ${fmt(valorEst(k,e.nivel+1))}</span></b></div>`}
+        <div class="stat"><span>Preço médio (Adega real)</span><b>${fmt(valorEst(k))}</b></div>
+        <div class="stat"><span>Cliente leva 2 unidades</span><b>${Math.round(chanceExtra(k)*100)}% <span class="prox">→ ${Math.round(chanceExtra(k,e.nivel+1)*100)}%</span></b></div>
         <div class="stat"><span>Tempo para pegar</span><b>${tempoEst(k).toFixed(1).replace('.',',')} s</b></div>
         <div class="stat"><span>Estoque</span><b>${e.estoque} / ${cap(k)}${e.pedido>0?` <span class="prox">🚚 +${e.pedido} a caminho</span>`:''}${atacQtd(k)?` <span class="prox">🚗 +${atacQtd(k)} do atacarejo</span>`:''}</b></div>
         <div class="stat"><span>Custo por unidade</span><b>${fmt(custoUnit(k))}</b></div>
       </div>`+catalogoNoPainel(k)+(faltando(k)>0?(qtdPossivel(k)>0&&qtdPossivel(k)<faltando(k)?btnCusto(qtdPossivel(k)*custoUnit(k),`🚚 Pedir +${qtdPossivel(k)} un.`,'bPedir'):btnCusto(custoPedido(k),`🚚 Pedir +${faltando(k)} un.`,'bPedir')):`<button class="btn azul" disabled>${e.pedido>0||atacQtd(k)?'Pedido a caminho':'Estoque completo'}</button>`)+compararCompra(k)+
-      `<p style="margin:8px 2px 0;color:var(--sub);font-size:.85rem;font-weight:700;line-height:1.35">Fique de olho no estoque: quando ele zera, os clientes não compram. Faça o pedido ao fornecedor antes de acabar.</p>`+(prox?`<div class="marcos"><span>Nv ${prox}: valor x2 e mais rápido</span><div class="trilho"><i style="width:${100*(e.nivel-ant)/(prox-ant)}%"></i></div></div>`:'')+
+      `<p style="margin:8px 2px 0;color:var(--sub);font-size:.85rem;font-weight:700;line-height:1.35">Fique de olho no estoque: quando ele zera, os clientes não compram. Faça o pedido ao fornecedor antes de acabar.</p>`+(prox?`<div class="marcos"><span>Nv ${prox}: atendimento mais rápido</span><div class="trilho"><i style="width:${100*(e.nivel-ant)/(prox-ant)}%"></i></div></div>`:'')+
       `<div class="duas">${btnCusto(custoEst(k),'Melhorar','bAcao')}<button class="btn amarelo" id="bMax">Máximo<small id="bMaxTxt"></small></button></div>`;
     }
   } else if(k==='caixa'){
@@ -4892,7 +5001,7 @@ function renderPainel(){
   } else if(k==='letreiro'){
     h+=`<div class="cab"><div class="ic">📣</div><div><h3>Letreiro da calçada</h3><p>Atrai mais clientes para a adega.</p></div></div>
     <div class="stats"><div class="stat"><span>Clientes por minuto</span><b>${Math.round(60/intervalo())}${S.letreiro<MAX_LETREIRO?` <span class="prox">→ ${Math.round(60/intervalo(S.letreiro+1))}</span>`:''}</b></div></div>`+
-    (S.letreiro<MAX_LETREIRO?btnCusto(custoLetreiro(),'Melhorar','bAcao'):'<button class="btn" disabled>Limite de 30 clientes por minuto</button>');
+    (S.letreiro<MAX_LETREIRO?btnCusto(custoLetreiro(),'Melhorar','bAcao'):'<button class="btn" disabled>Limite de '+MAX_CLIENTES_MIN+' clientes por minuto</button>');
   }
   el.innerHTML=h;
   $('#btnFechar').onclick=fecharPainel;
@@ -4924,10 +5033,10 @@ function acao(k,silencioso){
   if(IDS.includes(k)){
     const e=S.est[k];
     if(!e.aberta){ const c=EST[k].abrir*multPrest(); if(S.din<c) return; S.din-=c; e.aberta=true; e.estoque=cap(k); e.pedido=0; atualizarEstacoes(); atualizarProdutos(k); festa(objEst[k].g.position); }
-    else { const c=custoEst(k); if(S.din<c) return; S.din-=c; e.nivel++; atualizarProdutos(k); missaoEvento('melhorar',1); if(MARCOS.includes(e.nivel)){ SOM.marco(); festa(objEst[k].g.position); pop(objEst[k].g.position.clone().setY(3),'Valor x2!','grande'); } }
+    else { const c=custoEst(k); if(S.din<c) return; S.din-=c; e.nivel++; atualizarProdutos(k); missaoEvento('melhorar',1); if(MARCOS.includes(e.nivel)){ SOM.marco(); festa(objEst[k].g.position); pop(objEst[k].g.position.clone().setY(3),'Mais rápido!','grande'); } }
   } else if(k==='caixa'){ const c=custoCaixaV(); if(S.din<c) return; S.din-=c; S.caixaV++; }
   else if(k==='letreiro'){ const c=custoLetreiro(); if(S.din<c) return; S.din-=c; S.letreiro++; }
-  else if(k==='mesas'){ const c=custoMesaNivel(); if(S.din<c) return; S.din-=c; S.mesas.nivel++; if(MARCOS.includes(S.mesas.nivel)){ SOM.marco(); pop(new THREE.Vector3(-3.15,2,Z_CORREDOR),'Valor x2!','grande'); } }
+  else if(k==='mesas'){ const c=custoMesaNivel(); if(S.din<c) return; S.din-=c; S.mesas.nivel++; if(MARCOS.includes(S.mesas.nivel)){ SOM.marco(); pop(new THREE.Vector3(-3.15,2,Z_CORREDOR),'Mais rápido!','grande'); } }
   if(!silencioso) comprado();
 }
 function comprado(){ SOM.comprar(); atualizarHUD(true); renderPainel(); salvar(); }
