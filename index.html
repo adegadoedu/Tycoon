@@ -356,9 +356,13 @@ body:not(.jogando) .alerta{display:none}
 .vitrine.madeira .vit-porta{border-color:#C8965A;background:#F6E7CC}
 .vit-led{height:8px;margin:6px 18%;border-radius:6px;background:#fff;box-shadow:0 0 18px 8px rgba(255,255,255,.9)}
 .vit-interior{max-height:55vh;overflow-y:auto;padding:6px 6px 0;-webkit-overflow-scrolling:touch}
-.vit-prat{display:flex;justify-content:center;align-items:flex-end;gap:4px;padding:6px 2px 0;border-bottom:7px solid #FFFFFF;box-shadow:0 3px 0 #C9CDD6;margin-bottom:12px;min-height:60px}
-.vitrine.madeira .vit-prat{border-bottom-color:#D9AE6C;box-shadow:0 3px 0 #A67A40}
-.vit-prod{display:flex;flex-direction:column;align-items:center;background:none;border:2px solid transparent;border-radius:10px;padding:2px 1px 4px;cursor:pointer;width:4.4rem;-webkit-tap-highlight-color:transparent;font-family:'Nunito',sans-serif}
+.vit-prat{display:flex;justify-content:flex-start;align-items:flex-end;gap:3px;padding:8px 4px 0;border-bottom:7px solid #FFFFFF;box-shadow:0 3px 0 #C9CDD6;margin-bottom:22px;min-height:50px}
+.vitrine.madeira .vit-prat{border-bottom:13px solid #E4BF86;box-shadow:0 4px 0 #B98A4E,inset 0 -1px 0 #F3D7A8}
+.vitrine.madeira .vit-porta{border:none;border-radius:6px;background:#EFEDE8;box-shadow:inset 12px 0 0 #E4BF86,inset -12px 0 0 #E4BF86,inset 14px 0 0 #B98A4E,inset -14px 0 0 #B98A4E}
+.vitrine.madeira .vit-interior{padding:6px 18px 0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.02) 0 2px,transparent 2px 9px)}
+.vit-etq{position:relative;top:9px;margin-top:-6px;background:#FFF;color:#2A1A12;border:1.5px solid #2A1A12;border-radius:3px;font:900 .62rem/1.2 'Nunito',sans-serif;padding:0 3px;white-space:nowrap;z-index:1;box-shadow:0 1px 0 rgba(0,0,0,.2)}
+.vitrine:not(.madeira) .vit-etq{background:#FFE14D}
+.vit-prod{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;background:none;border:2px solid transparent;border-radius:8px;padding:2px 2px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;font-family:'Nunito',sans-serif;position:relative;min-width:44px}
 .vit-prod svg{display:block;filter:drop-shadow(0 2px 0 rgba(0,0,0,.12))}
 .vit-prod.sel{border-color:var(--amarelo-esc);background:rgba(255,201,60,.25)}
 .vit-preco{margin-top:3px;background:#FFE14D;color:#2A1A12;border:2px solid #2A1A12;border-radius:5px;font:900 .72rem 'Nunito',sans-serif;padding:0 4px;white-space:nowrap}
@@ -4251,6 +4255,182 @@ function svgProduto(p){
   const big=f.tipo==='pet2l', h=big?120:88, w=big?44:32;
   return `<svg viewBox="0 0 40 ${big?120:96}" width="${w}" height="${h}"><rect x="14" y="2" width="12" height="9" rx="2" fill="${T}" stroke="${C}" stroke-width="2.5"/><path d="M15 11 L25 11 L25 16 Q36 22 36 34 L36 ${big?114:90} Q36 ${big?118:94} 32 ${big?118:94} L8 ${big?118:94} Q4 ${big?118:94} 4 ${big?114:90} L4 34 Q4 22 15 16 Z" fill="${L}" stroke="${C}" stroke-width="2.5"/><rect x="4" y="${big?50:44}" width="32" height="${big?26:20}" fill="${R}"/><rect x="10" y="${big?58:50}" width="20" height="${big?5:4}" rx="2" fill="#fff" opacity=".85"/><rect x="8" y="${big?24:22}" width="4" height="${big?22:18}" rx="2" fill="#fff" opacity=".45"/></svg>`;
 }
+// ---------- Embalagens da mercearia e dos doces (desenho na vista de frente) ----------
+const TIPOS_SECOS=[
+  ['ovos',/\bovo|ovos/],['pao',/\bpao\b|pullman/],['rolos',/papel higienico|papel toalha/],['tubo',/creme dental/],
+  ['frasco',/detergente|desinfetante|amaciante|candida|veja|multiuso|ketchup|oleo|vinagre|molho de pimenta/],
+  ['lataAlim',/sardinha|milho verde|^milho$|nescau|leite em po|fermento em po/],['pote',/margarina|geleia|doce de leite/],
+  ['caixinha',/^leite|leite condensado|creme de leite|maisena|\bcha\b|sabao em po|sazon|^cx\.|^caixa|absorvente|fermento$|^fermento\b/],
+  ['sache',/molho de tomate|molho predilecta|whey|nutry/],['esponja',/esponja|bucha|bombril|sabonete/],
+  ['pirulito',/pirulito/],['bala',/^bala(?! fini)|tri bala|chiclete/],['barra',/barra de cereal|wafer|trento|passatempo|bolacha/],
+  ['tubinho',/fini tubes|halls|mentos|trident/],['quadradinho',/pacoca|pe de moca|pe de moleque|cocada|doce de|amendoleite/],
+  ['pacote',/./]
+];
+const ORDEM_SECO={pacote:0,pao:1,barra:2,caixinha:3,lataAlim:4,pote:5,sache:6,ovos:7,frasco:8,rolos:9,esponja:10,tubo:11,tubinho:12,quadradinho:13,bala:14,pirulito:15};
+const CORES_SECO=[
+  [/arroz/,'#F4F1E8','#D8382C'],[/feijao/,'#6B3A1E','#F2C31B'],[/acucar/,'#F7F7FA','#2F6FD8'],[/sal grosso|^sal$/,'#F2F6FA','#2F8FD8'],[/farinha|trigo|flocao|maisena/,'#F6EED8','#E8433A'],
+  [/melitta/,'#2E9B44','#D8382C'],[/pilao/,'#D8382C','#F2C31B'],[/3 coracoes/,'#E8742A','#B01E3A'],[/cafe/,'#5A2E17','#D8382C'],[/miojo|macarrao/,'#F7C21F','#D8382C'],[/batata palha/,'#F2C31B','#D8382C'],[/farofa yoki/,'#F2A516','#2E7D32'],[/farofa/,'#E8D9B0','#7A4F1A'],[/canjica|tapioca|pipoca/,'#F6E7C1','#E6A817'],
+  [/creme de leite/,'#F4F8FC','#7A4F1A'],[/condensado/,'#F4F8FC','#1D4E89'],[/doce de leite/,'#C8935A','#F4F8FC'],[/leite/,'#F4F8FC','#2F6FD8'],[/\bcha\b/,'#E9F3D8','#3E9B57'],[/sabao|amaciante/,'#7CC4F2','#1D4E89'],
+  [/candida|desinfetante/,'#F4F4F4','#2E9B44'],[/detergente/,'#F7D23B','#E8433A'],[/veja|multiuso/,'#F4F4F4','#E8433A'],[/ketchup|tomate|pimenta/,'#D8382C','#2E7D32'],
+  [/oleo/,'#F2C31B','#C8930A'],[/vinagre/,'#F3E9C6','#B01E3A'],[/sardinha/,'#2F6FD8','#C9CDD1'],[/milho/,'#F2C31B','#2E7D32'],[/nescau/,'#F7C21F','#2E7D32'],
+  [/margarina/,'#F7D23B','#2F6FD8'],[/sazon/,'#E8433A','#F2C31B'],[/papel/,'#F4F8FC','#2F8FD8'],[/sabonete/,'#F7B6CF','#B0306A'],[/creme dental/,'#F4F8FC','#D8382C'],
+  [/esponja|bucha/,'#F7D23B','#2E9B44'],[/bombril/,'#E8433A','#F2C31B'],[/absorvente/,'#F2B8D8','#9B5DE5'],[/queijo/,'#F7E7A8','#E8433A'],[/ovo/,'#F3E3C3','#C9A06A'],
+  [/morango|amora/,'#E8433A','#F7B6CF'],[/hortela|menta/,'#7FD8C8','#1D6E5C'],[/maca/,'#7BC043','#E8433A'],[/iogurte/,'#F4F8FC','#9B5DE5'],[/cafe/,'#5A2E17','#F2C31B'],
+  [/chocolate|trento|wafer|passatempo/,'#5A2E17','#E8433A'],[/blueberry/,'#4A4AC8','#9FD7F5'],[/pacoca|pe de|amendoleite/,'#C8935A','#E8433A'],[/cocada|coco/,'#F6EED8','#7A4F1A'],
+  [/abobora/,'#F28C1A','#7A4F1A'],[/banana/,'#F7D23B','#7A4F1A'],[/batata/,'#B5651D','#F2C31B'],[/doce de leite/,'#C8935A','#F4F8FC'],[/cereal/,'#E6A817','#2E7D32'],[/whey/,'#2A2A2A','#E8433A']
+];
+function corSeco(n){ const c=CORES_SECO.find(x=>x[0].test(n)); if(c) return [c[1],c[2]]; let h=0; for(const ch of n) h=(h*31+ch.charCodeAt(0))>>>0; const p=['#E8433A','#2F8FD8','#3CB371','#F2A516','#9B5DE5','#F27A1A'][h%6]; return [p,'#F4F4F4']; }
+function tipoSeco(p){ const n=semAcento(p.n); return (TIPOS_SECOS.find(t=>t[1].test(n))||['pacote'])[0]; }
+function svgSeco(p){
+  const n=semAcento(p.n), t=tipoSeco(p), [A,B]=corSeco(n), C='#2A1A12', S='stroke="'+C+'" stroke-width="2.5"';
+  const brilho='fill="#fff" opacity=".35"';
+  switch(t){
+    case 'ovos': return /unidade/.test(n)?`<svg viewBox="0 0 40 50" width="30" height="38"><ellipse cx="20" cy="27" rx="14" ry="19" fill="#F3E3C3" ${S}/><ellipse cx="14" cy="20" rx="3" ry="6" ${brilho}/></svg>`
+      :`<svg viewBox="0 0 70 44" width="64" height="40"><rect x="3" y="14" width="64" height="26" rx="5" fill="#C9A06A" ${S}/>${[12,27,42,57].map(x=>`<ellipse cx="${x}" cy="15" rx="7" ry="9" fill="#F3E3C3" ${S}/>`).join('')}</svg>`;
+    case 'pao': return `<svg viewBox="0 0 70 46" width="64" height="42"><path d="M6 14 Q6 4 20 4 L50 4 Q64 4 64 14 L64 42 L6 42 Z" fill="#E9B872" ${S}/><rect x="6" y="20" width="58" height="14" fill="${B}" opacity=".8"/><rect x="10" y="8" width="4" height="10" rx="2" ${brilho}/></svg>`;
+    case 'rolos': return `<svg viewBox="0 0 60 60" width="56" height="56"><rect x="3" y="6" width="54" height="50" rx="8" fill="#EAF4FB" ${S}/>${[[17,20],[43,20],[17,44],[43,44]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="10" fill="#fff" stroke="#9FB8C8" stroke-width="2"/><circle cx="${x}" cy="${y}" r="3" fill="#C9D6DC"/>`).join('')}<rect x="3" y="28" width="54" height="8" fill="${B}"/></svg>`;
+    case 'tubo': return `<svg viewBox="0 0 70 30" width="64" height="28"><rect x="3" y="4" width="64" height="22" rx="3" fill="${A}" ${S}/><rect x="3" y="4" width="22" height="22" fill="${B}"/><rect x="30" y="10" width="28" height="4" fill="${B}"/></svg>`;
+    case 'frasco':
+      if(/ketchup/.test(n)) return `<svg viewBox="0 0 40 80" width="34" height="70"><rect x="12" y="62" width="16" height="14" rx="3" fill="#F4F4F4" ${S}/><path d="M8 62 Q4 30 10 12 Q20 4 30 12 Q36 30 32 62 Z" fill="${A}" ${S}/><rect x="9" y="30" width="22" height="16" fill="#F4F4F4" opacity=".9"/><rect x="12" y="16" width="4" height="12" rx="2" ${brilho}/></svg>`;
+      if(/oleo|vinagre/.test(n)) return `<svg viewBox="0 0 36 96" width="30" height="84"><rect x="13" y="2" width="10" height="9" rx="2" fill="${B}" ${S}/><path d="M14 11 L22 11 L22 18 Q32 24 32 34 L32 92 L4 92 L4 34 Q4 24 14 18 Z" fill="${A}" ${S} opacity=".95"/><rect x="4" y="50" width="28" height="22" fill="${B}" opacity=".85"/><rect x="8" y="28" width="4" height="18" rx="2" ${brilho}/></svg>`;
+      if(/pimenta/.test(n)) return `<svg viewBox="0 0 30 60" width="24" height="50"><rect x="10" y="2" width="10" height="10" rx="2" fill="#F4F4F4" ${S}/><path d="M10 12 L20 12 L22 18 L22 56 L8 56 L8 18 Z" fill="${A}" ${S}/><rect x="8" y="30" width="14" height="12" fill="#F4F4F4"/></svg>`;
+      return `<svg viewBox="0 0 50 90" width="44" height="80"><rect x="10" y="2" width="12" height="10" rx="2" fill="${B}" ${S}/><path d="M8 12 L28 12 L30 20 L44 22 Q46 24 46 30 L46 86 L6 86 L6 22 Z" fill="${A}" ${S}/><path d="M32 26 L42 26 L42 44 L32 44" fill="none" ${S}/><rect x="6" y="50" width="40" height="22" fill="${B}" opacity=".9"/><rect x="10" y="28" width="4" height="16" rx="2" ${brilho}/></svg>`;
+    case 'lataAlim':
+      if(/sardinha/.test(n)) return `<svg viewBox="0 0 70 34" width="64" height="30"><rect x="3" y="6" width="64" height="24" rx="11" fill="${A}" ${S}/><rect x="6" y="9" width="58" height="8" rx="4" fill="#C9CDD1"/><circle cx="58" cy="13" r="4" fill="none" ${S}/></svg>`;
+      { const alta=/nescau|leite em po/.test(n); return `<svg viewBox="0 0 50 ${alta?80:60}" width="${alta?42:40}" height="${alta?72:52}"><rect x="5" y="8" width="40" height="${alta?68:48}" rx="5" fill="${A}" ${S}/><ellipse cx="25" cy="9" rx="20" ry="5" fill="#C9CDD1" ${S}/><rect x="5" y="${alta?30:24}" width="40" height="${alta?22:16}" fill="${B}" opacity=".9"/><rect x="9" y="16" width="4" height="${alta?50:30}" rx="2" ${brilho}/></svg>`; }
+    case 'pote': return `<svg viewBox="0 0 60 44" width="54" height="40"><rect x="4" y="6" width="52" height="10" rx="4" fill="${B}" ${S}/><path d="M7 16 L53 16 L49 40 L11 40 Z" fill="${A}" ${S}/><rect x="16" y="22" width="28" height="8" rx="3" fill="#fff" opacity=".8"/></svg>`;
+    case 'caixinha': {
+      const alta=/^leite|sabao|maisena/.test(n), larga=/^cx\.|^caixa|sabao/.test(n), w=larga?60:alta?40:46, h=alta?(/sabao/.test(n)?66:76):38;
+      return `<svg viewBox="0 0 ${w+6} ${h+6}" width="${w}" height="${h}"><rect x="3" y="3" width="${w}" height="${h}" rx="3" fill="${A}" ${S}/><rect x="3" y="${h*0.38}" width="${w}" height="${h*0.28}" fill="${B}"/><rect x="${w*0.25}" y="${h*0.15}" width="${w*0.5}" height="${Math.max(4,h*0.08)}" rx="2" fill="#fff" opacity=".85"/>${/^leite/.test(n)?`<rect x="${w-12}" y="-1" width="9" height="7" rx="2" fill="#55585C" ${S}/>`:''}</svg>`; }
+    case 'sache': return `<svg viewBox="0 0 50 60" width="44" height="54"><path d="M5 6 L45 6 L45 50 Q25 58 5 50 Z" fill="${A}" ${S}/><rect x="5" y="6" width="40" height="7" fill="${B}"/><circle cx="25" cy="32" r="10" fill="${B}" opacity=".85"/></svg>`;
+    case 'esponja':
+      if(/sabonete/.test(n)) return `<svg viewBox="0 0 60 34" width="54" height="30"><rect x="3" y="4" width="54" height="26" rx="8" fill="${A}" ${S}/><rect x="14" y="12" width="32" height="8" rx="4" fill="#fff" opacity=".8"/></svg>`;
+      if(/bombril/.test(n)) return `<svg viewBox="0 0 56 40" width="52" height="36"><rect x="3" y="4" width="50" height="32" rx="4" fill="${A}" ${S}/><circle cx="28" cy="20" r="10" fill="#C9CDD1" stroke="${C}" stroke-width="2"/><rect x="3" y="4" width="50" height="7" fill="${B}"/></svg>`;
+      return `<svg viewBox="0 0 56 36" width="52" height="34"><rect x="3" y="4" width="50" height="16" rx="4" fill="${A}" ${S}/><rect x="3" y="18" width="50" height="14" rx="3" fill="${B}" ${S}/></svg>`;
+    case 'pirulito': return `<svg viewBox="0 0 30 60" width="26" height="54"><rect x="13" y="26" width="4" height="32" rx="2" fill="#F4F4F4" ${S}/>${/coracao/.test(n)?`<path d="M15 28 C-4 14 6 0 15 10 C24 0 34 14 15 28 Z" fill="#E8433A" ${S}/>`:`<circle cx="15" cy="14" r="12" fill="${A}" ${S}/><path d="M7 10 Q15 4 22 12" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/>`}</svg>`;
+    case 'bala': return `<svg viewBox="0 0 54 28" width="46" height="24"><path d="M14 14 L3 4 L3 24 Z" fill="${A}" ${S}/><path d="M40 14 L51 4 L51 24 Z" fill="${A}" ${S}/><rect x="13" y="5" width="28" height="18" rx="8" fill="${A}" ${S}/><rect x="18" y="10" width="18" height="4" rx="2" fill="${B}"/></svg>`;
+    case 'barra': { const longa=/wafer|bolacha|passatempo/.test(n); const w=longa?62:52, h=longa?30:22;
+      return `<svg viewBox="0 0 ${w+6} ${h+6}" width="${w}" height="${h+4}"><path d="M3 3 L${w+3} 3 L${w} ${h/2+3} L${w+3} ${h+3} L3 ${h+3} L6 ${h/2+3} Z" fill="${A}" ${S}/><rect x="${w*0.2}" y="${h*0.35}" width="${w*0.6}" height="${h*0.36}" rx="3" fill="${B}"/></svg>`; }
+    case 'tubinho': return `<svg viewBox="0 0 30 60" width="24" height="52"><rect x="4" y="3" width="22" height="54" rx="5" fill="${A}" ${S}/><rect x="4" y="20" width="22" height="14" fill="${B}"/><rect x="8" y="7" width="3" height="10" rx="1.5" ${brilho}/></svg>`;
+    case 'quadradinho': return `<svg viewBox="0 0 44 36" width="40" height="32"><rect x="3" y="6" width="38" height="26" rx="4" fill="${A}" ${S}/><path d="M3 6 L22 18 L41 6" fill="none" stroke="${B}" stroke-width="3"/></svg>`;
+    default: { const peq=/miojo|sazon|fermento|cha\b|queijo/.test(n); const w=peq?44:50, h=peq?44:72;
+      return `<svg viewBox="0 0 ${w+6} ${h+6}" width="${w}" height="${h}"><path d="M5 7 Q${w/2+3} 3 ${w+1} 7 L${w-1} ${h} Q${w/2+3} ${h+4} 7 ${h} Z" fill="${A}" ${S}/><rect x="5" y="4" width="${w-4}" height="6" rx="2" fill="${B}" opacity=".9"/><rect x="9" y="${h*0.38}" width="${w-12}" height="${h*0.24}" rx="4" fill="${B}"/><rect x="${w*0.3}" y="${h*0.45}" width="${w*0.4}" height="${Math.max(3,h*0.06)}" rx="2" fill="#fff" opacity=".85"/><rect x="10" y="14" width="4" height="${h*0.2}" rx="2" ${brilho}/></svg>`; }
+  }
+}
+const ehSeco=p=>p.s==='mercearia'||p.s==='salgadinho';
+const ordemVitrine=(a,b)=>ehSeco(a)?(ORDEM_SECO[tipoSeco(a)]-ORDEM_SECO[tipoSeco(b)]||a.n.localeCompare(b.n)):(ORDEM_TIPO[perfilProduto(a).tipo]-ORDEM_TIPO[perfilProduto(b).tipo]||a.n.localeCompare(b.n));
+
+// ---------- Frentes de produto (como na prateleira da loja: pilhas e fileiras) ----------
+const CT='#2A1A12', SW='stroke="#2A1A12" stroke-width="1.8" stroke-linejoin="round"', BR='fill="#fff" opacity=".35"';
+// cada unidade devolve [largura, altura, desenho] em coordenadas locais
+function un(t,A,B,n){
+  switch(t){
+    case 'deitado': return [62,20,`<path d="M3 4 Q31 0 59 4 L60 16 Q31 20 2 16 Z" fill="${A}" ${SW}/><path d="M3 4 L1 1 M3 16 L1 19 M59 4 L61 1 M60 16 L61 19" stroke="${CT}" stroke-width="1.5"/><rect x="18" y="6" width="26" height="8" rx="3" fill="${B}"/><rect x="24" y="8.5" width="14" height="2.5" rx="1" fill="#fff" opacity=".9"/><rect x="6" y="5" width="10" height="2" rx="1" ${BR}/>`];
+    case 'tijolo': return [28,50,`<rect x="1" y="1" width="26" height="48" rx="2" fill="${A}" ${SW}/><rect x="1" y="1" width="26" height="6" fill="${B}" opacity=".6"/><circle cx="14" cy="22" r="7" fill="#fff"/><path d="M9 22 h10 v4 q-5 4 -10 0z" fill="${B}"/><rect x="5" y="34" width="18" height="8" rx="2" fill="${B}"/>`];
+    case 'pouch': return [34,48,`<path d="M4 4 L30 4 L32 44 Q17 48 2 44 Z" fill="${A}" ${SW}/><rect x="4" y="4" width="26" height="5" fill="${B}"/><rect x="7" y="16" width="20" height="14" rx="3" fill="${B}"/><rect x="10" y="21" width="14" height="3" rx="1" fill="#fff" opacity=".9"/><rect x="6" y="11" width="3" height="10" rx="1.5" ${BR}/>`];
+    case 'miojo': return [46,13,`<rect x="1" y="1" width="44" height="11" rx="2" fill="${A}" ${SW}/><rect x="14" y="3" width="18" height="7" rx="2" fill="${B}"/><rect x="3" y="2.5" width="8" height="2" rx="1" ${BR}/>`];
+    case 'macarrao': return [58,18,`<path d="M2 3 L56 3 L54 15 L4 15 Z" fill="${A}" ${SW}/><rect x="20" y="5" width="20" height="8" rx="3" fill="#F2D36A" stroke="${CT}" stroke-width="1"/><rect x="5" y="5" width="10" height="3" rx="1" fill="${B}"/>`];
+    case 'leite': return [24,48,`<path d="M1 8 L12 2 L23 8 L23 47 L1 47 Z" fill="#F4F8FC" ${SW}/><rect x="15" y="0" width="6" height="5" rx="1" fill="#55585C"/><rect x="1" y="14" width="22" height="7" fill="${B}"/><path d="M1 34 Q12 28 23 34 L23 47 L1 47 Z" fill="#DCEBF7"/>`];
+    case 'caixaP': return [28,20,`<rect x="1" y="1" width="26" height="18" rx="2" fill="${A}" ${SW}/><rect x="1" y="7" width="26" height="6" fill="${B}"/><rect x="6" y="3" width="10" height="2" rx="1" fill="#fff" opacity=".8"/>`];
+    case 'caixaAlta': return [28,46,`<rect x="1" y="1" width="26" height="44" rx="2" fill="${A}" ${SW}/><rect x="1" y="16" width="26" height="12" fill="${B}"/><rect x="6" y="6" width="16" height="4" rx="1" fill="#fff" opacity=".85"/>`];
+    case 'caixaSabao': return [46,54,`<rect x="1" y="1" width="44" height="52" rx="3" fill="${A}" ${SW}/><rect x="1" y="18" width="44" height="16" fill="${B}"/><circle cx="34" cy="44" r="6" fill="#fff" opacity=".8"/><rect x="6" y="6" width="22" height="6" rx="2" fill="#fff" opacity=".9"/>`];
+    case 'cha': return [42,20,`<rect x="1" y="1" width="40" height="18" rx="2" fill="${A}" ${SW}/><rect x="1" y="1" width="12" height="18" fill="${B}"/><rect x="17" y="7" width="18" height="5" rx="2" fill="#fff" opacity=".85"/>`];
+    case 'sazon': return [34,12,`<rect x="1" y="1" width="32" height="10" rx="1.5" fill="${A}" ${SW}/><rect x="10" y="3" width="14" height="6" rx="2" fill="${B}"/>`];
+    case 'lataAlta': return [30,46,`<rect x="1" y="4" width="28" height="41" rx="3" fill="${A}" ${SW}/><ellipse cx="15" cy="4.5" rx="14" ry="3.5" fill="#C9CDD1" ${SW}/><rect x="1" y="18" width="28" height="13" fill="${B}"/><rect x="4" y="9" width="3" height="32" rx="1.5" ${BR}/>`];
+    case 'lataMed': return [26,30,`<rect x="1" y="4" width="24" height="25" rx="3" fill="${A}" ${SW}/><ellipse cx="13" cy="4.5" rx="12" ry="3" fill="#C9CDD1" ${SW}/><rect x="1" y="12" width="24" height="9" fill="${B}"/>`];
+    case 'sardinha': return [44,14,`<rect x="1" y="1" width="42" height="12" rx="6" fill="${A}" ${SW}/><rect x="4" y="3" width="36" height="4" rx="2" fill="#C9CDD1"/>`];
+    case 'detergente': return [18,48,`<rect x="6" y="1" width="6" height="7" rx="1.5" fill="${B}" ${SW}/><path d="M4 8 L14 8 L16 14 L16 47 L2 47 L2 14 Z" fill="${A}" ${SW}/><rect x="2" y="24" width="14" height="12" fill="${B}" opacity=".9"/><rect x="4" y="14" width="2.5" height="10" rx="1" ${BR}/>`];
+    case 'galao': return [30,54,`<rect x="5" y="1" width="9" height="7" rx="1.5" fill="${B}" ${SW}/><path d="M4 8 L16 8 L17 13 L28 14 L29 53 L1 53 L1 14 Z" fill="${A}" ${SW}/><path d="M19 17 L26 17 L26 30 L19 30" fill="none" stroke="${CT}" stroke-width="1.8"/><rect x="1" y="32" width="28" height="13" fill="${B}" opacity=".9"/>`];
+    case 'spray': return [22,48,`<path d="M4 1 L16 1 L18 6 L12 6 L12 10 L4 10 Z" fill="${B}" ${SW}/><path d="M3 10 L15 10 L19 18 L19 47 L3 47 Z" fill="${A}" ${SW}/><rect x="3" y="26" width="16" height="11" fill="${B}" opacity=".85"/>`];
+    case 'ketchup': return [22,44,`<rect x="6" y="34" width="10" height="9" rx="2" fill="#F4F4F4" ${SW}/><path d="M4 34 Q1 14 5 4 Q11 0 17 4 Q21 14 18 34 Z" fill="${A}" ${SW}/><rect x="4" y="14" width="14" height="10" fill="#F4F4F4" opacity=".9"/>`];
+    case 'oleo': return [20,56,`<rect x="7" y="1" width="6" height="6" rx="1.5" fill="${B}" ${SW}/><path d="M7 7 L13 7 L13 11 Q19 14 19 20 L19 55 L1 55 L1 20 Q1 14 7 11 Z" fill="${A}" ${SW} opacity=".95"/><rect x="1" y="28" width="18" height="12" fill="${B}" opacity=".85"/><rect x="3" y="18" width="2.5" height="10" rx="1" ${BR}/>`];
+    case 'pimenta': return [12,30,`<rect x="3" y="1" width="6" height="6" rx="1" fill="#F4F4F4" ${SW}/><path d="M3 7 L9 7 L11 11 L11 29 L1 29 L1 11 Z" fill="${A}" ${SW}/><rect x="1" y="16" width="10" height="6" fill="#F4F4F4"/>`];
+    case 'pote': return [40,22,`<rect x="2" y="1" width="36" height="6" rx="2" fill="${B}" ${SW}/><path d="M4 7 L36 7 L33 21 L7 21 Z" fill="${A}" ${SW}/><rect x="12" y="11" width="16" height="5" rx="2" fill="#fff" opacity=".8"/>`];
+    case 'sache': return [24,32,`<path d="M2 2 L22 2 L22 26 Q12 32 2 26 Z" fill="${A}" ${SW}/><rect x="2" y="2" width="20" height="4" fill="${B}"/><circle cx="12" cy="16" r="6" fill="${B}" opacity=".9"/>`];
+    case 'papelHig': return [64,46,`<rect x="1" y="1" width="62" height="44" rx="6" fill="#F4F8FC" ${SW}/>${[[12,13],[28,13],[44,13],[12,33],[28,33],[44,33]].map(([x,y])=>`<circle cx="${x+4}" cy="${y}" r="8" fill="#fff" stroke="#9FB8C8" stroke-width="1.5"/><circle cx="${x+4}" cy="${y}" r="2.5" fill="#C9D6DC"/>`).join('')}<rect x="1" y="20" width="62" height="6" fill="${B}"/></svg>`.replace('</svg>','')];
+    case 'papelToalha': return [44,38,`<rect x="1" y="1" width="42" height="36" rx="6" fill="#F4F8FC" ${SW}/>${[13,31].map(x=>`<circle cx="${x}" cy="19" r="10" fill="#fff" stroke="#9FB8C8" stroke-width="1.5"/><circle cx="${x}" cy="19" r="3" fill="#C9D6DC"/>`).join('')}<rect x="1" y="30" width="42" height="5" fill="${B}"/>`];
+    case 'sabonete': return [30,14,`<rect x="1" y="1" width="28" height="12" rx="4" fill="${A}" ${SW}/><rect x="8" y="5" width="14" height="4" rx="2" fill="#fff" opacity=".8"/>`];
+    case 'esponja': return [34,14,`<rect x="1" y="1" width="32" height="7" rx="2" fill="${A}" ${SW}/><rect x="1" y="7" width="32" height="6" rx="2" fill="${B}" ${SW}/>`];
+    case 'bombril': return [38,20,`<rect x="1" y="1" width="36" height="18" rx="2" fill="${A}" ${SW}/><circle cx="19" cy="10" r="5" fill="#C9CDD1"/><rect x="1" y="1" width="36" height="4" fill="${B}"/>`];
+    case 'creme': return [54,13,`<rect x="1" y="1" width="52" height="11" rx="2" fill="${A}" ${SW}/><rect x="1" y="1" width="16" height="11" fill="${B}"/><rect x="22" y="5" width="22" height="3" fill="${B}"/>`];
+    case 'absorvente': return [34,26,`<rect x="1" y="1" width="32" height="24" rx="5" fill="${A}" ${SW}/><path d="M8 13 q9 -8 18 0 q-9 8 -18 0z" fill="#fff" opacity=".8"/>`];
+    case 'cartela': return [66,22,`<rect x="1" y="10" width="64" height="11" rx="2" fill="#C9A06A" ${SW}/>${[9,22,35,48,59].map(x=>`<ellipse cx="${x}" cy="10" rx="6" ry="8" fill="#F3E3C3" ${SW}/>`).join('')}`];
+    case 'cesta': return [44,32,`${[12,22,32,17,27].map((x,i)=>`<ellipse cx="${x}" cy="${i<3?14:9}" rx="6" ry="8" fill="#F3E3C3" ${SW}/>`).join('')}<path d="M2 16 L42 16 L38 31 L6 31 Z" fill="#C8935A" ${SW}/><path d="M6 21 H38 M8 26 H36" stroke="#9A6A3A" stroke-width="1.5"/>`];
+    case 'pao': return [32,58,`<path d="M3 10 Q3 2 16 2 Q29 2 29 10 L29 57 L3 57 Z" fill="#F4F8FC" ${SW}/><rect x="3" y="14" width="26" height="30" fill="${A}" opacity=".9"/><path d="M3 14 h26 M3 24 h26 M3 34 h26 M10 14 v30 M22 14 v30" stroke="#fff" stroke-width="1.5" opacity=".7"/><rect x="7" y="47" width="18" height="6" rx="2" fill="${B}"/>`];
+    case 'expositor': { const cores=['#E8433A','#F2C31B','#3CB371','#2F8FD8','#9B5DE5','#F27A1A']; let d=`<path d="M1 10 L51 10 L51 33 L1 33 Z" fill="#C8935A" ${SW}/><path d="M1 10 L51 10 L45 2 L7 2 Z" fill="#E6B98A" ${SW}/>`;
+      for(let i=0;i<10;i++){ const x=5+(i%5)*9, y=4+Math.floor(i/5)*4; d+=`<rect x="${x}" y="${y}" width="8" height="5" rx="2" fill="${i%3===0?A:cores[(i+n)%cores.length]}" stroke="${CT}" stroke-width=".8"/>`; }
+      return [52,34,d+`<rect x="12" y="18" width="28" height="8" rx="2" fill="${A}" ${SW}/>`]; }
+    case 'pote_doce': return [40,46,`<rect x="6" y="1" width="28" height="7" rx="2" fill="${B}" ${SW}/><path d="M4 8 L36 8 L36 44 L4 44 Z" fill="#EAF6FF" ${SW} opacity=".9"/>${[0,1,2,3,4,5].map(i=>`<rect x="${7+(i%3)*9}" y="${14+Math.floor(i/3)*14}" width="8" height="11" rx="2" fill="${A}" stroke="${CT}" stroke-width=".8"/>`).join('')}`];
+    case 'pirulitos': return [40,54,`<path d="M6 30 L34 30 L32 53 L8 53 Z" fill="#EAF6FF" ${SW}/>${[[10,'#E8433A'],[20,'#3CB371'],[30,'#F2C31B'],[15,'#9B5DE5'],[25,'#2F8FD8']].map(([x,c],i)=>`<rect x="${x-1}" y="${i<3?12:18}" width="2" height="22" fill="#F4F4F4"/><circle cx="${x}" cy="${i<3?10:16}" r="6" fill="${n&&i===0?'#E8433A':c}" stroke="${CT}" stroke-width="1"/>`).join('')}`];
+    case 'barraPack': return [58,16,`<path d="M1 2 L57 2 L55 8 L57 14 L1 14 L3 8 Z" fill="${A}" ${SW}/><rect x="16" y="5" width="26" height="6" rx="2" fill="${B}"/>`];
+    case 'bolacha': return [60,18,`<rect x="1" y="2" width="58" height="14" rx="6" fill="${A}" ${SW}/><rect x="18" y="4" width="24" height="10" rx="3" fill="${B}"/><path d="M5 4 v10 M9 4 v10" stroke="${CT}" stroke-width="1" opacity=".5"/>`];
+    case 'whey': return [22,30,`<path d="M2 2 L20 2 L20 24 Q11 30 2 24 Z" fill="${A}" ${SW}/><rect x="2" y="2" width="18" height="4" fill="${B}"/><rect x="5" y="12" width="12" height="6" rx="2" fill="${B}"/>`];
+  }
+  return [34,48,`<path d="M4 4 L30 4 L32 44 Q17 48 2 44 Z" fill="${A}" ${SW}/><rect x="7" y="16" width="20" height="14" rx="3" fill="${B}"/>`];
+}
+// como cada produto aparece na prateleira: unidade + arrumação (colunas x camadas)
+function arrumacao(p){
+  const n=semAcento(p.n);
+  const R=(t,c,l)=>({t,c,l});
+  if(/\bovo \(unidade\)|ovo unidade/.test(n)) return R('cesta',1,1);
+  if(/cartela|duzia/.test(n)) return R('cartela',1,/duzia/.test(n)?2:3);
+  if(/pao|pullman/.test(n)) return R('pao',2,1);
+  if(/papel higienico/.test(n)) return R('papelHig',1,1);
+  if(/papel toalha/.test(n)) return R('papelToalha',1,1);
+  if(/creme dental/.test(n)) return R('creme',1,3);
+  if(/absorvente/.test(n)) return R('absorvente',1,2);
+  if(/sabonete/.test(n)) return R('sabonete',2,3);
+  if(/bombril/.test(n)) return R('bombril',1,3);
+  if(/esponja|bucha/.test(n)) return R('esponja',1,3);
+  if(/detergente/.test(n)) return R('detergente',3,1);
+  if(/desinfetante|amaciante|candida/.test(n)) return R('galao',2,1);
+  if(/veja|multiuso/.test(n)) return R('spray',2,1);
+  if(/ketchup/.test(n)) return R('ketchup',2,1);
+  if(/oleo|vinagre/.test(n)) return R('oleo',3,1);
+  if(/molho de pimenta/.test(n)) return R('pimenta',3,1);
+  if(/sardinha/.test(n)) return R('sardinha',1,3);
+  if(/nescau|leite em po/.test(n)) return R('lataAlta',2,1);
+  if(/milho verde|^milho$|fermento em po/.test(n)) return R('lataMed',2,2);
+  if(/margarina|geleia|doce de leite/.test(n)) return R(/geleia|doce de leite/.test(n)?'pote_doce':'pote',/geleia|doce de leite/.test(n)?1:2,/geleia|doce de leite/.test(n)?1:2);
+  if(/^leite italac|^leite .*1 l/.test(n)) return R('leite',3,1);
+  if(/condensado|creme de leite/.test(n)) return R('caixaP',2,2);
+  if(/maisena|maizena/.test(n)) return R('caixaAlta',2,1);
+  if(/\bcha\b/.test(n)) return R('cha',1,3);
+  if(/sabao em po/.test(n)) return R('caixaSabao',1,1);
+  if(/sazon|^fermento$/.test(n)) return R('sazon',2,3);
+  if(/molho de tomate|predilecta/.test(n)) return R('sache',3,1);
+  if(/whey|nutry/.test(n)) return R('whey',2,1);
+  if(/cafe/.test(n)) return R('tijolo',2,1);
+  if(/miojo/.test(n)) return R('miojo',1,4);
+  if(/macarrao/.test(n)) return R('macarrao',1,3);
+  if(/batata palha|farofa|queijo ralado|^pipoca/.test(n)) return R('pouch',2,1);
+  if(/arroz|feijao|acucar|^sal|farinha|flocao|canjica|tapioca|milho de pipoca/.test(n)) return R('deitado',1,3);
+  if(/bolacha|biscoito/.test(n)) return R('bolacha',1,3);
+  if(/wafer|passatempo/.test(n)) return R('barraPack',1,3);
+  if(/^cx\.|^caixa/.test(n)) return R('expositor',1,1);
+  if(/pirulito/.test(n)) return R('pirulitos',1,1);
+  if(/pacoca|pe de moca|pe de moleque|cocada|doce de|amendoleite/.test(n)) return R('pote_doce',1,1);
+  if(/bala|chiclete|fini|halls|mentos|trident|trento|barra de cereal/.test(n)) return R('expositor',1,1);
+  return R('pouch',2,1);
+}
+const ESCALA_FRENTE=1.0;
+function frenteSeco(p){
+  const n=semAcento(p.n), [A,B]=corSeco(n), a=arrumacao(p), [w,h,d]=un(a.t,A,B,/coracao/.test(n)?1:0);
+  const gap=1, W=a.c*w+(a.c-1)*gap, H=a.l*h-(a.l-1)*2;
+  let g='';
+  for(let l=a.l-1;l>=0;l--) for(let c=0;c<a.c;c++){ const x=c*(w+gap)+(a.l>1&&l%2?2:0)*(a.c===1?0:0), y=H-h-l*(h-2); g+=`<g transform="translate(${x},${y})">${d}</g>`; }
+  return {w:W*ESCALA_FRENTE,h:H*ESCALA_FRENTE,svg:`<svg viewBox="-2 -2 ${W+4} ${H+4}" width="${(W+4)*ESCALA_FRENTE}" height="${(H+4)*ESCALA_FRENTE}" aria-hidden="true">${g}</svg>`};
+}
+// frentes das geladeiras: algumas unidades lado a lado
+function frenteBebida(p){
+  const f=perfilProduto(p), c=f.tipo==='pet2l'?2:f.tipo==='lata'?3:f.tipo==='caixa'?2:3;
+  const um=svgProduto(p), m=um.match(/width="(\d+)" height="(\d+)"/), w=+m[1], h=+m[2], esc=f.tipo==='pet2l'?0.62:f.tipo==='lata'?0.62:0.68;
+  const corpo=um.replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,''), vb=um.match(/viewBox="0 0 (\d+) (\d+)"/), vw=+vb[1], vh=+vb[2];
+  let g=''; for(let i=0;i<c;i++) g+=`<svg x="${i*vw*0.78}" y="0" width="${vw}" height="${vh}" viewBox="0 0 ${vw} ${vh}">${corpo}</svg>`;
+  const W=vw*(0.78*(c-1)+1);
+  return {w:w*esc*(0.78*(c-1)+1),h:h*esc,svg:`<svg viewBox="0 0 ${W} ${vh}" width="${w*esc*(0.78*(c-1)+1)}" height="${h*esc}" aria-hidden="true">${g}</svg>`};
+}
+
 let vitrineSetor=null;
 function vitrineDisponivel(id){ return !!(EST[id]&&S.est[id]&&S.est[id].aberta&&produtosDoSetor(id).length); }
 function abrirVitrine(id){
@@ -4259,16 +4439,19 @@ function abrirVitrine(id){
 }
 function renderVitrine(){
   const id=vitrineSetor; if(!id) return;
-  const itens=produtosDoSetor(id).slice().sort((a,b)=>ORDEM_TIPO[perfilProduto(a).tipo]-ORDEM_TIPO[perfilProduto(b).tipo]||a.n.localeCompare(b.n));
+  const itens=produtosDoSetor(id).slice().sort(ordemVitrine);
   const geladeiraSetor=EXPOSITORAS.includes(id);
   $('#vitrineTitulo').textContent=geladeiraSetor?(id==='refri'?'Refri gelado':'Água e suco'):EST[id].nome;
   $('#vitrineCaixa').className='vitrine'+(geladeiraSetor?'':' madeira');
   // prateleiras: cada tipo de embalagem começa numa prateleira nova
-  // enche cada prateleira até a largura da porta, na ordem: garrafas grandes embaixo… caixinhas em cima
-  const largura=($('#vitrinePrateleiras').clientWidth||320)-16, cab=Math.max(3,Math.floor(largura/74));
-  const prat=[]; for(let i=0;i<itens.length;i+=cab) prat.push(itens.slice(i,i+cab));
+  // frentes de produto lado a lado; quando não cabe mais, começa outra prateleira (como na loja)
+  const largura=($('#vitrinePrateleiras').clientWidth||320)-14;
+  const frentes=itens.map(p=>({p,...(ehSeco(p)?frenteSeco(p):frenteBebida(p))}));
+  const prat=[]; let atual=[], usado=0;
+  frentes.forEach(fz=>{ const w=Math.max(fz.w,44)+9; if(atual.length&&usado+w>largura){ prat.push(atual); atual=[]; usado=0; } atual.push(fz); usado+=w; });
+  if(atual.length) prat.push(atual);
   let h='';
-  prat.forEach(l=>{ h+='<div class="vit-prat">'+l.map(p=>`<button type="button" class="vit-prod" data-n="${encodeURIComponent(p.n)}" aria-label="${p.n}, ${reaisCat(p.p)}">${svgProduto(p)}<span class="vit-preco">${reaisCat(p.p)}</span><span class="vit-nome">${p.n}</span></button>`).join('')+'</div>'; });
+  prat.forEach(l=>{ h+='<div class="vit-prat">'+l.map(fz=>`<button type="button" class="vit-prod" data-n="${encodeURIComponent(fz.p.n)}" aria-label="${fz.p.n}, ${reaisCat(fz.p.p)}">${fz.svg}<span class="vit-etq">${reaisCat(fz.p.p).replace('R$ ','R$\u00a0')}</span></button>`).join('')+'</div>'; });
   if(!itens.length) h='<p class="vit-vazio">Os produtos deste setor ainda não foram cadastrados no catálogo.</p>';
   $('#vitrinePrateleiras').innerHTML=h;
   $('#vitrineInfo').innerHTML=`<span>Toque num produto para ver o nome e o preço.</span><small>${itens.length} ${itens.length===1?'produto':'produtos'} · preços do balcão em ${CATALOGO_DATA}</small>`;
