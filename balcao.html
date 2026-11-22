@@ -59,7 +59,22 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .cod-grande{font:900 2.4rem/1.1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.18em;margin:8px 0;user-select:all}
 .cat-imp{margin:8px 0;border:2px dashed var(--borda);border-radius:12px;padding:8px 10px}
 .cat-imp textarea{width:100%;box-sizing:border-box;margin:6px 0;font:600 .9rem ui-monospace,Menlo,Consolas,monospace;border:2px solid var(--borda);border-radius:10px;padding:8px}
-.cat-tab{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:8px}
+.cat-tab{margin-top:8px}
+.cat-row{border-bottom:1px solid var(--borda);padding:8px 0}
+.cat-row.inativo{opacity:.55}
+.cat-l1 .cat-nome{width:100%;box-sizing:border-box;font:800 .95rem inherit;border:2px solid transparent;border-radius:8px;padding:4px 6px;background:transparent}
+.cat-l1 .cat-nome:focus{border-color:var(--borda);background:#fff}
+.cat-l2{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px;font-weight:800}
+.cat-l2 .cat-preco{width:5.5em;padding:5px 6px;border:2px solid var(--borda);border-radius:8px;font:700 .9rem inherit;text-align:right}
+.cat-l2 select,.cat-filtros-b select,.cat-novo select{padding:5px;border:2px solid var(--borda);border-radius:8px;font:700 .85rem inherit;background:#fff}
+.cat-l2 button{padding:5px 12px;font-size:.82rem}
+.cat-ativo{font-size:.85rem;display:flex;align-items:center;gap:4px}
+.cat-novo{margin:8px 0;padding:10px;border:2px solid var(--borda);border-radius:12px;background:var(--verde-claro,#E6F6EA)}
+.cat-novo-linha{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cat-novo-linha input{flex:1 1 9em;min-width:0;padding:7px 8px;border:2px solid var(--borda);border-radius:8px;font:700 .9rem inherit}
+.cat-novo-linha input:nth-child(2){flex:0 1 6em}
+.cat-filtros-b{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.cat-filtros-b input{flex:1 1 10em;padding:7px 8px;border:2px solid var(--borda);border-radius:8px;font:700 .9rem inherit}
 .cat-tab td{padding:5px 4px;border-bottom:1px solid var(--borda);vertical-align:middle}
 .cat-tab input[type=text]{width:5.5em;padding:5px 6px;border:2px solid var(--borda);border-radius:8px;font:700 .9rem inherit;text-align:right}
 .cat-tab .alc{color:#B3362B;font-size:.75rem;font-weight:800}
@@ -116,7 +131,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 
   <section class="cartao" id="boxCatalogo">
     <div class="cab-res"><h2>🛒 Catálogo do jogo</h2><button type="button" id="btnCatCarregar">Carregar</button></div>
-    <p class="pequeno">Os produtos e preços que aparecem no jogo, na tela “🔎 Catálogo da Adega”. Só o preço de venda: custo e estoque ficam no ERP. Bebidas alcoólicas nunca aparecem no jogo.</p>
+    <p class="pequeno">Os produtos e preços que aparecem no jogo: nas geladeiras, na tela da expositora e no “🔎 Catálogo da Adega”. Produto da temporada? Adicione aqui; quando acabar, desmarque “no jogo”. Só o preço de venda: custo e estoque ficam no ERP. Bebidas alcoólicas nunca aparecem no jogo.</p>
     <details class="cat-imp"><summary><b>📥 Atualizar com a planilha do ERP</b></summary>
       <p class="pequeno">Uma linha por produto: <b>nome; preço; categoria; código</b> (o código é opcional). Pode colar direto do Excel ou escolher um arquivo .csv.</p>
       <input type="file" id="catArquivo" accept=".csv,.txt,text/csv,text/plain">
@@ -411,27 +426,52 @@ $('#btnCodSenha').addEventListener('click',async()=>{
 });
 // ---------- Catálogo do jogo ----------
 const brl=v=>Number(v).toFixed(2).replace('.',',');
-const MSG_CAT={senha_invalida:'Senha do balcão incorreta.',preco_invalido:'Digite um preço maior que zero.',produto_inexistente:'Produto não encontrado.',lista_invalida:'Não entendi a planilha.'};
+const MSG_CAT={setor_invalido:'Setor inválido.',nome_invalido:'Digite o nome do produto.',senha_invalida:'Senha do balcão incorreta.',preco_invalido:'Digite um preço maior que zero.',produto_inexistente:'Produto não encontrado.',lista_invalida:'Não entendi a planilha.'};
 const erroCat=e=>{ const k=Object.keys(MSG_CAT).find(c=>e.message.indexOf(c)>=0); return k?MSG_CAT[k]:(/catalogo_/.test(e.message)?'O catálogo ainda não foi instalado. Rode o supabase-catalogo.sql no Supabase.':'Não foi possível agora. Confira a internet.'); };
+const SETORES_CAT={refri:'🥤 Geladeira de refri',agua:'💧 Água e suco',salgadinho:'🍿 Salgadinhos e doces',gelo:'🧊 Gelo',carvao:'🔥 Carvão',mercearia:'🛒 Mercearia'};
+const semAc=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const lerPreco=t=>Number(String(t).replace(/R\$\s*/i,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.'));
+function selSetor(valor){ const s=el('select'); Object.keys(SETORES_CAT).forEach(k=>{ const o=el('option','',SETORES_CAT[k]); o.value=k; if(k===valor) o.selected=true; s.appendChild(o); }); return s; }
+let catLista=[];
 async function carregarCatBalcao(){
   const box=$('#catBalcao'); box.innerHTML='';
   if(!$('#senha').value){ box.appendChild(el('p','vazio','Digite a senha do balcão lá em cima.')); return; }
   box.appendChild(el('p','vazio','Carregando…'));
   try{
-    const l=await rpc('catalogo_admin',{p_senha:$('#senha').value})||[]; box.innerHTML='';
-    const at=l.filter(p=>p.ativo&&!p.alcoolico).length;
-    box.appendChild(el('p','pequeno',`${l.length} produtos cadastrados · ${at} aparecem no jogo.`));
-    const busca=el('input'); busca.type='search'; busca.placeholder='Buscar produto'; busca.style.cssText='width:100%;box-sizing:border-box;padding:8px 10px;border:2px solid var(--borda);border-radius:10px;font:700 .95rem inherit';
-    const tab=el('table','cat-tab'); box.append(busca,tab);
-    const desenhar=()=>{ const q=busca.value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); tab.innerHTML='';
-      l.filter(p=>!q||p.nome.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(q)).forEach(p=>{
-        const tr=el('tr',p.ativo?'':'inativo'), td1=el('td'); td1.append(el('b','',p.nome),el('br'),el('span','pequeno',p.categoria+(p.codigo?' · cód. '+p.codigo:''))); if(p.alcoolico) td1.append(el('div','alc','🍺 alcoólico: não aparece no jogo'));
-        const inp=el('input'); inp.type='text'; inp.inputMode='decimal'; inp.value=brl(p.preco);
-        const ck=el('input'); ck.type='checkbox'; ck.checked=p.ativo&&!p.alcoolico; ck.disabled=!!p.alcoolico; ck.title=p.alcoolico?'Bebida alcoólica nunca aparece no jogo':'Aparece no jogo';
-        const ok=botao('Salvar','',async()=>{ ok.disabled=true; try{ await rpc('catalogo_editar',{p_senha:$('#senha').value,p_id:p.id,p_preco:Number(inp.value.replace(/\./g,'').replace(',','.')),p_ativo:ck.checked}); p.preco=Number(inp.value.replace(/\./g,'').replace(',','.')); p.ativo=ck.checked; ok.textContent='✔'; tr.className=p.ativo?'':'inativo'; }catch(e){ ok.textContent='Erro'; alert(erroCat(e)); } finally{ ok.disabled=false; setTimeout(()=>ok.textContent='Salvar',1500); } });
-        const tdP=el('td'); tdP.append('R$ ',inp); const tdA=el('td'); const lb=el('label','pequeno'); lb.append(ck,' no jogo'); tdA.append(lb); const tdB=el('td'); tdB.append(ok);
-        tr.append(td1,tdP,tdA,tdB); tab.appendChild(tr); }); };
-    busca.addEventListener('input',desenhar); desenhar();
+    catLista=await rpc('catalogo_admin',{p_senha:$('#senha').value})||[]; box.innerHTML='';
+    const resumo=el('p','pequeno'); box.appendChild(resumo);
+    // novo produto da temporada
+    const novo=el('div','cat-novo'); novo.appendChild(el('b','','➕ Produto novo'));
+    const nN=el('input'); nN.placeholder='Nome, ex.: Suco Del Valle Manga 1 L'; const nP=el('input'); nP.placeholder='Preço'; nP.inputMode='decimal'; const nS=selSetor('agua');
+    const nB=botao('Adicionar','prim',async()=>{ const preco=lerPreco(nP.value); if(!nN.value.trim()||!(preco>0)){ alert('Digite o nome e o preço.'); return; }
+      nB.disabled=true; try{ await rpc('catalogo_sincronizar',{p_senha:$('#senha').value,p_itens:[{nome:nN.value.trim(),preco,categoria:SETORES_CAT[nS.value].replace(/^\S+\s/,''),setor:nS.value}]}); await carregarCatBalcao(); $('#catBalcao').prepend(el('p','pequeno','✔ '+nN.value.trim()+' entrou no jogo.')); }catch(e){ alert(erroCat(e)); } finally{ nB.disabled=false; } });
+    const lin=el('div','cat-novo-linha'); lin.append(nN,nP,nS,nB); novo.appendChild(lin); box.appendChild(novo);
+    // filtros
+    const filtros=el('div','cat-filtros-b'); const busca=el('input'); busca.type='search'; busca.placeholder='Buscar produto';
+    const fS=el('select'); [['','Todos os setores']].concat(Object.entries(SETORES_CAT)).forEach(([k,v])=>{ const o=el('option','',v); o.value=k; fS.appendChild(o); });
+    const fA=el('select'); [['','No jogo e fora'],['sim','Só os que estão no jogo'],['nao','Só os que estão fora']].forEach(([k,v])=>{ const o=el('option','',v); o.value=k; fA.appendChild(o); });
+    filtros.append(busca,fS,fA); box.appendChild(filtros);
+    const tab=el('div','cat-tab'); box.appendChild(tab);
+    const atualizarResumo=()=>{ resumo.textContent=`${catLista.length} produtos cadastrados · ${catLista.filter(p=>p.ativo&&!p.alcoolico).length} aparecem no jogo agora.`; };
+    const desenhar=()=>{ const q=semAc(busca.value); tab.innerHTML=''; atualizarResumo();
+      catLista.filter(p=>(!q||semAc(p.nome).includes(q))&&(!fS.value||(p.setor||'mercearia')===fS.value)&&(!fA.value||(fA.value==='sim')===(p.ativo&&!p.alcoolico))).forEach(p=>{
+        const row=el('div','cat-row'+(p.ativo&&!p.alcoolico?'':' inativo'));
+        const nome=el('input','cat-nome'); nome.value=p.nome;
+        const info=el('div','pequeno',(p.categoria||'')+(p.codigo?' · cód. '+p.codigo:'')+(p.alcoolico?' · 🍺 alcoólico: nunca aparece no jogo':''));
+        const preco=el('input','cat-preco'); preco.inputMode='decimal'; preco.value=brl(p.preco);
+        const setor=selSetor(p.setor||'mercearia');
+        const ck=el('input'); ck.type='checkbox'; ck.checked=p.ativo&&!p.alcoolico; ck.disabled=!!p.alcoolico;
+        const lb=el('label','cat-ativo'); lb.append(ck,' no jogo');
+        const salvarB=botao('Salvar','',()=>salvar());
+        async function salvar(){ const v=lerPreco(preco.value); if(!(v>0)){ alert('Digite um preço maior que zero.'); return; }
+          salvarB.disabled=true; try{ await rpc('catalogo_editar',{p_senha:$('#senha').value,p_id:p.id,p_preco:v,p_ativo:ck.checked,p_setor:setor.value,p_nome:nome.value.trim()||p.nome});
+            Object.assign(p,{preco:v,ativo:ck.checked,setor:setor.value,nome:nome.value.trim()||p.nome}); row.className='cat-row'+(p.ativo&&!p.alcoolico?'':' inativo'); atualizarResumo(); salvarB.textContent='✔ Salvo'; }
+          catch(e){ salvarB.textContent='Erro'; alert(erroCat(e)); } finally{ salvarB.disabled=false; setTimeout(()=>salvarB.textContent='Salvar',1500); } }
+        ck.addEventListener('change',salvar); // tirar ou pôr na temporada já salva
+        const l1=el('div','cat-l1'); l1.append(nome); const l2=el('div','cat-l2'); l2.append('R$ ',preco,setor,lb,salvarB);
+        row.append(l1,info,l2); tab.appendChild(row); });
+      if(!tab.children.length) tab.appendChild(el('p','vazio','Nenhum produto com esse filtro.')); };
+    [busca,fS,fA].forEach(x=>x.addEventListener(x===busca?'input':'change',desenhar)); desenhar();
   }catch(e){ box.innerHTML=''; box.appendChild(el('p','vazio',erroCat(e))); }
 }
 function lerPlanilha(txt){

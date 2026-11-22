@@ -348,6 +348,30 @@ body:not(.jogando) .alerta{display:none}
 .compra-nota{font-size:.78rem;color:var(--sub);font-weight:700;margin:6px 2px 0;line-height:1.35}
 .compra-box .btn{margin-top:6px}
 .licao-nota{font-size:.72rem;color:var(--sub);margin:4px 0 0}
+/* vitrine (expositora de frente) */
+.vitrine{margin:auto;width:100%;max-width:27rem;background:#F3F5F6;border:4px solid var(--contorno);border-radius:20px;box-shadow:0 7px 0 var(--contorno);padding:0 10px 12px;box-sizing:border-box;position:relative}
+.vit-topo{display:flex;justify-content:space-between;align-items:center;margin:0 -10px 10px;padding:10px 12px;border-radius:16px 16px 0 0;background:linear-gradient(90deg,#2F8FD8,#6CC0F0);color:#fff;font:400 1.5rem 'Lilita One','Arial Black',sans-serif;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.vitrine.madeira .vit-topo{background:linear-gradient(90deg,#B98545,#D9AE6C)}
+.vit-porta{position:relative;border:8px solid #3A3F44;border-radius:12px;background:linear-gradient(#F7F5FD,#E6E2F1);overflow:hidden}
+.vitrine.madeira .vit-porta{border-color:#C8965A;background:#F6E7CC}
+.vit-led{height:8px;margin:6px 18%;border-radius:6px;background:#fff;box-shadow:0 0 18px 8px rgba(255,255,255,.9)}
+.vit-interior{max-height:55vh;overflow-y:auto;padding:6px 6px 0;-webkit-overflow-scrolling:touch}
+.vit-prat{display:flex;justify-content:center;align-items:flex-end;gap:4px;padding:6px 2px 0;border-bottom:7px solid #FFFFFF;box-shadow:0 3px 0 #C9CDD6;margin-bottom:12px;min-height:60px}
+.vitrine.madeira .vit-prat{border-bottom-color:#D9AE6C;box-shadow:0 3px 0 #A67A40}
+.vit-prod{display:flex;flex-direction:column;align-items:center;background:none;border:2px solid transparent;border-radius:10px;padding:2px 1px 4px;cursor:pointer;width:4.4rem;-webkit-tap-highlight-color:transparent;font-family:'Nunito',sans-serif}
+.vit-prod svg{display:block;filter:drop-shadow(0 2px 0 rgba(0,0,0,.12))}
+.vit-prod.sel{border-color:var(--amarelo-esc);background:rgba(255,201,60,.25)}
+.vit-preco{margin-top:3px;background:#FFE14D;color:#2A1A12;border:2px solid #2A1A12;border-radius:5px;font:900 .72rem 'Nunito',sans-serif;padding:0 4px;white-space:nowrap}
+.vit-nome{font:800 .62rem/1.15 'Nunito',sans-serif;color:#4A3B30;text-align:center;margin-top:2px;max-width:4.3rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vit-reflexo{position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 0 18%,rgba(255,255,255,.28) 22%,transparent 30% 62%,rgba(255,255,255,.18) 66%,transparent 72%)}
+.vit-puxador{position:absolute;right:4px;top:30%;width:6px;height:28%;border-radius:4px;background:linear-gradient(90deg,#B8C0C2,#E4E8EA,#9AA3A8);pointer-events:none}
+.vitrine.madeira .vit-reflexo,.vitrine.madeira .vit-puxador,.vitrine.madeira .vit-led{display:none}
+.vit-info{min-height:3.2rem;margin:10px 2px 6px;display:flex;flex-direction:column;align-items:center;text-align:center;font-weight:800;font-size:.92rem}
+.vit-info small{color:var(--sub);font-size:.74rem;margin-top:2px}
+.vit-info-preco{font:400 1.6rem 'Lilita One','Arial Black',sans-serif;color:var(--verde-esc)}
+.vit-acoes{display:flex;gap:8px}
+.vit-acoes .btn{flex:1;margin:0;font-size:.85rem;padding:10px 6px}
+.vit-vazio{padding:30px 10px;text-align:center;color:var(--sub);font-weight:800}
 /* catálogo */
 .cat-busca{width:100%;box-sizing:border-box;padding:11px 14px;border:3px solid var(--contorno);border-radius:14px;font:800 1rem 'Nunito',sans-serif;background:#fff;color:var(--texto);margin:4px 0 8px}
 .cat-filtros{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
@@ -612,6 +636,15 @@ body:not(.jogando) .alerta{display:none}
   <div class="caixa">
     <div class="papo-topo"><h2 class="titulo" style="font-size:1.7rem">📒 Caderninho</h2><button class="pilula" id="btnCadernoFechar" type="button" aria-label="Fechar">✕</button></div>
     <div id="cadernoConteudo"></div>
+  </div>
+</section>
+
+<section class="tela" id="telaVitrine" hidden>
+  <div class="vitrine" id="vitrineCaixa">
+    <div class="vit-topo"><span id="vitrineTitulo">Refri gelado</span><button class="pilula" id="btnVitrineFechar" type="button" aria-label="Fechar">✕</button></div>
+    <div class="vit-porta"><div class="vit-led"></div><div class="vit-interior" id="vitrinePrateleiras"></div><div class="vit-reflexo" aria-hidden="true"></div><div class="vit-puxador" aria-hidden="true"></div></div>
+    <div class="vit-info" id="vitrineInfo" aria-live="polite"></div>
+    <div class="vit-acoes"><button class="btn peq" id="btnVitrinePainel" type="button">⚙️ Nível, estoque e melhorias</button><button class="btn azul peq" id="btnVitrineCat" type="button">🔎 Catálogo</button></div>
   </div>
 </section>
 
@@ -1138,7 +1171,7 @@ const EXPO=(function(){
     {n:8,dx:0.2,f:i=>pet600(0xC6E6F8,[0x2F8FD8,0x64B5E8][i%2],0x2F8FD8)},
     {n:7,dx:0.22,f:i=>{ const s=[['#C8D62B','#F2A516','#F7C21F'],['#F7A21B','#F28C1A','#FF8C1A'],['#7A2C8F','#5B1E6B','#B02040'],['#C8D62B','#F2A516','#F7C21F'],['#F2C31B','#E6A817','#7A4F1A'],['#9FD3EA','#E8433A','#F28C1A']][i%6]; return caixaSuco(...s); }}
   ];
-  return {REFRI,AGUA};
+  return {REFRI,AGUA,pet2l,pet600,lata,caixaSuco,esporte};
 })();
 function geladeira(id,corpo,coresItens){
   const d=EST[id], g=new THREE.Group(); g.position.set(d.pos[0],0,d.pos[2]);
@@ -4121,7 +4154,7 @@ try{ aplicarCatalogo(JSON.parse(localStorage.getItem('adegaEdu.catalogo')||'null
 let catBuscado=0;
 async function buscarCatalogo(){
   if(!rankingAtivo()||Date.now()-catBuscado<5*60*1000) return; catBuscado=Date.now();
-  try{ const d=await rpc('catalogo_publico',{}); if(aplicarCatalogo(d)){ try{ localStorage.setItem('adegaEdu.catalogo',JSON.stringify(d)); }catch(e){} if(!$('#telaCatalogo').hidden) renderCatalogo(); } }catch(e){ catBuscado=0; }
+  try{ const d=await rpc('catalogo_publico',{}); if(aplicarCatalogo(d)){ try{ localStorage.setItem('adegaEdu.catalogo',JSON.stringify(d)); }catch(e){} if(!$('#telaCatalogo').hidden) renderCatalogo(); if(typeof preencherExpositoras==='function'){ preencherExpositoras(); if(vitrineSetor) renderVitrine(); } } }catch(e){ catBuscado=0; }
 }
 setTimeout(buscarCatalogo,2500);
 const semAcento=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
@@ -4151,8 +4184,104 @@ $('#btnCatFechar').addEventListener('click',()=>{ $('#telaCatalogo').hidden=true
 function catalogoNoPainel(k){
   const l=produtosDoSetor(k); if(!l.length) return '';
   const ex=l.slice().sort((a,b)=>b.p-a.p).slice(0,1).concat(l.slice(0,2)).filter((p,i,a)=>a.indexOf(p)===i).slice(0,2);
-  return `<div class="cat-real">🏪 <b>Na Adega de verdade:</b> ${ex.map(p=>`${p.n} ${reaisCat(p.p)}`).join(' · ')}${l.length>2?` e mais ${l.length-2}`:''}.<button type="button" class="link-btn" id="bCatSetor">🔎 Ver os produtos reais deste setor</button></div>`;
+  return `<div class="cat-real">🏪 <b>Na Adega de verdade:</b> ${ex.map(p=>`${p.n} ${reaisCat(p.p)}`).join(' · ')}${l.length>2?` e mais ${l.length-2}`:''}.<button type="button" class="link-btn" id="bCatSetor">👀 Ver a expositora com os produtos reais</button></div>`;
 }
+
+// ================= Expositoras com os produtos reais da Adega =================
+// Cada produto do catálogo vira uma embalagem (tipo e cor pelo nome), na geladeira 3D e na vista de frente.
+const ORDEM_TIPO={pet2l:0,pet600:1,esporte:2,lata:3,caixa:4};
+const LARG_TIPO={pet2l:0.26,pet600:0.2,esporte:0.2,lata:0.17,caixa:0.22};
+const SABORES=[
+  [/pepsi/,0x2A1A12,0x1B4FA0],[/cola|coca/,0x3B1E12,0xD8382C],[/guarana/,0xC9C25A,0x2E9B44],[/laranja|fanta|orange/,0xFF8A1F,0xF27A1A],
+  [/uva|grape/,0x6A2380,0x7A2C8F],[/limao|lima|sprite|soda|citrus/,0xD8EFA0,0x7BC043],[/maracuja/,0xF2C31B,0xE6A817],[/abacaxi/,0xE9E36A,0xC8D62B],
+  [/manga/,0xFFB53A,0xF29F1A],[/pessego/,0xFFB58A,0xF28C6A],[/morango|frutas vermelhas|cereja/,0xD8382C,0xB01E3A],[/caju/,0xF7D36A,0xE8433A],
+  [/tonica/,0xEAF6E0,0xE6C200],[/\bcha\b|ice tea|mate/,0xB5651D,0xF2C31B],[/monster/,0x1C1C1C,0x7BC043],[/red ?bull/,0x2B4FA0,0xC0C4C8],
+  [/energet/,0x1C1C1C,0xE8433A],[/isoton|gatorade|powerade/,0x2F7FD8,0xF3F3F3],[/agua|mineral/,0xBFE3F7,0x2F8FD8],[/coco/,0xF3F1E4,0x3E9B57]
+];
+const PALETA=[[0xE8433A,0xB01E3A],[0x2E9B44,0x1F6E30],[0xF27A1A,0xC85A10],[0x2F8FD8,0x1B5FA0],[0x9B5DE5,0x6A2380],[0xF2C31B,0xC89A10]];
+const hexCss=h=>'#'+h.toString(16).padStart(6,'0');
+function perfilProduto(p){
+  const n=semAcento(p.n);
+  let tipo;
+  if(/\blata\b|\b(269|310|350|473) ?ml/.test(n)) tipo='lata';
+  else if(/isoton|gatorade|powerade/.test(n)) tipo='esporte';
+  else if(/energet|monster|red ?bull|\btnt\b/.test(n)) tipo='lata';
+  else if(/suco|nectar|del valle|caixinha/.test(n)&&!/garrafa|pet\b|lata/.test(n)) tipo='caixa';
+  else if(/(\b1[,.]5|\b2|\b2[,.]5|\b3|\b5) ?l\b|litrao|galao/.test(n)) tipo='pet2l';
+  else tipo='pet600';
+  const s=SABORES.find(x=>x[0].test(n));
+  let liq,rot;
+  if(s){ liq=s[1]; rot=s[2]; } else { let h=0; for(const c of n) h=(h*31+c.charCodeAt(0))>>>0; const pp=PALETA[h%PALETA.length]; liq=pp[0]; rot=pp[1]; }
+  if(/zero|diet|sem acucar/.test(n)) rot=0x1C1C1C;
+  const tampa=/agua|mineral/.test(n)?0x2F8FD8:tipo==='esporte'?0xFF7A1A:rot;
+  return {tipo,liq,rot,tampa};
+}
+function modelo3D(p){
+  const f=perfilProduto(p);
+  if(f.tipo==='lata') return EXPO.lata(f.liq===0xBFE3F7?f.rot:(/cola|coca/.test(semAcento(p.n))?f.rot:f.liq),f.rot);
+  if(f.tipo==='esporte') return EXPO.esporte(f.liq,f.tampa);
+  if(f.tipo==='caixa') return EXPO.caixaSuco(hexCss(f.liq),hexCss(f.rot),hexCss(f.rot));
+  if(f.tipo==='pet2l') return EXPO.pet2l(f.liq,f.rot,f.tampa);
+  return EXPO.pet600(f.liq,f.rot,f.tampa);
+}
+const EXPOSITORAS=['refri','agua'];
+// Remonta as prateleiras 3D com os produtos reais do setor (repete as frentes para encher, como na loja)
+function preencherExpositora(id){
+  const o=objEst[id]; if(!o||!o.vis) return;
+  const itens=produtosDoSetor(id).slice().sort((a,b)=>ORDEM_TIPO[perfilProduto(a).tipo]-ORDEM_TIPO[perfilProduto(b).tipo]||a.n.localeCompare(b.n));
+  if(!itens.length) return;
+  o.prods.forEach(m=>{ o.vis.remove(m); }); o.prods.length=0; o.ordem=null;
+  const alturas=[0.27,0.67,1.07,1.42], LARG=1.56;
+  let k=0;
+  alturas.forEach(y=>{
+    const fila=[]; let w=0;
+    while(true){ const p=itens[k%itens.length], lw=LARG_TIPO[perfilProduto(p).tipo]; if(w+lw>LARG&&fila.length) break; fila.push(p); w+=lw; k++; if(fila.length>14) break; }
+    let x=-w/2;
+    fila.forEach(p=>{ const lw=LARG_TIPO[perfilProduto(p).tipo], m=modelo3D(p); m.position.set(x+lw/2,y,0.16); m.rotation.y=rnd(-0.2,0.2); o.vis.add(m); o.prods.push(m); x+=lw; });
+  });
+  atualizarProdutos(id);
+}
+function preencherExpositoras(){ EXPOSITORAS.forEach(preencherExpositora); }
+// ---------- vista de frente (ao tocar na geladeira) ----------
+function svgProduto(p){
+  const f=perfilProduto(p), L=hexCss(f.liq), R=hexCss(f.rot), T=hexCss(f.tampa), C='#2A1A12';
+  if(f.tipo==='lata') return `<svg viewBox="0 0 40 70" width="34" height="60"><rect x="3" y="6" width="34" height="60" rx="6" fill="${/cola|coca/.test(semAcento(p.n))?R:L}" stroke="${C}" stroke-width="2.5"/><rect x="3" y="30" width="34" height="14" fill="${R}" opacity=".85"/><ellipse cx="20" cy="7" rx="15" ry="4" fill="#C9CDD1" stroke="${C}" stroke-width="2"/><rect x="8" y="12" width="4" height="48" rx="2" fill="#fff" opacity=".35"/></svg>`;
+  if(f.tipo==='caixa') return `<svg viewBox="0 0 50 100" width="44" height="88"><path d="M5 22 L25 10 L45 22 L45 96 L5 96 Z" fill="${L}" stroke="${C}" stroke-width="2.5"/><rect x="31" y="6" width="9" height="10" rx="2" fill="#55585C" stroke="${C}" stroke-width="2"/><path d="M11 32 h28 v24 l-14 5 l-14 -5z" fill="#3E3A33"/><rect x="15" y="40" width="20" height="4" fill="#fff"/><circle cx="25" cy="78" r="12" fill="${R}"/><circle cx="21" cy="80" r="6" fill="#fff" opacity=".35"/></svg>`;
+  if(f.tipo==='esporte') return `<svg viewBox="0 0 40 100" width="36" height="88"><rect x="13" y="2" width="14" height="12" rx="3" fill="${T}" stroke="${C}" stroke-width="2.5"/><path d="M8 18 Q20 10 32 18 L34 46 Q28 54 34 62 L33 96 L7 96 L6 62 Q12 54 6 46 Z" fill="${L}" stroke="${C}" stroke-width="2.5"/><rect x="7" y="64" width="26" height="18" fill="#fff" opacity=".9"/><rect x="10" y="22" width="4" height="22" rx="2" fill="#fff" opacity=".4"/></svg>`;
+  const big=f.tipo==='pet2l', h=big?120:88, w=big?44:32;
+  return `<svg viewBox="0 0 40 ${big?120:96}" width="${w}" height="${h}"><rect x="14" y="2" width="12" height="9" rx="2" fill="${T}" stroke="${C}" stroke-width="2.5"/><path d="M15 11 L25 11 L25 16 Q36 22 36 34 L36 ${big?114:90} Q36 ${big?118:94} 32 ${big?118:94} L8 ${big?118:94} Q4 ${big?118:94} 4 ${big?114:90} L4 34 Q4 22 15 16 Z" fill="${L}" stroke="${C}" stroke-width="2.5"/><rect x="4" y="${big?50:44}" width="32" height="${big?26:20}" fill="${R}"/><rect x="10" y="${big?58:50}" width="20" height="${big?5:4}" rx="2" fill="#fff" opacity=".85"/><rect x="8" y="${big?24:22}" width="4" height="${big?22:18}" rx="2" fill="#fff" opacity=".45"/></svg>`;
+}
+let vitrineSetor=null;
+function vitrineDisponivel(id){ return !!(EST[id]&&S.est[id]&&S.est[id].aberta&&produtosDoSetor(id).length); }
+function abrirVitrine(id){
+  vitrineSetor=id; buscarCatalogo(); fecharPainel(); $('#telaVitrine').hidden=false; renderVitrine(); SOM.abrir();
+  if(!S.viuVitrine){ S.viuVitrine=true; salvar(); setTimeout(()=>toastMissao('👀 Esses são os produtos de verdade da Adega do Edu! Toque num produto para ver o preço.'),400); }
+}
+function renderVitrine(){
+  const id=vitrineSetor; if(!id) return;
+  const itens=produtosDoSetor(id).slice().sort((a,b)=>ORDEM_TIPO[perfilProduto(a).tipo]-ORDEM_TIPO[perfilProduto(b).tipo]||a.n.localeCompare(b.n));
+  const geladeiraSetor=EXPOSITORAS.includes(id);
+  $('#vitrineTitulo').textContent=geladeiraSetor?(id==='refri'?'Refri gelado':'Água e suco'):EST[id].nome;
+  $('#vitrineCaixa').className='vitrine'+(geladeiraSetor?'':' madeira');
+  // prateleiras: cada tipo de embalagem começa numa prateleira nova
+  // enche cada prateleira até a largura da porta, na ordem: garrafas grandes embaixo… caixinhas em cima
+  const largura=($('#vitrinePrateleiras').clientWidth||320)-16, cab=Math.max(3,Math.floor(largura/74));
+  const prat=[]; for(let i=0;i<itens.length;i+=cab) prat.push(itens.slice(i,i+cab));
+  let h='';
+  prat.forEach(l=>{ h+='<div class="vit-prat">'+l.map(p=>`<button type="button" class="vit-prod" data-n="${encodeURIComponent(p.n)}" aria-label="${p.n}, ${reaisCat(p.p)}">${svgProduto(p)}<span class="vit-preco">${reaisCat(p.p)}</span><span class="vit-nome">${p.n}</span></button>`).join('')+'</div>'; });
+  if(!itens.length) h='<p class="vit-vazio">Os produtos deste setor ainda não foram cadastrados no catálogo.</p>';
+  $('#vitrinePrateleiras').innerHTML=h;
+  $('#vitrineInfo').innerHTML=`<span>Toque num produto para ver o nome e o preço.</span><small>${itens.length} ${itens.length===1?'produto':'produtos'} · preços do balcão em ${CATALOGO_DATA}</small>`;
+  $('#vitrinePrateleiras').querySelectorAll('.vit-prod').forEach(b=>b.onclick=()=>{
+    $('#vitrinePrateleiras').querySelectorAll('.vit-prod.sel').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); SOM.abrir();
+    const p=itens.find(x=>x.n===decodeURIComponent(b.dataset.n));
+    $('#vitrineInfo').innerHTML=`<b>${p.n}</b><span class="vit-info-preco">${reaisCat(p.p)}</span><small>Tem na Adega do Edu de verdade · preço do balcão em ${CATALOGO_DATA}</small>`;
+  });
+}
+$('#btnVitrineFechar').addEventListener('click',()=>{ $('#telaVitrine').hidden=true; vitrineSetor=null; });
+$('#btnVitrinePainel').addEventListener('click',()=>{ const id=vitrineSetor; $('#telaVitrine').hidden=true; vitrineSetor=null; abrirPainel(id); });
+$('#btnVitrineCat').addEventListener('click',()=>{ const id=vitrineSetor; $('#telaVitrine').hidden=true; vitrineSetor=null; abrirCatalogo(id); });
+preencherExpositoras();
 
 // ================= Mapa da Adega (etapas do jogo e quando liberam) =================
 const menorNivelSetores=()=>Math.min(...IDS.map(id=>S.est[id].aberta?S.est[id].nivel:0));
@@ -4588,7 +4717,7 @@ function renderPainel(){
   const bc=$('#bCaixa'); if(bc) bc.onclick=()=>{const c=CUSTO_CAIXA[S.caixas]*multPrest(); if(S.din<c) return; S.din-=c; S.caixas++; comprado(); atualizarEquipe();};
   const bp=$('#bPedir'); if(bp) bp.onclick=()=>{ if(pedir(k)) renderPainel(); };
   const bat=$('#bAtac'); if(bat) bat.onclick=()=>abrirListaAtac(k);
-  const bcat=$('#bCatSetor'); if(bcat) bcat.onclick=()=>abrirCatalogo(k);
+  const bcat=$('#bCatSetor'); if(bcat) bcat.onclick=()=>abrirVitrine(k);
   const bx=$('#bExtra'); if(bx) bx.onclick=()=>{ liberarExtras(); renderPainel(); renderSelos(); };
   const bmn=$('#bMesaNova'); if(bmn) bmn.onclick=()=>{const c=CUSTO_MESA[S.mesas.n]*multPrest(); if(S.din<c) return; S.din-=c; S.mesas.n++; atualizarMesas(); atualizarEquipe(); festa(mesasObj[S.mesas.n-1].g.position); comprado();};
   const bgc=$('#bGarcom'); if(bgc) bgc.onclick=()=>{const c=CUSTO_GARCOM*multPrest(); if(S.din<c) return; S.din-=c; S.mesas.garcom=true; atualizarEquipe(); comprado();};
@@ -4664,6 +4793,7 @@ canvas.addEventListener('pointerup',e=>{
   if(a==='pilha'){ if(pilhaValor>=1) coletar(); else abrirPainel('caixa'); }
   else if(a==='pdr') abrirPdr();
   else if(a.indexOf('mesa')===0){ const i=+a.slice(4); if(!recolherMesa(i)) abrirPainel('mesas'); }
+  else if(vitrineDisponivel(a)) abrirVitrine(a);
   else abrirPainel(a);
 });
 canvas.addEventListener('wheel',e=>{e.preventDefault();meiaLarg=THREE.MathUtils.clamp(meiaLarg*(e.deltaY>0?1.1:0.9),3.5,9);ajustar();},{passive:false});
