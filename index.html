@@ -905,7 +905,7 @@ body:not(.jogando) .alerta{display:none}
   <div class="caixa centro">
     <h2 class="titulo">Temporada 2: dinheiro de verdade</h2>
     <p class="txt">Agora a Adega funciona como uma adega real: <b>uma Coca-Cola 2 L custa R$ 12,00</b>, um guaraná R$ 11,00, e cada produto vendido entra no caixa pelo preço do balcão da Adega do Edu.</p>
-    <p class="txt">Por isso todo mundo recomeça do zero. O seu nome, o seu personagem e as lições do Edu continuam com você. A Temporada 1 fica guardada nos registros da Adega.</p>
+    <p class="txt"><b>Ninguém perdeu nada:</b> a sua adega continua com os mesmos setores, níveis e equipe. O dinheiro foi convertido: <b>cada 1.000 do jogo antigo virou R$ 1,00</b>, o mesmo valor em cupom de antes. Adegas que tinham falido foram reabertas.</p>
     <div class="meta-lista" id="t2Metas"></div>
     <p class="txt" style="font-size:.9rem;color:var(--sub)">Cada meta de faturamento batida dá um prêmio de 5% dela. 🎟️ Os cupons agora valem <b>R$ 1,00 a cada R$ 1.000</b> no caixa do jogo.</p>
     <button class="btn amarelo" id="btnT2Ok">Bora abrir a adega!</button>
@@ -973,27 +973,58 @@ function estadoNovo(prest){
     est:{refri:{aberta:true,nivel:1},agua:{aberta:false,nivel:1},salgadinho:{aberta:false,nivel:1},gelo:{aberta:false,nivel:1},carvao:{aberta:false,nivel:1},mercearia:{aberta:false,nivel:1}},
     caixas:1,operadores:0,cobrados:0,mesas:{n:0,nivel:1,garcom:false},caixaV:1,letreiro:1,gerente:false,tarefa:0,coletou:0,taxa:0,salvo:Date.now(),viuInicio:false};
 }
+// Temporada 2: a adega da Temporada 1 é CONVERTIDA para reais (cada 1.000 antigos = R$ 1,00, o mesmo valor em cupom).
+// Níveis, setores, equipe e tarefas continuam. O que já foi jogado na Temporada 2 é somado.
+const CONV_T1=1000;
+function converterT1(a,t2){
+  const r=v=>Math.round((+v||0)/CONV_T1*100)/100, N=JSON.parse(JSON.stringify(a));
+  delete N.t2; N.temporada=TEMPORADA; N.convertidoT1=true; N.metasConv=true;
+  ['din','total','totalBase','totalInicioMes','taxa'].forEach(k=>{ if(N[k]!=null) N[k]=r(N[k]); });
+  if(N.pdr) N.pdr.ganho=r(N.pdr.ganho);
+  if(N.fiado){ ['vendido','recebido','perdido'].forEach(k=>N.fiado[k]=r(N.fiado[k])); (N.fiado.lista||[]).forEach(e=>{ e.valor=r(e.valor); }); (N.fiado.hist||[]).forEach(e=>{ e.valor=r(e.valor); if(e.vendas) e.vendas=r(e.vendas); }); }
+  if(N.compras){ N.compras.gasto=r(N.compras.gasto); N.compras.economia=r(N.compras.economia); }
+  (N.vendas||[]).forEach(v=>v.valor=r(v.valor)); if(N.certificado) N.certificado.valor=r(N.certificado.valor);
+  delete N.contas; delete N.atac; delete N.missoes; delete N.pendente;   // recomeçam já em reais
+  const falido=!!N.falido;
+  N.falido=false; delete N.falidoApelido; delete N.falenciaEnviada; N.saiu=false;
+  if(N.perfil&&N.apelidosFalidos) N.apelidosFalidos=N.apelidosFalidos.filter(x=>x!==String(N.perfil.apelido||'').toLowerCase());
+  if(falido){ // adega falida na Temporada 1: reabre com estoque cheio e um capital para recomeçar
+    IDS.forEach(id=>{ const e=N.est[id]; if(e&&e.aberta){ e.estoque=undefined; e.pedido=0; } }); N.din=Math.max(N.din||0,200);
+  }
+  if(t2&&t2.est&&!t2.falido){ N.din=(N.din||0)+(+t2.din||0); N.total=(N.total||0)+(+t2.total||0); N.metas=t2.metas; N.nivelJ=Math.max(N.nivelJ||1,t2.nivelJ||1); }
+  else if(t2){ N.total=(N.total||0)+(+t2.total||0); }
+  return N;
+}
 let S;
 try{S=JSON.parse(localStorage.getItem(CHAVE));}catch(e){}
-if(!S||!S.est||S.temporada!==TEMPORADA){
-  // Temporada 2: a adega recomeça com a economia em reais; perfil, personagem e lições continuam
+(function(){
   let ant=null; try{ ant=JSON.parse(localStorage.getItem(CHAVE_T1)); }catch(e){}
-  S=estadoNovo();
-  if(ant&&ant.est){ ['perfil','visual','licoes','licoesVistas','guiaCorrVisto','viuVitrine','regrasChat','som'].forEach(k=>{ if(ant[k]!==undefined) S[k]=ant[k]; }); S.viuInicio=!!ant.viuInicio; S.avisoT2=true; }
-}
+  const temT1=ant&&ant.est, mesmo=(a,b)=>!a||!b||!a.perfil||!b.perfil||!a.perfil.id||!b.perfil.id||a.perfil.id===b.perfil.id;
+  if(!S||!S.est||S.temporada!==TEMPORADA){
+    S=temT1?converterT1(ant):estadoNovo(); if(temT1) S.avisoT2=true;
+  } else if(temT1&&!S.convertidoT1){
+    // já tinha aberto a versão que zerava: devolve a Temporada 1 convertida + o que jogou depois
+    if(mesmo(S,ant)){ const t2=S; S=converterT1(ant,t2); S.avisoT2=true; }
+    else S.convertidoT1=true;
+  }
+  // anistia: adega que faliu nesta temporada por causa do erro de atualizar a página reabre uma vez
+  if(S.falido&&!S.anistiaT2){ S.falido=false; delete S.falidoApelido; delete S.falenciaEnviada;
+    if(S.perfil&&S.apelidosFalidos) S.apelidosFalidos=S.apelidosFalidos.filter(x=>x!==String(S.perfil.apelido||'').toLowerCase());
+    IDS.forEach(id=>{ const e=S.est[id]; if(e&&e.aberta){ e.estoque=undefined; e.pedido=0; } }); S.din=Math.max(S.din||0,200); }
+  S.anistiaT2=true;
+})();
 if(S.operadores===undefined){S.operadores=0;S.cobrados=0;}
 const MAX_OPERADORES=1;
 if(S.operadores>MAX_OPERADORES) S.operadores=MAX_OPERADORES;
 if(S.letreiro>MAX_LETREIRO) S.letreiro=MAX_LETREIRO;
-if(!S.est.carvao){S.est.carvao={aberta:false,nivel:1};}
-if(!S.est.mercearia){S.est.mercearia={aberta:false,nivel:1};}
+IDS.forEach(id=>{ if(!S.est[id]) S.est[id]={aberta:id==='refri',nivel:1}; });
 if(!S.mesas){S.mesas={n:0,nivel:1,garcom:false};}
 if(S.mesas.n>4){ S.mesas.n=4; }
 if(!S.mesasExtra) S.mesasExtra={}; if(typeof S.tempoJogo!=='number') S.tempoJogo=0;
 IDS.forEach(id=>{const e=S.est[id]; if(e.estoque===undefined){e.estoque=20+2*(e.nivel-1); e.pedido=0;}}); if(S.pedidos===undefined) S.pedidos=0;
 S.caixas=Math.min(S.caixas,2); S.operadores=Math.min(S.operadores,S.caixas);
 var trocandoConta=false;
-function salvar(){if(trocandoConta)return;S.salvo=Date.now();if(typeof taxaPorMin==='function'){const t=taxaPorMin();if(t>0)S.taxa=t;}try{localStorage.setItem(CHAVE,JSON.stringify(S));}catch(e){}}
+function salvar(){if(trocandoConta)return;S.salvo=Date.now();try{S.pendente=valorPendente();}catch(e){}if(typeof taxaPorMin==='function'){const t=taxaPorMin();if(t>0)S.taxa=t;}try{localStorage.setItem(CHAVE,JSON.stringify(S));}catch(e){}}
 
 const multPrest=()=>1+0.25*((S&&S.prest)||0);
 var precosCache={};   // preço médio de cada setor no catálogo da Adega real (o catálogo preenche)
@@ -1729,7 +1760,7 @@ const baloesCobrar=[0,1,2].map(k=>{
   $('#cobrancas').appendChild(b); return b;
 });
 function cobrar(c,modo){
-  const k=c.caixa; pagando[k]=null; baloesCobrar[k].style.display='none';
+  const k=c.caixa; pagando[k]=null; c.pago=true; baloesCobrar[k].style.display='none';
   if(c.retirada&&!c.retirou) marcarRetirada(c);
   const topo=c.g.position.clone().setY(2.0);
   S.total+=c.valor; registrarGanho(c.valor); missaoEvento('cobrar',1); if(modo==='manual') missaoEvento('cobrarManual',1);
@@ -1795,6 +1826,13 @@ function posicionarCobrancas(){
 }
 
 let pilhaValor=0;
+// dinheiro que ainda está na loja: clientes com produto na mão, caixa do gerente e mesas por recolher
+function valorPendente(){
+  let fat=0, caixa=pilhaValor;
+  clientes.forEach(c=>{ if(c.valor>0&&!c.pago&&c.estado!=='saindo') fat+=c.valor; });
+  assentos.forEach(a=>{ if(a.valor>0) fat+=a.valor; });
+  return {fat:Math.round(fat*100)/100,caixa:Math.round(caixa*100)/100};
+}
 function atualizarClientes(dt){
   for(let i=clientes.length-1;i>=0;i--){
     const c=clientes[i];
@@ -2102,11 +2140,12 @@ $('#btnEntrar').addEventListener('click',async()=>{
   try{
     const r=await rpc('entrar',{p_apelido:nome,p_senha:senha}); const l=Array.isArray(r)?r[0]:r;
     if(!l||l.status!=='ok'){ err.textContent=msgLogin[l&&l.status]||msgLogin.invalido; return; }
-    let novo=(l.estado&&typeof l.estado==='object'&&l.estado.est&&l.estado.temporada===TEMPORADA)?l.estado:estadoNovo();
-    if(novo.temporada!==TEMPORADA) novo.temporada=TEMPORADA;
+    const e=(l.estado&&typeof l.estado==='object'&&l.estado.est)?l.estado:null;
+    let novo=!e?estadoNovo():e.temporada===TEMPORADA?e:converterT1(e,e.t2);
+    if(e&&e.temporada!==TEMPORADA) novo.avisoT2=true;
     novo.perfil={apelido:l.apelido,idade:l.idade,id:l.jogador_id,token:l.chave,temSenha:true,visual:(l.estado&&l.estado.perfil&&l.estado.perfil.visual)||null};
     novo.viuInicio=true; novo.saiu=false; novo.salvo=Date.now();
-    if(l.falido){ novo.falido=true; novo.falidoApelido=l.apelido; }
+    if(l.falido){ novo.falido=true; novo.falidoApelido=l.apelido; } else if(novo.falido){ novo.falido=false; delete novo.falidoApelido; }
     trocandoConta=true;
     localStorage.setItem(CHAVE,JSON.stringify(novo));
     location.reload();
@@ -2186,10 +2225,21 @@ async function reenviarFalencia(){
     try{ await rpc('declarar_falencia',{p_id:S.perfil.id,p_token:S.perfil.token}); S.falenciaEnviada=true; salvar(); }catch(e){}
   }
 }
+const T_ABRIU=performance.now();
+const iniciante=()=>(S.total+(S.totalBase||0))<1000;
 function checarFalencia(dt){
   if(S.falido||!semSaida()){ tFalencia=0; return; }
-  tFalencia+=dt; if(tFalencia<3) return;
-  tFalencia=0; declararFalencia();
+  if(performance.now()-T_ABRIU<90000) return;   // nada de falência logo depois de abrir o jogo
+  tFalencia+=dt; if(tFalencia<20) return;          // espera 20 s sem saída antes de fechar a adega
+  tFalencia=0;
+  if(iniciante()){ socorroInicio(); return; }
+  declararFalencia();
+}
+// Quem está começando não fecha as portas: o Edu banca uma reposição e explica o que aconteceu
+function socorroInicio(){
+  const id=IDS.find(i=>S.est[i].aberta)||'refri', q=Math.min(cap(id),20);
+  S.est[id].estoque+=q; atualizarProdutos(id); S.socorros=(S.socorros||0)+1; salvar();
+  toastMissao('🤝 O Edu bancou '+q+' produtos para você não fechar as portas. Cobre os clientes no caixa e peça reposição antes do estoque acabar!');
 }
 function novaAdega(){
   const falidos=S.apelidosFalidos||[], fal=(S.falencias||0)+1;
@@ -4941,6 +4991,7 @@ let metaMostrando=false;
 function checarMetas(){
   if(!S||S.falido||metaMostrando) return;
   S.metas=S.metas||[];
+  if(S.metasConv){ METAS.forEach(x=>{ if(fatTemporada()>=x&&!S.metas.includes(x)) S.metas.push(x); }); S.metasConv=false; salvar(); }
   const m=METAS.find(x=>!metaBatida(x)&&fatTemporada()>=x); if(!m) return;
   S.metas.push(m); const p=premioMeta(m); S.din+=p; somarXP(60+20*METAS.indexOf(m),true); salvar(); atualizarHUD(true);
   if(typeof atualizarBadgeMapa==='function') atualizarBadgeMapa();
@@ -5270,6 +5321,7 @@ function renderPainelLeve(){
 }
 if(document.fonts&&document.fonts.load){ document.fonts.load('150px "Lilita One"').then(desenharPlaca).catch(()=>{}); }
 atualizarEstacoes(); atualizarMesas(); atualizarEquipe(); IDS.forEach(atualizarProdutos); atualizarHUD();
+if(S.pendente){ const p=S.pendente; if(p.fat>0){ S.din+=p.fat; S.total+=p.fat; } if(p.caixa>0) S.din+=p.caixa; S.pendente=null; }
 if(S.mes===undefined){ S.mes=mesAtual(); S.totalInicioMes=S.total; }
 if(S.falido){ $('#telaInicio').hidden=true; mostrarFalencia(); reenviarFalencia(); }
 else if(!S.perfil){ mostrarCadastro(); }
