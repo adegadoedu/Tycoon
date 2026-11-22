@@ -1091,22 +1091,88 @@ const objEst={};
 const alvos=[];
 function hit(nome,pai,w,h,d,x,y,z){const a=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshBasicMaterial({visible:false}));a.position.set(x,y,z);a.userData.alvo=nome;pai.add(a);alvos.push(a);return a;}
 const CORES_PROD=[0xE8433A,0x2F8FD8,0x3CB371,0xFFC93C,0xFF7A2F,0x9B5DE5];
+// Geladeira expositora: porta de vidro, luz interna, prateleiras aramadas e produtos de verdade (sem marcas)
+const EXPO=(function(){
+  const G={
+    pet:new THREE.CylinderGeometry(0.075,0.075,0.3,12), petOmbro:new THREE.CylinderGeometry(0.03,0.075,0.07,12), tampa:new THREE.CylinderGeometry(0.03,0.03,0.035,10),
+    rotulo:new THREE.CylinderGeometry(0.078,0.078,0.11,12,1,true),
+    p600:new THREE.CylinderGeometry(0.048,0.048,0.2,10), p600Omb:new THREE.CylinderGeometry(0.022,0.048,0.06,10), tampaP:new THREE.CylinderGeometry(0.022,0.022,0.025,8),
+    rotP:new THREE.CylinderGeometry(0.05,0.05,0.07,10,1,true),
+    lata:new THREE.CylinderGeometry(0.052,0.052,0.165,12), lataTopo:new THREE.CylinderGeometry(0.045,0.052,0.015,12),
+    caixa:new THREE.BoxGeometry(0.15,0.3,0.1), tampaCx:new THREE.CylinderGeometry(0.022,0.022,0.035,8),
+    esporte:new THREE.CylinderGeometry(0.055,0.062,0.24,12), cintura:new THREE.CylinderGeometry(0.05,0.05,0.05,12)
+  };
+  const M={}, mat=(k,f)=>M[k]||(M[k]=f());
+  const liquido=cor=>mat('liq'+cor,()=>toon(cor));
+  const lisa=cor=>mat('t'+cor,()=>toon(cor));
+  const metal=cor=>mat('m'+cor,()=>new THREE.MeshStandardMaterial({color:cor,roughness:0.35,metalness:0.55}));
+  const texCaixa=(fundo,faixa,fruta)=>mat('cx'+fundo+fruta,()=>{
+    const tx=texCanvas(96,192,(c)=>{ c.fillStyle=fundo; c.fillRect(0,0,96,192); c.fillStyle='#3E3A33'; c.beginPath(); c.moveTo(14,30); c.lineTo(82,30); c.lineTo(82,92); c.lineTo(48,104); c.lineTo(14,92); c.closePath(); c.fill();
+      c.fillStyle='#fff'; c.fillRect(24,50,48,8); c.fillRect(30,64,36,5); c.fillStyle=faixa; c.beginPath(); c.arc(48,148,26,0,7); c.fill(); c.fillStyle=fruta; c.beginPath(); c.arc(38,152,13,0,7); c.arc(60,142,11,0,7); c.fill();
+      c.fillStyle='#2E7D32'; c.beginPath(); c.ellipse(64,128,10,5,-0.6,0,7); c.fill(); });
+    return [lisa(new THREE.Color(fundo).getHex()),lisa(new THREE.Color(fundo).getHex()),lisa(0xEEEEEE),lisa(0xEEEEEE),new THREE.MeshToonMaterial({map:tx,gradientMap:degraus}),lisa(new THREE.Color(fundo).getHex())];
+  });
+  function pet2l(liq,rot,tampa){ const g=new THREE.Group();
+    malha(G.pet,liquido(liq),g,0,0.15,0,false); malha(G.petOmbro,liquido(liq),g,0,0.335,0,false); malha(G.tampa,lisa(tampa),g,0,0.385,0,false);
+    malha(G.rotulo,lisa(rot),g,0,0.16,0,false); g.scale.setScalar(0.9); return g; }
+  function pet600(liq,rot,tampa){ const g=new THREE.Group();
+    malha(G.p600,liquido(liq),g,0,0.1,0,false); malha(G.p600Omb,liquido(liq),g,0,0.23,0,false); malha(G.tampaP,lisa(tampa),g,0,0.272,0,false);
+    malha(G.rotP,lisa(rot),g,0,0.1,0,false); g.scale.setScalar(1.25); return g; }
+  function lata(cor,faixa){ const g=new THREE.Group();
+    malha(G.lata,metal(cor),g,0,0.083,0,false); malha(G.lataTopo,metal(0xC9CDD1),g,0,0.172,0,false);
+    if(faixa) malha(G.rotP,lisa(faixa),g,0,0.06,0,false).scale.set(1.06,0.6,1.06); g.scale.setScalar(1.3); return g; }
+  function caixaSuco(fundo,faixa,fruta){ const g=new THREE.Group();
+    malha(G.caixa,texCaixa(fundo,faixa,fruta),g,0,0.15,0,false); malha(G.tampaCx,lisa(0x55585C),g,0.03,0.317,0.02,false); g.scale.setScalar(1.15); return g; }
+  function esporte(liq,tampa){ const g=new THREE.Group();
+    malha(G.esporte,liquido(liq),g,0,0.12,0,false); malha(G.cintura,lisa(0xF4F4F4),g,0,0.14,0,false).scale.set(1.15,1,1.15); malha(G.tampaP,lisa(tampa),g,0,0.255,0,false).scale.set(1.3,1.4,1.3); g.scale.setScalar(1.3); return g; }
+  // o que vai em cada prateleira (de baixo para cima)
+  const REFRI=[
+    {n:6,dx:0.26,f:i=>pet2l([0x3B1E12,0xC9C25A,0xFF8A1F,0x3B1E12,0x1C1C1C][i%5],[0xD8382C,0x2E9B44,0xF27A1A,0xD8382C,0x1B4FA0][i%5],[0xE8E8E8,0x2E9B44,0x2E9B44,0xD8382C,0x1B4FA0][i%5])},
+    {n:8,dx:0.2,f:i=>pet600([0x3B1E12,0xC9C25A,0xFF8A1F,0x2A1A12][i%4],[0xD8382C,0x2E9B44,0xF27A1A,0x1B4FA0][i%4],[0xD8382C,0x2E9B44,0x2E9B44,0x1B4FA0][i%4])},
+    {n:9,dx:0.168,f:i=>lata([0x2E9B44,0xD8382C,0x2E9B44,0xF27A1A,0x2E9B44,0x7BC043,0xD8382C,0x2E9B44,0xF27A1A][i%9])},
+    {n:9,dx:0.168,f:i=>lata([0xD8382C,0x2E9B44,0xC0C4C8,0xF27A1A,0x2E9B44,0xD8382C,0x1C1C1C,0x2E9B44,0xD8382C][i%9])}
+  ];
+  const AGUA=[
+    {n:6,dx:0.26,f:i=>pet2l(0xBFE3F7,0x2F8FD8,0x2F8FD8)},
+    {n:8,dx:0.2,f:i=>esporte([0xF3F3F3,0x2F7FD8,0xFFB020,0x9B1D35,0xF3F3F3,0x2F7FD8,0xFFB020,0x7BC043][i%8],0xFF7A1A)},
+    {n:8,dx:0.2,f:i=>pet600(0xC6E6F8,[0x2F8FD8,0x64B5E8][i%2],0x2F8FD8)},
+    {n:7,dx:0.22,f:i=>{ const s=[['#C8D62B','#F2A516','#F7C21F'],['#F7A21B','#F28C1A','#FF8C1A'],['#7A2C8F','#5B1E6B','#B02040'],['#C8D62B','#F2A516','#F7C21F'],['#F2C31B','#E6A817','#7A4F1A'],['#9FD3EA','#E8433A','#F28C1A']][i%6]; return caixaSuco(...s); }}
+  ];
+  return {REFRI,AGUA};
+})();
 function geladeira(id,corpo,coresItens){
   const d=EST[id], g=new THREE.Group(); g.position.set(d.pos[0],0,d.pos[2]);
   g.rotation.y=Math.atan2(d.face[0],d.face[2]); scene.add(g);
   const vis=new THREE.Group(); g.add(vis); const prods=[];
-  bloco(1.9,2.3,0.9,toon(0xF3F5F6),vis,0,1.15,0,0.08,0.03);
-  bloco(1.92,0.4,0.93,toon(0x2F8FD8),vis,0,2.12,0,0.06,0.02);
-  bloco(1.7,0.22,0.02,toon(0xDDE2E5),vis,0,0.13,0.46);
-  malha(new THREE.PlaneGeometry(1.6,1.75),new THREE.MeshBasicMaterial({color:0xDDF5FF}),vis,0,1.2,0.455,false);
-  for(let r=0;r<4;r++){
-    bloco(1.55,0.03,0.5,toon(0xC9D6DC),vis,0,0.42+r*0.42,0.2);
-    for(let c=0;c<6;c++){ const cor=pega(coresItens); prods.push(malha(new THREE.CylinderGeometry(0.075,0.075,0.26,10),toon(cor),vis,-0.62+c*0.25,0.56+r*0.42,0.25,false)); }
-  }
-  const vidro=malha(new THREE.PlaneGeometry(1.6,1.75),new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:0.14,roughness:0.05,depthWrite:false}),vis,0,1.2,0.47,false);
-  bloco(0.05,1.6,0.06,padrao(0xB8C0C2,{metalness:0.6}),vis,0.0,1.2,0.49);
-  const topo=texCanvas(512,96,(c)=>{const gr=c.createLinearGradient(0,0,512,0);gr.addColorStop(0,'#2F8FD8');gr.addColorStop(1,'#6CC0F0');c.fillStyle=gr;c.fillRect(0,0,512,96);c.fillStyle='#fff';c.font='bold 46px Nunito, sans-serif';c.textAlign='left';c.textBaseline='middle';c.fillText(id==='refri'?'Refri gelado':'Água e suco',28,50);c.globalAlpha=.35;for(let i=0;i<9;i++){c.beginPath();c.arc(330+i*20,30+(i%3)*18,7+(i%2)*4,0,7);c.fill();}});
-  malha(new THREE.PlaneGeometry(1.84,0.34),new THREE.MeshBasicMaterial({map:topo}),vis,0,2.12,0.47,false);
+  const branco=toon(0xF3F5F6), cinza=toon(0x9AA3A8), escuro=toon(0x3A3F44);
+  // gabinete: laterais, teto, base e fundo iluminado
+  bloco(0.12,2.3,0.9,branco,vis,-0.89,1.15,0,0.03,0.02); bloco(0.12,2.3,0.9,branco,vis,0.89,1.15,0,0.03,0.02);
+  bloco(1.9,0.42,0.9,branco,vis,0,2.12,0,0.05,0.02); bloco(1.9,0.24,0.9,cinza,vis,0,0.12,0,0.03,0.02);
+  malha(new THREE.PlaneGeometry(1.66,1.66),new THREE.MeshBasicMaterial({color:0xE2DEEE}),vis,0,1.08,-0.42,false);
+  [-0.82,0.82].forEach(x=>{ const p=malha(new THREE.PlaneGeometry(0.84,1.66),new THREE.MeshBasicMaterial({color:0xE9E6F2}),vis,x,1.08,0,false); p.rotation.y=x<0?Math.PI/2:-Math.PI/2; });
+  // luz de LED no alto
+  malha(new THREE.BoxGeometry(1.2,0.04,0.3),new THREE.MeshBasicMaterial({color:0xFFFFFF}),vis,0,1.88,-0.05,false);
+  const brilho=malha(new THREE.PlaneGeometry(1.6,0.5),new THREE.MeshBasicMaterial({color:0xFFFFFF,transparent:true,opacity:0.35,depthWrite:false}),vis,0,1.8,-0.4,false);
+  // prateleiras aramadas com produtos
+  const plano=id==='refri'?EXPO.REFRI:EXPO.AGUA, alturas=[0.27,0.67,1.07,1.42];
+  const arame=toon(0xF7F7F7);
+  plano.forEach((pr,r)=>{
+    const y=alturas[r];
+    bloco(1.64,0.025,0.7,arame,vis,0,y-0.012,-0.05); bloco(1.64,0.035,0.015,arame,vis,0,y+0.012,0.3);
+    for(let i=0;i<pr.n;i++){
+      const x=-((pr.n-1)*pr.dx)/2+i*pr.dx;
+      const fr=pr.f(i); fr.position.set(x,y,0.16); fr.rotation.y=rnd(-0.2,0.2); vis.add(fr); prods.push(fr);
+    }
+  });
+  // porta de vidro com moldura e puxador
+  const vidro=malha(new THREE.PlaneGeometry(1.66,1.74),new THREE.MeshStandardMaterial({color:0xEAF6FF,transparent:true,opacity:0.1,roughness:0.05,metalness:0.1,depthWrite:false}),vis,0,1.08,0.455,false);
+  [[0,1.96,1.76,0.06],[0,0.24,1.76,0.06]].forEach(b=>bloco(b[2],b[3],0.05,escuro,vis,b[0],b[1],0.46));
+  [-0.86,0.86].forEach(x=>bloco(0.05,1.78,0.05,escuro,vis,x,1.1,0.46));
+  bloco(0.04,0.7,0.06,padrao(0xB8C0C2,{metalness:0.6}),vis,0.74,1.15,0.5,0.015);
+  const reflexo=malha(new THREE.PlaneGeometry(0.25,1.6),new THREE.MeshBasicMaterial({color:0xFFFFFF,transparent:true,opacity:0.12,depthWrite:false}),vis,-0.45,1.1,0.462,false); reflexo.rotation.z=0.18;
+  // letreiro de cima
+  const topo=texCanvas(512,96,(c)=>{const gr=c.createLinearGradient(0,0,512,0);gr.addColorStop(0,'#2F8FD8');gr.addColorStop(1,'#6CC0F0');c.fillStyle=gr;c.fillRect(0,0,512,96);c.fillStyle='#fff';c.font='bold 46px Nunito, sans-serif';c.textAlign='left';c.textBaseline='middle';c.fillText(id==='refri'?'Refri gelado':'Água e suco',28,50);c.globalAlpha=.35;for(let i=0;i<9;i++){c.beginPath();c.arc(330+i*20,30+(i%3)*18,6+(i%2)*3,0,7);c.fillStyle='#fff';c.fill();}});
+  malha(new THREE.PlaneGeometry(1.84,0.34),new THREE.MeshBasicMaterial({map:topo}),vis,0,2.12,0.455,false);
   hit(id,g,2.0,2.4,1.4,0,1.2,0.3);
   return {g,vis,prods};
 }
