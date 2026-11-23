@@ -5980,7 +5980,10 @@ var tempoPronto=false, ruaPronta=false, grafPronto=false;
 // ================= Relógio do dia, dia da semana e clima =================
 // Cada hora do jogo dura 15 segundos (um dia, 6 minutos). O movimento muda com o horário, o dia e o tempo,
 // e o clima muda o que o cliente leva: no calor sai gelo e água; na chuva vem menos gente.
-const SEG_HORA=15, HORA_INICIO=8;
+// Relógio: 1 hora jogada = 1 dia inteiro do jogo (cada hora do jogo dura 2,5 min).
+// A data e o dia da semana são sempre os de verdade (horário de Brasília), iguais para todo mundo.
+// Ao abrir o jogo, o relógio começa na hora real: quem joga às 20h já pega a noite.
+const SEG_HORA=150, HORA_INICIO=8;
 const FLUXO_HORA=(()=>{ const r=[0.38,0.38,0.38,0.38,0.38,0.38,0.75,0.75,0.75,0.75,1,1,1,1,1,1,1.25,1.25,1.75,1.75,1.75,1.75,1.25,0.75], m=r.reduce((a,b)=>a+b,0)/24; return r.map(v=>v/m); })();   // média do dia = 1
 const DIAS_SEM=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'], DIAS_NOME=['segunda','terça','quarta','quinta','sexta','sábado','domingo'];
 const DIA_EF=[{f:0.9},{f:1},{f:1},{f:1},{f:1.15,txt:'Sextou! Mais gente no fim do dia.'},{f:1.25,peso:{carvao:2.2,gelo:1.5,refri:1.2},txt:'Sábado é dia de churrasco: carvão e gelo saem muito.'},{f:1.1,peso:{carvao:1.8,refri:1.3},txt:'Domingo de almoço em família: carvão e refri.'}];
@@ -5991,14 +5994,51 @@ const CLIMAS={
   chuva:{ic:'🌧️',nome:'Chuva',t:[17,22],f:0.6,peso:{mercearia:1.6,salgadinho:1.3,gelo:0.5,carvao:0.4},txt:'Chuva: vem menos gente, e quem vem leva mercearia e salgadinho.'},
   frio:{ic:'🧥',nome:'Frio',t:[11,16],f:0.85,peso:{gelo:0.4,agua:0.6,mercearia:1.4,salgadinho:1.2},txt:'Frio: quase ninguém quer gelo. Mercearia sai mais.'}
 };
-const SORTE_CLIMA=[['sol',30],['calor',25],['nublado',20],['chuva',18],['frio',7]];
-const horasJogo=()=>((S&&S.tempoJogo)||0)/SEG_HORA+HORA_INICIO;
-const horaAgora=()=>horasJogo()%24;
-const diaAgora=()=>Math.floor(horasJogo()/24);
+const SORTE_CLIMA=[['sol',32],['calor',22],['nublado',22],['chuva',18],['frio',6]];
+function horaRealSP(){ const p=new Date().toLocaleTimeString('en-GB',{timeZone:'America/Sao_Paulo',hour12:false}).split(':').map(Number); return (p[0]%24)+p[1]/60+(p[2]||0)/3600; }
+const numDia=iso=>{ const [y,m,d]=iso.split('-').map(Number); return Math.round(Date.UTC(y,m-1,d)/864e5); };   // dias desde 01/01/1970
+let horaBase=horaRealSP()-((S&&S.tempoJogo)||0)/SEG_HORA;
+const horasJogo=()=>((S&&S.tempoJogo)||0)/SEG_HORA+horaBase;
+const horaAgora=()=>((horasJogo()%24)+24)%24;
+const voltaDia=()=>Math.floor(horasJogo()/24);   // cada volta completa do relógio (1 hora jogada)
+let _diaCache=0, _diaT=-1e9;
+function diaAgora(){ const n=Date.now(); if(n-_diaT>5000){ _diaT=n; _diaCache=numDia(diaSP(n)); } return _diaCache; }   // o dia de verdade
+const dataCurta=d=>{ const x=new Date(d*864e5); return String(x.getUTCDate()).padStart(2,'0')+'/'+String(x.getUTCMonth()+1).padStart(2,'0'); };
+// ---------- previsão do tempo de verdade (Open-Meteo, grátis e sem cadastro) ----------
+const LOCAL_ADEGA={nome:'São Paulo',lat:-23.55,lon:-46.63};
+const PREV_KEY='adegaEdu.previsao';
+let PREV=null; try{ PREV=JSON.parse(localStorage.getItem(PREV_KEY)||'null'); }catch(e){ PREV=null; }
+const CHUVA_COD=c=>(c>=51&&c<=67)||(c>=80&&c<=82)||c>=95;
+function categoriaReal(x){ if(CHUVA_COD(x.cod)&&x.mm>=1) return 'chuva'; if(x.max>=31) return 'calor'; if(x.max<=17) return 'frio'; if(x.cod>=2||CHUVA_COD(x.cod)) return 'nublado'; return 'sol'; }
+function lerPrevisao(j){ const dias={}, horas={}; const D=j.daily, H=j.hourly;
+  D.time.forEach((iso,i)=>{ const x={cod:D.weather_code[i],max:D.temperature_2m_max[i],min:D.temperature_2m_min[i],mm:D.precipitation_sum?D.precipitation_sum[i]||0:0}; if(x.max==null||x.cod==null) return; x.k=categoriaReal(x); dias[numDia(iso)]=x; });
+  if(H) H.time.forEach((iso,i)=>{ const n=numDia(iso.slice(0,10)), h=+iso.slice(11,13); (horas[n]=horas[n]||[])[h]=H.temperature_2m[i]; });
+  return {em:Date.now(),dias,horas}; }
+let prevBuscando=false;
+async function carregarPrevisao(forcar){
+  if(prevBuscando) return; if(!forcar&&PREV&&Date.now()-PREV.em<3600e3&&PREV.dias[diaAgora()]) return;
+  prevBuscando=true;
+  try{ const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),9000);
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${LOCAL_ADEGA.lat}&longitude=${LOCAL_ADEGA.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&hourly=temperature_2m&timezone=America%2FSao_Paulo&forecast_days=4`;
+    const r=await fetch(u,{signal:ctl.signal}); clearTimeout(to); if(!r.ok) throw new Error('http '+r.status);
+    PREV=lerPrevisao(await r.json()); try{ localStorage.setItem(PREV_KEY,JSON.stringify(PREV)); }catch(e){}
+    relCache='';
+  }catch(e){ /* sem internet: fica a previsão guardada ou a do jogo */ }
+  prevBuscando=false; }
+const prevDia=d=>PREV&&PREV.dias&&PREV.dias[d]||null;
+function sementeG(n){ let x=(n*2654435761+7)>>>0; x^=x<<13; x^=x>>>17; x^=x<<5; return (x>>>0)/4294967296; }   // igual para todos
 function semente(n){ let x=(n*2654435761+((S&&S.perfil&&S.perfil.id)?S.perfil.id.charCodeAt(0)*97:7))>>>0; x^=x<<13; x^=x>>>17; x^=x<<5; return (x>>>0)/4294967296; }
-function climaDia(d){ let r=semente(d+11)*100; for(const [k,p] of SORTE_CLIMA){ r-=p; if(r<0) return k; } return 'sol'; }
-function tempDia(d){ const c=CLIMAS[climaDia(d)]; return Math.round(c.t[0]+semente(d+101)*(c.t[1]-c.t[0])); }
-const diaSemana=d=>((d%7)+7)%7;
+function climaDia(d){ const p=prevDia(d); if(p) return p.k; let r=sementeG(d+11)*100; for(const [k,q] of sorteClima(d)){ r-=q; if(r<0) return k; } return 'sol'; }
+// sem internet: sorteio de acordo com a estação do ano (verão quente e chuvoso, inverno frio)
+function sorteClima(d){ const m=new Date(d*864e5).getUTCMonth()+1;
+  if(m===12||m<=3) return [['sol',30],['calor',35],['nublado',13],['chuva',22],['frio',0]];
+  if(m===10||m===11) return [['sol',32],['calor',28],['nublado',18],['chuva',22],['frio',0]];
+  if(m>=6&&m<=8) return [['sol',32],['calor',3],['nublado',25],['chuva',10],['frio',30]];
+  return SORTE_CLIMA; }
+function tempDia(d){ const p=prevDia(d); if(p) return Math.round(p.max); const c=CLIMAS[climaDia(d)]; return Math.round(c.t[0]+sementeG(d+101)*(c.t[1]-c.t[0])); }
+function tempMin(d){ const p=prevDia(d); return p?Math.round(p.min):null; }
+function tempHora(d,h){ const a=PREV&&PREV.horas&&PREV.horas[d]; const v=a&&a[Math.floor(h)]; return v!=null?Math.round(v):tempDia(d); }
+const diaSemana=d=>(((d+3)%7)+7)%7;   // 01/01/1970 foi quinta-feira; 0 = segunda
 function fluxoAgora(){ const d=diaAgora(); return FLUXO_HORA[Math.floor(horaAgora())]*CLIMAS[climaDia(d)].f*DIA_EF[diaSemana(d)].f; }
 function pesoSetor(id){ const d=diaAgora(), c=CLIMAS[climaDia(d)], w=DIA_EF[diaSemana(d)]; return ((c.peso&&c.peso[id])||1)*((w.peso&&w.peso[id])||1); }
 function sortearSetores(abertas,n){ const pool=abertas.slice(), out=[];
@@ -6008,13 +6048,14 @@ const hhmm=h=>String(Math.floor(h)).padStart(2,'0')+':'+String(Math.floor((h%1)*
 const ehNoite=h=>h>=19||h<6;
 let relCache='';
 function atualizarRelogio(){
-  const h=horaAgora(), d=diaAgora(), c=CLIMAS[climaDia(d)], txt=`${ehNoite(h)?'🌙':'🕗'} ${DIAS_SEM[diaSemana(d)]} ${hhmm(h)} · ${c.ic} ${tempDia(d)}°`;
+  const h=horaAgora(), d=diaAgora(), c=CLIMAS[climaDia(d)], txt=`${ehNoite(h)?'🌙':'🕗'} ${DIAS_SEM[diaSemana(d)]} ${dataCurta(d)} ${hhmm(h)} · ${c.ic} ${tempHora(d,h)}°`;
   if(txt!==relCache){ relCache=txt; const b=$('#relogio'); b.textContent=txt; b.classList.toggle('noite',ehNoite(h)); }
   // avisos: bom dia com o tempo de hoje, e a previsão de amanhã no fim da tarde
   S.tempoAvisos=S.tempoAvisos||{};
   if(document.body.classList.contains('jogando')&&!algumaTelaAberta()){
-    if(h>=7&&h<9&&S.tempoAvisos.manha!==d){ S.tempoAvisos.manha=d; toastMissao(`${c.ic} Bom dia! ${DIAS_NOME[diaSemana(d)]}, ${tempDia(d)}°. ${textoDia(d)}`); }
-    else if(h>=18&&h<20&&S.tempoAvisos.prev!==d){ S.tempoAvisos.prev=d; const a=CLIMAS[climaDia(d+1)]; toastMissao(`📺 Previsão para amanhã (${DIAS_NOME[diaSemana(d+1)]}): ${a.ic} ${a.nome}, ${tempDia(d+1)}°. ${textoDia(d+1)}`); }
+    const v=d+':'+voltaDia();
+    if(h>=7&&h<9&&S.tempoAvisos.manha!==v){ S.tempoAvisos.manha=v; toastMissao(`${c.ic} Bom dia! Hoje é ${DIAS_NOME[diaSemana(d)]}, ${dataCurta(d)}, máxima de ${tempDia(d)}°. ${textoDia(d)}`); }
+    else if(h>=18&&h<20&&S.tempoAvisos.prev!==v){ S.tempoAvisos.prev=v; const a=CLIMAS[climaDia(d+1)]; toastMissao(`📺 Previsão para amanhã (${DIAS_NOME[diaSemana(d+1)]}): ${a.ic} ${a.nome}, ${tempDia(d+1)}°. ${textoDia(d+1)}`); }
   }
 }
 function textoDia(d){ const k=climaDia(d), w=DIA_EF[diaSemana(d)]; if(['chuva','frio','calor'].includes(k)||!w.txt) return CLIMAS[k].txt; return w.txt; }
@@ -6026,14 +6067,18 @@ function abrirTempo(){
   const d=diaAgora(), h=horaAgora();
   let x='';
   [d,d+1,d+2].forEach((dd,i)=>{ const c=CLIMAS[climaDia(dd)], w=DIA_EF[diaSemana(dd)];
-    x+=`<div class="tempo-dia${i?'':' hoje'}"><div class="tempo-cab"><span class="tempo-ic">${c.ic}</span><span><b>${i===0?'Hoje':i===1?'Amanhã':'Depois de amanhã'} · ${DIAS_NOME[diaSemana(dd)]}</b><small>${c.nome}, ${tempDia(dd)}° · ${textoDia(dd)}</small></span></div><div class="tempo-ef">${efeitosTxt(dd)}</div></div>`; });
+    x+=`<div class="tempo-dia${i?'':' hoje'}"><div class="tempo-cab"><span class="tempo-ic">${c.ic}</span><span><b>${i===0?'Hoje':i===1?'Amanhã':'Depois de amanhã'} · ${DIAS_NOME[diaSemana(dd)]}</b><small>${dataCurta(dd)} · ${c.nome}, ${tempMin(dd)!=null?tempMin(dd)+'° a ':''}${tempDia(dd)}° · ${textoDia(dd)}</small></span></div><div class="tempo-ef">${efeitosTxt(dd)}</div></div>`; });
   x+=`<p class="txt" style="font-size:.88rem;margin-top:10px"><b>Movimento ao longo do dia</b> (o pico é das 18h às 22h):</p><div class="tempo-horas">`;
   FLUXO_HORA.forEach((v,i)=>{ x+=`<i class="${i===Math.floor(h)?'agora':''}" style="height:${Math.round(v*32)}px" title="${i}h"></i>`; });
   x+=`</div><div class="tempo-leg"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>23h</span></div>`;
   x+=`<p class="bol-nota">Olhe a previsão e encha o estoque do que vai sair mais. No calor, o gelo acaba rápido!</p>`;
+  x+=prevDia(d)?`<p class="bol-nota">🛰️ Previsão de verdade para ${LOCAL_ADEGA.nome}, atualizada às ${new Date(PREV.em).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})}. O dia e a data também são os de hoje. Cada hora jogada é um dia inteiro no relógio da Adega. <small>Dados do tempo: Open-Meteo.com</small></p>`
+    :`<p class="bol-nota">📡 Sem internet agora: esta é a previsão do jogo. Com internet, aparece o tempo de verdade de ${LOCAL_ADEGA.nome}.</p>`;
   $('#tempoConteudo').innerHTML=x; document.querySelector('#telaTempo h2').textContent='📺 Previsão do tempo'; fecharPainel(); $('#telaTempo').hidden=false; SOM.abrir();
 }
-$('#relogio').addEventListener('click',abrirTempo);
+$('#relogio').addEventListener('click',()=>{ carregarPrevisao(); abrirTempo(); });
+carregarPrevisao(); setInterval(()=>carregarPrevisao(),3600e3);
+let saiuEm=0; document.addEventListener('visibilitychange',()=>{ if(document.hidden){ saiuEm=Date.now(); return; } carregarPrevisao(); if(saiuEm&&Date.now()-saiuEm>10*60e3) horaBase=horaRealSP()-((S&&S.tempoJogo)||0)/SEG_HORA; });   // voltou depois de 10 min: o relógio acerta com a hora real
 $('#btnTempoFechar').addEventListener('click',()=>{ $('#telaTempo').hidden=true; });
 // ---------- céu, luz e chuva conforme a hora ----------
 // [hora, cor do céu, luz do céu, luz do sol, cor da luz]
