@@ -540,6 +540,7 @@ body:not(.jogando) .alerta{display:none}
 .tempo-dia.hoje{background:#FFF3C4}
 .tempo-cab{display:flex;align-items:center;gap:10px}.tempo-ic{font-size:2.2rem}
 .tempo-cab b{font-size:1.05rem}.tempo-cab small{display:block;color:var(--sub);font-weight:700}
+.tempo-cab small b{font-size:inherit;color:var(--texto,#2A1A12)}
 .tempo-ef{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .tempo-ef span{border:2px solid var(--contorno);border-radius:999px;padding:1px 8px;font-size:.8rem;font-weight:800;background:#E7F8EC}
 .tempo-ef span.menos{background:#FFD1C7}
@@ -564,6 +565,12 @@ body:not(.jogando) .alerta{display:none}
 .rf-simt{display:grid;grid-template-columns:1.1fr 1fr 1fr 1.1fr;gap:4px;font-size:.78rem;font-weight:700;padding:5px 0;border-bottom:1px dashed #D9CFBF;align-items:center}
 .rf-simt span:nth-child(n+2),.rf-simt b{text-align:right}.rf-simt small{display:block;color:var(--sub);font-size:.66rem}
 .rf-nota{font-size:.8rem;font-weight:700;margin:6px 0;color:var(--texto)}
+.rf-reserva{border:2.5px solid var(--contorno);border-radius:14px;padding:9px 11px;margin:8px 0;background:#FFF3E0}
+.rf-reserva.ok{background:#E7F8EC}
+.rf-res-cab b{display:block}.rf-res-cab small{font-weight:700;color:var(--sub)}
+.rf-res-pe{display:flex;justify-content:space-between;font-size:.8rem;font-weight:800;margin:4px 0 6px}
+.rf-reserva .duas .btn{margin:0}
+.rf-meses{margin:8px 0 4px}.rf-dica{display:block;font-weight:700;color:var(--sub)}
 </style>
 </head>
 <body>
@@ -2001,7 +2008,10 @@ function atualizarClientes(dt){
 function cap(id,n){n=n||S.est[id].nivel;return 20+2*(n-1);}
 function custoUnit(id){return Math.max(0.05,Math.round(valorEst(id)*(1-MARGEM[id])*fatorFornecedor()*100)/100);}   // custo de exemplo pela margem do setor
 function faltando(id){const e=S.est[id], a=S.atac?(S.atac.itens?(S.atac.itens[id]||0):(S.atac.id===id?S.atac.q:0)):0;return Math.max(0,cap(id)-e.estoque-e.pedido-a);}
-function custoPedido(id){return faltando(id)*custoUnit(id);}
+// Todo pedido ao distribuidor paga um frete fixo, que se dilui pela quantidade: pedido pequeno = frete caro por unidade
+const FRETE_PEDIDO=15;
+function custoPedido(id){const q=faltando(id); return q>0?Math.round((q*custoUnit(id)+FRETE_PEDIDO)*100)/100:0;}
+const fretePorUn=q=>q>0?FRETE_PEDIDO/q:0;
 const autoRepor=()=>false; // reposição sempre manual: o jogador faz os pedidos
 function atualizarProdutos(id){
   const o=objEst[id]; if(!o||!o.prods||!o.prods.length) return;
@@ -2028,14 +2038,15 @@ const caixaEntrega=new THREE.Group(); caixaEntrega.position.set(0,0.6,0.3); entr
 const PARADA_X=2.6, Z_RUA=9.6, DESCARGA=new THREE.Vector3(2.15,0,8.3), CALCADA_PT=new THREE.Vector3(2.15,0,7.0);
 const FORN={estado:'ocioso',fila:[],ent:{g:entregador,caminho:[],lista:[],estado:'',t:0,passo:0,vel:2.6}};
 IDS.forEach(id=>{ if(S.est[id].pedido>0) FORN.fila.push(id); });
-function qtdPossivel(id){return Math.min(faltando(id),Math.floor(S.din/custoUnit(id)));}
+function qtdPossivel(id){return Math.max(0,Math.min(faltando(id),Math.floor((S.din-FRETE_PEDIDO)/custoUnit(id))));}
 function pedir(id,auto){
-  const q=qtdPossivel(id), c=q*custoUnit(id);
+  const q=qtdPossivel(id), c=Math.round((q*custoUnit(id)+FRETE_PEDIDO)*100)/100;
   if(q<=0) return false;
   if(auto&&q<Math.min(5,faltando(id))) return false;
   S.din-=c; S.est[id].pedido+=q; S.pedidos=(S.pedidos||0)+1; missaoEvento('repor',1); if(S.pedidos>=6) oferecerLicao('compras');
   if(FORN.fila.indexOf(id)<0&&G.lista.indexOf(id)<0) FORN.fila.push(id);
   pop(objEst[id].g.position.clone().setY(2.7),(auto?'Pedido automático 🚚':'Pedido feito 🚚'),'');
+  if(!auto&&q<12) setTimeout(()=>toastMissao(`🚚 Frete de ${fmt(FRETE_PEDIDO)} dividido por só ${q} ${q>1?'unidades':'unidade'}: +${fmt(fretePorUn(q))} em cada. Pedido maior dilui o frete!`),300);
   if(!auto) SOM.comprar();
   atualizarHUD(!auto); salvar(); return true;
 }
@@ -2297,7 +2308,7 @@ function atualizarAlerta(){
   let pior=null,r=1;
   IDS.forEach(id=>{ const e=S.est[id]; if(!e.aberta||e.pedido>0) return; const q=e.estoque/cap(id); if(q<=0.25&&q<r+1e-9){ if(!pior||q<r){pior=id;r=q;} } });
   if(!pior){ el.hidden=true; return; }
-  const e=S.est[pior], qp=qtdPossivel(pior), c=qp>0?qp*custoUnit(pior):custoPedido(pior);
+  const e=S.est[pior], qp=qtdPossivel(pior), c=qp>0?qp*custoUnit(pior)+FRETE_PEDIDO:custoPedido(pior);
   const rua=qp<=0&&S.fiado?fiadoNaRua():0;
   $('#alertaTxt').textContent=`${EST[pior].ic} ${EST[pior].nome}: ${e.estoque?'estoque acabando ('+e.estoque+'/'+cap(pior)+')':'acabou o estoque!'}`+(rua>0?` · falta caixa, e ${fmt(rua)} está no fiado 📒${textoRepor(rua,pior)?' (repunha '+textoRepor(rua,pior)+')':''}`:'');
   if(rua>0) oferecerLicao('fiado');
@@ -3578,7 +3589,7 @@ const mesesTxt=d=>{ const m=d/MES_DIAS; return m<1?Math.max(0,Math.floor(d))+' '
 async function carregarRF(){
   const b=$('#corrConteudo'); b.innerHTML=''; abasCorr(b); const w=document.createElement('p'); w.className='txt centro'; w.textContent='Carregando a prateleira…'; b.appendChild(w);
   try{ rf=await rpc('rf_status',{p_id:S.perfil.id,p_token:S.perfil.token}); rfT0=performance.now(); renderRF();
-    if(!S.viuRF){ S.viuRF=true; S.licoesVistas=S.licoesVistas||{}; S.licoesVistas.rendafixa=true; salvar(); setTimeout(()=>abrirLicao('rendafixa'),600); } }
+    if(!S.viuRF){ S.viuRF=true; salvar(); setTimeout(()=>abrirReserva(true),500); } }
   catch(e){ w.textContent=/rf_status/.test(e.message)?'A renda fixa ainda não foi instalada no servidor.':'Não foi possível abrir a renda fixa agora. Confira a internet.'; }
 }
 function chipsRF(p){
@@ -3597,6 +3608,7 @@ function renderRF(){
   add(`<div class="corr-saldo"><span>Saldo para investir</span><b>${fmt(+rf.saldo)}</b></div>`);
   add(`<div class="rf-taxas"><span>CDI hoje <b>${pctTxt(+rf.cdi)} ao ano</b></span><span>Selic <b>${pctTxt(+rf.selic)}</b></span></div>
     <p class="rf-tempo">⏱ Na corretora, <b>cada dia de verdade conta como 1 mês</b> do investimento. Volte amanhã para ver o dinheiro render!</p>`);
+  add(cardReserva()); $('#bReservaAprender').onclick=()=>abrirReserva(); $('#bTesouroDireto').onclick=abrirTesouroDireto;
   const bg=add(`<button type="button" class="pilula guia-btn">📚 O que é CDI, liquidez, IR e FGC?</button>`); bg.onclick=abrirGlossarioRF;
   // minhas aplicações
   if(rf.aplicacoes.length){
@@ -3615,7 +3627,7 @@ function renderRF(){
   add('<p class="txt" style="margin-top:10px"><b>Prateleira de renda fixa</b></p>');
   rf.produtos.forEach(p=>{
     const ano=rfAnoBruto(p);
-    const el=add(`<div class="rf-prod${rfSel===p.id?' aberto':''}"><button type="button" class="rf-prod-cab"><span class="rf-ic">${{poupanca:'🐷',tesouro:'🏛️',cdb:'🏦',lci:'🏠',lca:'🌾'}[p.tipo]}</span>
+    const el=add(`<div class="rf-prod${rfSel===p.id?' aberto':''}"><button type="button" class="rf-prod-cab"><span class="rf-ic">${(p.id==='tesouro_reserva'?'🛟':{poupanca:'🐷',tesouro:'🏛️',cdb:'🏦',lci:'🏠',lca:'🌾'}[p.tipo])}</span>
       <span class="bol-tx"><b>${p.nome}</b><small>${p.emissor} · mínimo ${fmt(+p.minimo)}</small></span><span class="rf-ano"><b>${pctTxt(ano)}</b><small>ao ano${p.ir?' (bruto)':''}</small></span></button>
       <div class="tempo-ef">${chipsRF(p)}</div><div class="rf-sim"></div></div>`);
     el.querySelector('.rf-prod-cab').onclick=()=>{ rfSel=rfSel===p.id?null:p.id; SOM.abrir(); renderRF(); };
@@ -3634,9 +3646,14 @@ function simuladorRF(p,box){
     if(p.liquidez==='diaria'&&p.ir) { const c=rfConta(p,v,15); h+=`<p class="rf-nota">Resgatar com só 15 dias paga <b>IOF</b> (${fmt(c.iof)}) e IR de 22,5%: renda fixa gosta de tempo.</p>`; }
     if(!p.ir&&p.indexador==='cdi') { const irx=rfIr((p.prazo_meses||12)*MES_DIAS); h+=`<p class="rf-nota">Isento de IR: ${Math.round(p.taxa*100)}% do CDI aqui equivale a uns <b>${Math.round(p.taxa/(1-irx)*100)}% do CDI</b> num CDB do mesmo prazo, que paga IR de ${pctTxt(irx)}.</p>`; }
     if(p.tipo==='poupanca') h+=`<p class="rf-nota">A poupança só rende no "aniversário": a cada mês completo. Tirar antes perde o rendimento do mês.</p>`;
-    tab.innerHTML=h; bt.disabled=v<+p.minimo||v>+rf.saldo; bt.textContent=v>+rf.saldo?'Saldo insuficiente':v<+p.minimo?'Mínimo de '+fmt(+p.minimo):'Investir '+fmt(v); };
+    if(RESERVA_IDS.includes(p.id)) h+=`<p class="rf-nota">🛟 Serve para a reserva de emergência: seguro, rende e sai no mesmo dia.</p>`;
+    tab.innerHTML=h; bt.disabled=licaoFeita('reserva')&&(v<+p.minimo||v>+rf.saldo); bt.textContent=!licaoFeita('reserva')?'🛟 Primeiro: reserva de emergência':v>+rf.saldo?'Saldo insuficiente':v<+p.minimo?'Mínimo de '+fmt(+p.minimo):'Investir '+fmt(v); };
   inp.addEventListener('input',()=>{ const v=lerValor(inp.value); inp.value=v?v.toLocaleString('pt-BR'):''; conta(); });
-  bt.onclick=async()=>{ const v=lerValor(inp.value); if(!confirm(`Investir ${fmt(v)} em ${p.nome}?${p.liquidez==='vencimento'?'\n\nAtenção: só dá para resgatar no vencimento ('+p.prazo_meses+' meses = '+p.prazo_meses+' dias de verdade).':''}`)) return;
+  bt.onclick=async()=>{ const v=lerValor(inp.value);
+    if(!licaoFeita('reserva')){ toastMissao('🛟 Antes de investir, aprenda sobre a reserva de emergência.'); abrirReserva(true); return; }
+    const prende=p.liquidez==='vencimento'||p.carencia_meses>0;
+    if(prende&&!reservaPronta()&&!confirm(`🛟 Sua reserva de emergência ainda não está pronta (${fmtC(valorReserva())} de ${fmtC(metaReserva())}).\n\n${p.nome} prende o dinheiro${p.liquidez==='vencimento'?' até o vencimento':' na carência'}. Se aparecer um imprevisto, você não vai conseguir tirar.\n\nQuer investir mesmo assim?`)) return;
+    if(!confirm(`Investir ${fmt(v)} em ${p.nome}?${p.liquidez==='vencimento'?'\n\nAtenção: só dá para resgatar no vencimento ('+p.prazo_meses+' meses = '+p.prazo_meses+' dias de verdade).':''}`)) return;
     bt.disabled=true;
     try{ rf=await rpc('rf_aplicar',{p_id:S.perfil.id,p_token:S.perfil.token,p_produto:p.id,p_valor:v}); rfT0=performance.now(); rfSel=null; SOM.marco(); toastMissao(`🏦 Investiu ${fmt(v)} em ${p.nome}. Volte amanhã para ver render!`); renderRF(); }
     catch(e){ const k=Object.keys(MSG_RF).find(x=>e.message.indexOf(x)>=0); alert(k?MSG_RF[k]:'Não foi possível investir agora. Confira a internet.'); bt.disabled=false; } };
@@ -3649,6 +3666,53 @@ async function resgatarRF(a,bt){
   try{ rf=await rpc('rf_resgatar',{p_id:S.perfil.id,p_token:S.perfil.token,p_aplicacao:a.id}); rfT0=performance.now(); SOM.coletar(); toastMissao(`💰 Resgate de ${p.nome}: ${fmt(c.liquido)} voltou para o saldo.`); renderRF(); }
   catch(e){ const k=Object.keys(MSG_RF).find(x=>e.message.indexOf(x)>=0); alert(k?MSG_RF[k]:'Não foi possível resgatar agora. Confira a internet.'); bt.disabled=false; }
 }
+
+// ---------- Reserva de emergência ----------
+const RESERVA_IDS=['poupanca','tesouro_reserva','tesouro_selic','cdb_diario'];   // seguros e com dinheiro no mesmo dia
+function custoMesAdega(){ const C=S.contas; if(C&&C.ultimo&&C.ultimo.total>0) return C.ultimo.total; return Math.max(100,Math.round(fatMes()*0.093)||0); }
+const metaReserva=()=>Math.round(custoMesAdega()*((S.reservaMeses)||6));
+function valorReserva(){ if(!rf) return 0; return rf.aplicacoes.filter(a=>RESERVA_IDS.includes(a.produto)).reduce((t,a)=>t+rfConta(rfProd(a.produto),+a.valor,diasDe(a)).liquido,0); }
+const reservaPronta=()=>valorReserva()>=metaReserva();
+function cardReserva(){
+  const v=valorReserva(), m=metaReserva(), pct=Math.min(100,m?100*v/m:0);
+  return `<div class="rf-reserva${pct>=100?' ok':''}"><div class="rf-res-cab"><b>🛟 Reserva de emergência</b><small>${pct>=100?'✔ Pronta! Agora dá para pensar em títulos mais longos.':'Monte antes de prender dinheiro em títulos longos.'}</small></div>
+    <div class="missao-barra"><i style="width:${pct}%"></i></div>
+    <div class="rf-res-pe"><span>${fmtC(v)} de ${fmtC(m)}</span><span>meta: ${S.reservaMeses||6} meses de contas</span></div>
+    <div class="duas"><button type="button" class="btn azul peq" id="bReservaAprender">🛟 O que é?</button><button type="button" class="btn peq" id="bTesouroDireto">🏛️ Tesouro Direto</button></div></div>`;
+}
+function abrirReserva(primeira){
+  const cm=custoMesAdega(), meses=S.reservaMeses||6;
+  let h=`<div class="tempo-dia hoje"><div class="tempo-cab"><span class="tempo-ic">🛟</span><span><b>Antes de investir: a reserva de emergência</b><small>Um dinheiro guardado só para imprevistos, que fica num lugar seguro, rende e sai no mesmo dia.</small></span></div></div>
+    <div class="tempo-dia"><div class="tempo-cab"><span class="tempo-ic">🧮</span><span><b>Quanto guardar?</b><small>De 3 a 6 meses das contas. As contas da sua adega dão uns <b>${fmtC(cm)}</b> por mês.</small></span></div>
+      <div class="cat-filtros rf-meses">${[3,6,12].map(n=>`<button type="button" data-m="${n}" class="${n===meses?'ativo':''}">${n} meses · ${fmtC(cm*n)}</button>`).join('')}</div>
+      <small class="rf-dica">Quem tem renda que varia, como dono de negócio ou autônomo, costuma escolher mais meses.</small></div>
+    <div class="tempo-dia"><div class="tempo-cab"><span class="tempo-ic">✅</span><span><b>Onde guardar?</b><small>Seguro, rendendo e com liquidez diária: <b>Tesouro Reserva</b>, <b>Tesouro Selic</b> ou <b>CDB de liquidez diária</b> (100% do CDI). A poupança também serve, mas costuma render menos.</small></span></div></div>
+    <div class="tempo-dia"><div class="tempo-cab"><span class="tempo-ic">⛔</span><span><b>Onde não guardar?</b><small>Em título que só devolve no vencimento (CDB 2 anos, LCA), em algo arriscado, ou parado sem render: a inflação vai comendo o dinheiro.</small></span></div></div>
+    <div class="tempo-dia"><div class="tempo-cab"><span class="tempo-ic">🔁</span><span><b>E quando usar?</b><small>Só em emergência de verdade. Usou? Primeiro reponha a reserva, depois volte a investir no resto.</small></span></div></div>`;
+  h+=`<button class="btn" id="bResLicao" type="button">${licaoFeita('reserva')?'🛟 Rever a lição do Edu':'🛟 Fazer a lição e liberar os investimentos'}</button>`;
+  h+=`<p class="bol-nota">Dinheiro fictício do jogo. Não é recomendação de investimento.</p>`;
+  $('#tempoConteudo').innerHTML=h; document.querySelector('#telaTempo h2').textContent='🛟 Reserva de emergência'; $('#telaTempo').hidden=false; SOM.abrir();
+  $('#tempoConteudo').querySelectorAll('.rf-meses button').forEach(b=>b.onclick=()=>{ S.reservaMeses=+b.dataset.m; salvar(); SOM.abrir(); abrirReserva(); if(rf&&abaCorr==='rf') renderRF(); });
+  $('#bResLicao').onclick=()=>{ $('#telaTempo').hidden=true; abrirLicao('reserva'); };
+}
+// ---------- Tesouro Direto ----------
+function abrirTesouroDireto(){
+  const itens=[['🏛️','O que é','É um programa do Tesouro Nacional para pessoas comuns comprarem títulos públicos pela internet. Você empresta dinheiro para o Governo Federal e recebe de volta com juros. É considerado o investimento mais seguro do país.'],
+    ['📊','Tesouro Selic','Acompanha a taxa Selic ('+pctTxt(+rf.selic)+' ao ano hoje). O preço quase não oscila e dá para vender em qualquer dia útil. É o mais usado para a reserva de emergência.'],
+    ['🛟','Tesouro Reserva','Lançado em maio de 2026, também rende a Selic, começa com R$ 1 e o resgate cai na hora, até à noite e no fim de semana. Feito para a reserva de emergência.'],
+    ['🔒','Tesouro Prefixado','A taxa fica travada no dia da compra (por exemplo, 14% ao ano). Bom quando você acha que os juros vão cair. Se vender antes do vencimento, o preço pode estar maior ou menor.'],
+    ['📈','Tesouro IPCA+','Paga a inflação (IPCA) mais um juro. Protege o poder de compra no longo prazo, como uma aposentadoria. Também oscila se vender antes.'],
+    ['🎓','Renda+ e Educa+','Títulos para objetivos: o Renda+ paga uma renda mensal na aposentadoria, e o Educa+ ajuda a pagar a faculdade dos filhos.'],
+    ['⚖️','Marcação a mercado','O preço do título muda todo dia conforme os juros do mercado. Quem fica até o vencimento recebe exatamente a taxa combinada; quem vende antes pode ganhar ou perder um pouco.'],
+    ['🧾','Custos e impostos','IR regressivo (22,5% a 15%) sobre o que rendeu e IOF se sair em menos de 30 dias. A B3 cobra taxa de custódia de 0,20% ao ano, com isenção no Tesouro Selic até R$ 10 mil. No jogo não cobramos custódia.'],
+    ['📱','Como comprar','Pelo app do banco ou de uma corretora, com CPF. O valor mínimo é pequeno (1% do título, uns R$ 30 na maioria; o Tesouro Reserva começa com R$ 1).']];
+  let h=itens.map(([ic,tt,x])=>`<div class="tempo-dia"><div class="tempo-cab"><span class="tempo-ic" style="font-size:1.6rem">${ic}</span><span><b>${tt}</b><small>${x}</small></span></div></div>`).join('');
+  h+=`<p class="txt" style="font-size:.86rem">Na prateleira do jogo você encontra o <b>Tesouro Selic</b> e o <b>Tesouro Reserva</b>.</p>`;
+  h+=`<button class="btn azul peq" id="bTdLicao" type="button">🏛️ ${licaoFeita('tesouro')?'Rever':'Fazer'} a lição do Edu</button><p class="bol-nota">Regras de exemplo, parecidas com as de verdade em 2026. Taxas mudam com o tempo.</p>`;
+  $('#tempoConteudo').innerHTML=h; document.querySelector('#telaTempo h2').textContent='🏛️ Tesouro Direto'; $('#telaTempo').hidden=false; SOM.abrir();
+  $('#bTdLicao').onclick=()=>{ $('#telaTempo').hidden=true; abrirLicao('tesouro'); };
+}
+
 // o valor "rendendo" na tela, a cada segundo
 function atualizarRFVivo(){
   if(!rf||abaCorr!=='rf'||$('#telaCorretora').hidden) return;
@@ -4171,12 +4235,12 @@ function compararCompra(k){
   const q=faltando(k); if(q<=0&&!atacQtd(k)) return '';
   const U=custoUnit(k), rede=Math.max(0.05,Math.round(U*REDE_FATOR*100)/100);
   let h=`<div class="compra-box"><div class="compra-tit">🧾 Onde comprar?</div>
-   <div class="compra-linha"><span>🚚 <b>Distribuidor</b><small>entrega na porta, fardo a fardo</small></span><span><b>${fmt(U)}</b><small>por unidade</small></span></div>
-   <div class="compra-linha"><span>🚗 <b>Atacarejo</b><small>caixa fechada de ${CAIXA_UN} · o Edu vai buscar</small></span><span><b>${fmt(unitAtac(k))}</b><small>+ gasolina da viagem</small></span></div>
+   <div class="compra-linha"><span>🚚 <b>Distribuidor</b><small>entrega na porta · frete de ${fmt(FRETE_PEDIDO)} por pedido</small></span><span><b>${fmt(U)}</b><small>${q>0?`com frete: ${fmt(U+fretePorUn(q))} cada (${q} un.)`:'+ frete do pedido'}</small></span></div>
+   <div class="compra-linha"><span>🚗 <b>Atacarejo</b><small>caixa fechada de ${CAIXA_UN} · o frete é a gasolina</small></span><span><b>${fmt(unitAtac(k))}</b><small>+ gasolina da viagem</small></span></div>
    <div class="compra-linha trancada"><span>🏭 <b>Rede de supermercado</b><small>caminhões direto da fábrica</small></span><span><b>${fmt(rede)}</b><small>a adega não chega lá</small></span></div>`;
   if(S.atac) h+=`<p class="compra-nota">🚗 O Edu está no atacarejo. ${S.gerente?'O gerente recebe o fornecedor enquanto isso.':'Enquanto isso, ninguém recebe o caminhão do fornecedor.'}</p>`;
   else h+=`<button class="btn azul" id="bAtac" type="button">🛒 Montar a lista do atacarejo</button>`;
-  h+=`<p class="compra-nota">A gasolina custa o mesmo para 1 ou para ${veiculo().caixas} caixas: junte vários setores numa viagem só.</p>`;
+  h+=`<p class="compra-nota">🚚 Frete se divide pela quantidade: ${fmt(FRETE_PEDIDO)} em 5 unidades é ${fmt(FRETE_PEDIDO/5)} a mais em cada; em 50, só ${fmt(FRETE_PEDIDO/50)}. A gasolina do atacarejo também: ela custa o mesmo para 1 ou para ${veiculo().caixas} caixas, então junte vários setores numa viagem só.</p>`;
   const C=Cmp(); if(C.viagens) h+=`<p class="compra-nota">Você foi ${C.viagens}× ao atacarejo: ${C.economia>=0?'economizou':'gastou a mais'} ${fmt(Math.abs(C.economia))} em relação ao distribuidor.</p>`;
   return h+'</div>';
 }
@@ -4189,7 +4253,7 @@ function abrirListaAtac(pre){
 }
 function resumoLista(){
   let cx=0,prod=0,dist=0; for(const id in listaAtac){ const n=listaAtac[id]; cx+=n; prod+=n*caixaAtac(id); dist+=n*CAIXA_UN*custoUnit(id); }
-  const gas=cx?gasolinaViagem():0; return {cx,prod,dist,gas,total:prod+gas};
+  const gas=cx?gasolinaViagem():0; if(cx) dist+=FRETE_PEDIDO; return {cx,prod,dist,gas,total:prod+gas};
 }
 function renderListaAtac(){
   const V=veiculo(), R=resumoLista(), el=$('#atacConteudo');
@@ -4242,6 +4306,7 @@ function corResumo(){
     if(n>vai) parado+=(n-vai)*caixaAtac(id); if(n>lista) fora+=n-lista; }
   for(const id in COR.lista){ const f=COR.lista[id]-(COR.pego[id]||0); if(f>0) faltou.push([id,f]); }
   COR.cor.forEach(c=>c.itens.forEach(x=>{ if(x.promo!=null&&COR.promo[x.promo]){ imp+=COR.promo[x.promo]*x.por; fora+=COR.promo[x.promo]; } }));
+  if(dist>0) dist+=FRETE_PEDIDO;
   const gas=gasolinaViagem(), fun=COR.funilaria||0; return {prod,dist,parado,imp,gas,fun,total:prod+imp+gas+fun,carregar,faltou,fora};
 }
 function renderCorredor(){
@@ -4627,16 +4692,16 @@ const LICOES={
     errado:'Quase! Lembre: o fornecedor quer o pagamento na hora da entrega. Tente de novo.',
     libera:()=>!!(S.fiado&&S.fiado.pedidos>0)},
   compras:{ic:'🚗',tit:'Comprar pouco custa mais',
-    falas:['Uma garrafa de refri de 2 litros chega aqui por uns <b>R$ 8,50</b>: a adega compra fardo a fardo do distribuidor, que entrega na porta.',
-           'No atacarejo, a mesma garrafa sai por uns <b>R$ 7,40</b>. Mas alguém tem que ir buscar: gasolina, tempo e a loja sem o dono.',
-           'Uma rede de supermercado compra <b>caminhões inteiros</b> direto da fábrica e paga uns <b>R$ 6,30</b>. Quem compra muito paga menos por garrafa.'],
-    perg:'Por que o supermercado consegue vender o refri mais barato?',
-    ops:[{t:'Porque compra em quantidade enorme e paga menos por cada garrafa.',ok:true},
-         {t:'Porque o refri do supermercado é diferente do refri da adega.'},
-         {t:'Porque a adega não paga nada pelo refri que vende.'}],
-    certo:'Isso! Quanto maior a compra, menor o preço de cada unidade. A adega compra pouco, mas está pertinho de você, aberta até tarde e com a bebida gelada na hora. 💛',
-    errado:'Quase! Pense no tamanho da compra: quem leva um caminhão inteiro paga menos por garrafa.',
-    nota:'Valores de exemplo, parecidos com os de verdade.',
+    falas:['A Coca-Cola 2 L é vendida aqui por <b>R$ 12,00</b>. A adega paga uns <b>R$ 9,65</b> por garrafa ao distribuidor, <b>mais o frete</b> da entrega.',
+           'Toda compra tem frete, e ele é um valor fixo que se <b>divide pela quantidade</b>. Com R$ 15 de frete: em <b>6 garrafas</b>, são R$ 2,50 a mais em cada uma, e a garrafa sai <b>R$ 12,15</b> (mais cara do que o preço de venda!). Em <b>60 garrafas</b>, são só R$ 0,25, e ela sai <b>R$ 9,90</b>.',
+           'No atacarejo, o frete é a gasolina e o tempo de ir buscar. E uma rede de supermercado traz caminhões inteiros direto da fábrica: o frete quase some em cada garrafa. Quem compra muito paga menos por unidade.'],
+    perg:'Por que comprar pouco sai mais caro?',
+    ops:[{t:'Porque o frete é dividido por poucos produtos, e cada um fica mais caro.',ok:true},
+         {t:'Porque o distribuidor cobra mais caro de quem é educado.'},
+         {t:'Porque o frete fica mais barato quando o pedido é pequeno.'}],
+    certo:'Isso! O frete é o mesmo para 6 ou para 60 garrafas, então quanto maior a compra, menos frete cada garrafa carrega. A adega compra pouco, mas está pertinho de você, aberta até tarde e com a bebida gelada na hora. 💛',
+    errado:'Quase! Pense no frete: o mesmo valor dividido por 6 ou por 60 garrafas. Tente de novo.',
+    nota:'Preço de compra da Coca 2 L informado pela Adega do Edu (nov/2026); frete de exemplo.',
     libera:()=>!!((S.compras&&S.compras.viagens>0)||(S.pedidos||0)>=6)},
   contas:{ic:'🧾',tit:'As contas do mês',
     falas:['Além de comprar os produtos, todo mês a adega paga <b>luz</b> das geladeiras, <b>aluguel</b>, <b>impostos</b> e a <b>taxa da maquininha</b>.',
@@ -4648,6 +4713,31 @@ const LICOES={
     errado:'Quase! Lembre: o produto, os funcionários, a luz, o aluguel, os impostos e a maquininha saem antes de sobrar alguma coisa.',
     nota:'Valores de exemplo, parecidos com os de verdade.',
     libera:()=>!!(S.contas&&S.contas.meses>0)},
+  reserva:{ic:'🛟',tit:'Reserva de emergência',
+    falas:['Antes de investir para ganhar mais, todo mundo precisa de uma <b>reserva de emergência</b>: um dinheiro guardado só para imprevistos.',
+           'Na adega, imprevisto é a geladeira que quebra, um mês fraco de vendas ou uma conta que chega maior. Em casa, é um remédio, um conserto, ficar sem renda.',
+           'O tamanho certo é de <b>3 a 6 meses de contas</b> (quem tem renda que varia, como dono de negócio, costuma guardar mais). E ela fica num lugar <b>seguro</b>, que <b>rende</b> e que dá para tirar <b>no mesmo dia</b>: Tesouro Selic, Tesouro Reserva ou CDB de liquidez diária.',
+           'Só depois da reserva pronta vale prender dinheiro em títulos longos, que rendem mais mas só devolvem no vencimento.'],
+    perg:'Onde faz mais sentido guardar a reserva de emergência?',
+    ops:[{t:'Num investimento seguro, que rende e dá para resgatar no mesmo dia, como o Tesouro Selic.',ok:true},
+         {t:'Numa LCA de 2 anos, porque rende mais.'},
+         {t:'Embaixo do colchão, para ter sempre à mão.'}],
+    certo:'Isso! Reserva boa é segura, rende e está disponível na hora do aperto.',
+    errado:'Quase! A LCA prende o dinheiro até o vencimento, e o colchão não rende nada (e a inflação come o dinheiro). Tente de novo.',
+    nota:'No jogo, a meta é 6 meses das contas da sua adega.',
+    libera:()=>true},
+  tesouro:{ic:'🏛️',tit:'Tesouro Direto',
+    falas:['No Tesouro Direto você <b>empresta dinheiro para o Governo Federal</b>, que devolve com juros. É o investimento considerado o mais seguro do Brasil.',
+           'Tem tipos para cada objetivo: <b>Selic</b> (acompanha os juros, bom para a reserva), <b>Prefixado</b> (taxa travada no dia da compra), <b>IPCA+</b> (inflação mais um juro, para o longo prazo), além do <b>Renda+</b>, do <b>Educa+</b> e do novo <b>Tesouro Reserva</b>.',
+           'Compra-se pelo banco ou pela corretora, com pouco dinheiro. Tem IR que cai com o tempo, e se vender antes do vencimento um Prefixado ou IPCA+, o preço pode estar maior ou menor (é a <b>marcação a mercado</b>).'],
+    perg:'Para quem você empresta o dinheiro quando compra um título do Tesouro Direto?',
+    ops:[{t:'Para o Governo Federal, que devolve com juros.',ok:true},
+         {t:'Para a Adega do Edu.'},
+         {t:'Para a bolsa de valores, que compra ações.'}],
+    certo:'Isso! O Tesouro Direto é um empréstimo para o governo, por isso é tão seguro.',
+    errado:'Quase! Pense em quem emite o título: o Tesouro Nacional. Tente de novo.',
+    nota:'Regras de exemplo, parecidas com as de verdade em 2026. Não é recomendação de investimento.',
+    libera:()=>true},
   rendafixa:{ic:'🏦',tit:'Renda fixa',
     falas:['Na renda fixa você <b>empresta</b> dinheiro para um banco ou para o governo, e eles devolvem com <b>juros</b>.',
            'O que muda entre eles: quanto rende (o <b>CDI</b>), quando dá para tirar (<b>liquidez</b>) e se paga <b>Imposto de Renda</b>. CDB e Tesouro pagam IR, que cai com o tempo; LCI e LCA são isentas.',
@@ -4656,7 +4746,7 @@ const LICOES={
     ops:[{t:'Um investimento com liquidez diária, como o CDB de liquidez diária ou o Tesouro Selic.',ok:true},
          {t:'Uma LCA de 2 anos, porque rende mais.'},
          {t:'Deixar parado sem render nada.'}],
-    certo:'Isso! Primeiro a gente pensa em <b>quando</b> vai precisar do dinheiro, depois em quanto rende. 💛',
+    certo:'Isso! Primeiro a gente pensa em quando vai precisar do dinheiro, depois em quanto rende. 💛',
     errado:'Quase! A LCA de 2 anos prende o dinheiro até o vencimento. Tente de novo.',
     nota:'Regras de exemplo, parecidas com as de verdade. Não é recomendação de investimento.',
     libera:()=>!!S.viuRF},
@@ -4704,7 +4794,7 @@ function responderLicao(b){
     res.textContent+=` +${fmt(p)}`; SOM.marco(); salvar(); atualizarHUD(true); if(typeof atualizarBadgeMapa==='function') atualizarBadgeMapa(); }
   const pr=$('#licaoConteudo .licao-premio'); if(pr) pr.textContent='✔ Lição concluída!';
 }
-$('#btnLicaoFechar').addEventListener('click',()=>{ $('#telaLicao').hidden=true; });
+$('#btnLicaoFechar').addEventListener('click',()=>{ $('#telaLicao').hidden=true; if(typeof rf!=='undefined'&&rf&&abaCorr==='rf'&&!$('#telaCorretora').hidden) renderRF(); });
 setInterval(()=>{ if(S){ checarLicaoPendente(); atualizarBtnFiado(); } },1000);
 
 // ================= Catálogo da Adega do Edu (produtos e preços reais de venda) =================
@@ -5640,7 +5730,7 @@ function renderPainel(){
         <div class="stat"><span>Tempo para pegar</span><b>${tempoEst(k).toFixed(1).replace('.',',')} s</b></div>
         <div class="stat"><span>Estoque</span><b>${e.estoque} / ${cap(k)}${e.pedido>0?` <span class="prox">🚚 +${e.pedido} a caminho</span>`:''}${atacQtd(k)?` <span class="prox">🚗 +${atacQtd(k)} do atacarejo</span>`:''}</b></div>
         <div class="stat"><span>Custo por unidade</span><b>${fmt(custoUnit(k))}</b></div>
-      </div>`+catalogoNoPainel(k)+(faltando(k)>0?(qtdPossivel(k)>0&&qtdPossivel(k)<faltando(k)?btnCusto(qtdPossivel(k)*custoUnit(k),`🚚 Pedir +${qtdPossivel(k)} un.`,'bPedir'):btnCusto(custoPedido(k),`🚚 Pedir +${faltando(k)} un.`,'bPedir')):`<button class="btn azul" disabled>${e.pedido>0||atacQtd(k)?'Pedido a caminho':'Estoque completo'}</button>`)+compararCompra(k)+
+      </div>`+catalogoNoPainel(k)+(faltando(k)>0?(qtdPossivel(k)>0&&qtdPossivel(k)<faltando(k)?btnCusto(qtdPossivel(k)*custoUnit(k)+FRETE_PEDIDO,`🚚 Pedir +${qtdPossivel(k)} un.`,'bPedir'):btnCusto(custoPedido(k),`🚚 Pedir +${faltando(k)} un.`,'bPedir')):`<button class="btn azul" disabled>${e.pedido>0||atacQtd(k)?'Pedido a caminho':'Estoque completo'}</button>`)+compararCompra(k)+
       `<p style="margin:8px 2px 0;color:var(--sub);font-size:.85rem;font-weight:700;line-height:1.35">Fique de olho no estoque: quando ele zera, os clientes não compram. Faça o pedido ao fornecedor antes de acabar.</p>`+(prox?`<div class="marcos"><span>Nv ${prox}: atendimento mais rápido</span><div class="trilho"><i style="width:${100*(e.nivel-ant)/(prox-ant)}%"></i></div></div>`:'')+
       `<div class="duas">${btnCusto(custoEst(k),'Melhorar','bAcao')}<button class="btn amarelo" id="bMax">Máximo<small id="bMaxTxt"></small></button></div>`;
     }
