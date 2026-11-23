@@ -3281,7 +3281,7 @@ const EVENTOS=[
   {id:'aniversario',nome:'Aniversário da Adega',ic:'🎂',bonus:0.25,ate:'09/12',dec:['baloes','luzes','faixa'],faixa:()=>(agoraSP().y-2023)+' ANOS DE ADEGA DO EDU!',cor:['#E8433A','#FFFFFF'],bal:[0xE8433A,0xFFC93C,0x2F8FD8,0x3CB371],ativo:t=>!!ANIV_ADEGA&&entreMD(t,ANIV_ADEGA[0],ANIV_ADEGA[1])},
   {id:'natal',nome:'Natal na Adega',ic:'🎄',bonus:0.20,ate:'25/12',dec:['arvore','luzes','faixa'],faixa:'FELIZ NATAL!',cor:['#C2362B','#FFFFFF'],ativo:t=>entreMD(t,1215,1225)},
   {id:'reveillon',nome:'Réveillon na Adega',ic:'🎆',bonus:0.15,ate:'1º/01',dec:['baloes','luzes','faixa'],faixa:'FELIZ ANO NOVO!',cor:['#1A1A1A','#FFD54F'],bal:[0xFFD54F,0xE0E0E0,0xFFC93C,0xF5F5F5],ativo:t=>entreMD(t,1226,101)},
-  {id:'black',nome:'Black Friday',ic:'🛍️',bonus:0.10,fornecedor:0.7,ate:'30/11',dec:['faixa'],faixa:'BLACK FRIDAY · FORNECEDOR -30%',cor:['#111111','#FFC93C'],ativo:t=>entreMD(t,1120,1130)},
+  {id:'black',nome:'Black Friday',ic:'🛍️',bonus:0.10,fornecedor:0.95,ate:'30/11',dec:['faixa'],faixa:'BLACK FRIDAY · FORNECEDOR -5%',cor:['#111111','#FFC93C'],ativo:t=>entreMD(t,1120,1130)},
   {id:'carnaval',nome:'Carnaval na Adega',ic:'🎉',bonus:0.15,ate:'Quarta de Cinzas',dec:['confete','bandeirinhas','faixa'],faixa:'CARNAVAL NA ADEGA!',cor:['#9B5DE5','#FFFFFF'],ativo:t=>{ const c=CARNAVAL[t.y]; return !!c&&entreMD(t,c[0],c[1]); }},
   {id:'junina',nome:'Arraiá da Adega',ic:'🌽',bonus:0.10,ate:'30/06',dec:['bandeirinhas','faixa'],faixa:'ARRAIÁ DA ADEGA!',cor:['#C2862B','#FFFFFF'],ativo:t=>t.m===6},
   {id:'maes',nome:'Semana das Mães',ic:'💐',bonus:0.15,ate:'Dia das Mães',dec:['baloes','faixa'],faixa:'FELIZ DIA DAS MÃES!',cor:['#D63384','#FFFFFF'],bal:[0xF06AA7,0xC5A3E8,0xFFFFFF,0xF8BBD0],ativo:t=>{ const s=domingoMaes(t.y); return t.m===5&&t.d>=s-6&&t.d<=s; }},
@@ -3343,7 +3343,7 @@ function avisarEvento(){
   const t=agoraSP(), chave=ev.id+'-'+t.y+(ev.id==='sextou'?'-'+mdSP(t):'');
   if(S.eventoVisto===chave) return;
   S.eventoVisto=chave; salvar();
-  toastMissao(ev.ic+' '+ev.nome+'! Vendas +'+Math.round(ev.bonus*100)+'%'+(ev.fornecedor?' e fornecedor 30% mais barato':'')+' até '+ev.ate+'.');
+  toastMissao(ev.ic+' '+ev.nome+'! Vendas +'+Math.round(ev.bonus*100)+'%'+(ev.fornecedor?' e fornecedor '+Math.round((1-ev.fornecedor)*100)+'% mais barato':'')+' até '+ev.ate+'.');
 }
 function adicionarMissaoEvento(M){
   const ev=eventoAtual(); if(!ev||!M||M.lista.some(m=>m.evento===ev.id)) return;
@@ -3448,7 +3448,7 @@ function renderMissoes(){
   const agora=Date.now(); const falta=Math.max(0,inicioMissoes(M)+CICLO_MISSOES-agora);
   const hh=Math.floor(falta/3600000), mm=Math.floor(falta%3600000/60000);
   const add=h=>{ const d=document.createElement('div'); d.innerHTML=h; while(d.firstChild) b.appendChild(d.firstChild); };
-  const evA=eventoAtual(); if(evA) add(`<div class="ev-banner">${evA.ic} <b>${evA.nome}</b>: vendas +${Math.round(evA.bonus*100)}%${evA.fornecedor?' e fornecedor 30% mais barato':''} até ${evA.ate}.</div>`);
+  const evA=eventoAtual(); if(evA) add(`<div class="ev-banner">${evA.ic} <b>${evA.nome}</b>: vendas +${Math.round(evA.bonus*100)}%${evA.fornecedor?' e fornecedor '+Math.round((1-evA.fornecedor)*100)+'% mais barato':''} até ${evA.ate}.</div>`);
   add(`<p class="txt" style="color:var(--sub);font-size:.9rem">Novas missões em ${hh} h ${mm} min.</p>`);
   if((M.fator||1)<1) add(`<div class="ev-banner" style="background:var(--painel2)">🔁 Rodada ${M.rodada||3} de hoje: prêmios pela metade. As 2 primeiras rodadas do dia pagam o valor cheio.</div>`);
   M.lista.forEach((m,i)=>{
@@ -4212,7 +4212,7 @@ setTimeout(checarWhats,1500);
 // ================= Compras: distribuidor x atacarejo x rede de supermercado =================
 // Educativo: quem compra pouco paga mais caro por unidade. O atacarejo só vende caixa fechada,
 // a gasolina é a mesma para a viagem toda e o carro tem espaço limitado.
-const ATAC_FATOR=0.87, REDE_FATOR=0.74, CAIXA_UN=12, ATAC_TEMPO=45;
+const ATAC_FATOR=0.93, REDE_FATOR=0.85, CAIXA_UN=12, ATAC_TEMPO=45;
 const VEICULOS={carro:{nome:'Carro',ic:'🚗',caixas:6,gas:6},kombi:{nome:'Kombi',ic:'🚐',caixas:14,gas:7.5}};
 const atacLiberado=()=>!!(S&&!S.falido&&(S.pedidos||0)>=2);
 const unitAtac=id=>Math.max(0.05,Math.round(custoUnit(id)*ATAC_FATOR*100)/100);
@@ -4220,7 +4220,10 @@ const caixaAtac=id=>CAIXA_UN*unitAtac(id);
 const veiculo=()=>VEICULOS[S.kombi?'kombi':'carro'];
 const custoMedio=()=>{ const ab=IDS.filter(i=>S.est[i].aberta); return ab.length?ab.reduce((t,i)=>t+custoUnit(i),0)/ab.length:1; };
 const custoBase=()=>{ const ab=IDS.filter(i=>S.est[i].aberta); return ab.length?Math.min(...ab.map(custoUnit)):1; };
-const gasolinaViagem=()=>Math.round(veiculo().gas*5);   // ida e volta ao atacarejo, em reais
+// custo da viagem ao atacarejo: gasolina + estacionamento + o tempo de ir e vir (o dono fora da loja também custa)
+const VIAGEM={estacionamento:8,tempo:20};
+const gasolinaSo=()=>Math.round(veiculo().gas*4);
+const gasolinaViagem=()=>gasolinaSo()+VIAGEM.estacionamento+VIAGEM.tempo;
 const precoKombi=()=>Math.round(6000*multPrest());
 const maxCaixas=id=>Math.floor(faltando(id)/CAIXA_UN);
 const atacQtd=id=>(S.atac&&S.atac.itens&&S.atac.itens[id])||0;
@@ -4236,11 +4239,11 @@ function compararCompra(k){
   const U=custoUnit(k), rede=Math.max(0.05,Math.round(U*REDE_FATOR*100)/100);
   let h=`<div class="compra-box"><div class="compra-tit">🧾 Onde comprar?</div>
    <div class="compra-linha"><span>🚚 <b>Distribuidor</b><small>entrega na porta · frete de ${fmt(FRETE_PEDIDO)} por pedido</small></span><span><b>${fmt(U)}</b><small>${q>0?`com frete: ${fmt(U+fretePorUn(q))} cada (${q} un.)`:'+ frete do pedido'}</small></span></div>
-   <div class="compra-linha"><span>🚗 <b>Atacarejo</b><small>caixa fechada de ${CAIXA_UN} · o frete é a gasolina</small></span><span><b>${fmt(unitAtac(k))}</b><small>+ gasolina da viagem</small></span></div>
+   <div class="compra-linha"><span>🚗 <b>Atacarejo</b><small>caixa fechada de ${CAIXA_UN} · o frete é a viagem</small></span><span><b>${fmt(unitAtac(k))}</b><small>+ viagem ${fmt(gasolinaViagem())}</small></span></div>
    <div class="compra-linha trancada"><span>🏭 <b>Rede de supermercado</b><small>caminhões direto da fábrica</small></span><span><b>${fmt(rede)}</b><small>a adega não chega lá</small></span></div>`;
   if(S.atac) h+=`<p class="compra-nota">🚗 O Edu está no atacarejo. ${S.gerente?'O gerente recebe o fornecedor enquanto isso.':'Enquanto isso, ninguém recebe o caminhão do fornecedor.'}</p>`;
   else h+=`<button class="btn azul" id="bAtac" type="button">🛒 Montar a lista do atacarejo</button>`;
-  h+=`<p class="compra-nota">🚚 Frete se divide pela quantidade: ${fmt(FRETE_PEDIDO)} em 5 unidades é ${fmt(FRETE_PEDIDO/5)} a mais em cada; em 50, só ${fmt(FRETE_PEDIDO/50)}. A gasolina do atacarejo também: ela custa o mesmo para 1 ou para ${veiculo().caixas} caixas, então junte vários setores numa viagem só.</p>`;
+  h+=`<p class="compra-nota">🚚 Frete se divide pela quantidade: ${fmt(FRETE_PEDIDO)} em 5 unidades é ${fmt(FRETE_PEDIDO/5)} a mais em cada; em 50, só ${fmt(FRETE_PEDIDO/50)}. No atacarejo, o "frete" é a viagem: gasolina, estacionamento e o tempo de ir e vir (${fmt(gasolinaViagem())}), o mesmo para 1 ou para ${veiculo().caixas} caixas. Junte vários setores numa viagem só.</p>`;
   const C=Cmp(); if(C.viagens) h+=`<p class="compra-nota">Você foi ${C.viagens}× ao atacarejo: ${C.economia>=0?'economizou':'gastou a mais'} ${fmt(Math.abs(C.economia))} em relação ao distribuidor.</p>`;
   return h+'</div>';
 }
@@ -4258,7 +4261,7 @@ function resumoLista(){
 function renderListaAtac(){
   const V=veiculo(), R=resumoLista(), el=$('#atacConteudo');
   if(S.atac){ el.innerHTML='<p class="txt">🚗 O Edu já está no atacarejo. Espere ele voltar para fazer outra lista.</p>'; return; }
-  let h=`<p class="txt" style="font-size:.9rem">O atacarejo só vende <b>caixa fechada de ${CAIXA_UN} unidades</b>. A gasolina é a mesma para a viagem toda: quanto mais coisa você trouxer de uma vez, mais ela se dilui.</p><div class="atac-lista">`;
+  let h=`<p class="txt" style="font-size:.9rem">O atacarejo só vende <b>caixa fechada de ${CAIXA_UN} unidades</b>. A viagem (gasolina, estacionamento e tempo) custa o mesmo para a compra toda: quanto mais coisa você trouxer de uma vez, mais ela se dilui.</p><div class="atac-lista">`;
   IDS.filter(id=>S.est[id].aberta).forEach(id=>{
     const mx=maxCaixas(id), n=listaAtac[id]||0;
     h+=`<div class="atac-item${mx?'':' cheio'}"><span class="atac-ic">${EST[id].ic}</span><span class="bol-tx"><b>${EST[id].nome}</b><small>${mx?`cabem ${mx} ${mx>1?'caixas':'caixa'} · caixa ${fmt(caixaAtac(id))} (distribuidor: ${fmt(CAIXA_UN*custoUnit(id))})`:'geladeira cheia: não cabe uma caixa'}</small></span>
@@ -4267,7 +4270,7 @@ function renderListaAtac(){
   h+=`</div><div class="atac-espaco"><span>${V.ic} ${V.nome}: <b>${R.cx} de ${V.caixas} caixas</b></span><div class="missao-barra"><i style="width:${100*R.cx/V.caixas}%"></i></div></div>`;
   if(R.cx){
     const dif=R.dist-R.total;
-    h+=`<div class="stats"><div class="stat"><span>Produtos (${R.cx*CAIXA_UN} un.)</span><b>${fmt(R.prod)}</b></div><div class="stat"><span>⛽ Gasolina e tempo</span><b>${fmt(R.gas)}</b></div><div class="stat destaque"><span>Total no atacarejo</span><b>${fmt(R.total)}</b></div></div>`;
+    h+=`<div class="stats"><div class="stat"><span>Produtos (${R.cx*CAIXA_UN} un.)</span><b>${fmt(R.prod)}</b></div><div class="stat"><span>⛽ Viagem (gasolina, estacionamento e tempo)</span><b>${fmt(R.gas)}</b></div><div class="stat destaque"><span>Total no atacarejo</span><b>${fmt(R.total)}</b></div></div>`;
     h+=`<p class="atac-comp ${dif>=0?'bom':'ruim'}">No distribuidor, a mesma compra sairia ${fmt(R.dist)}. ${dif>=0?`Você economiza ${fmt(dif)}.`:`O atacarejo sai ${fmt(-dif)} mais caro: a gasolina pesou numa compra pequena.`}</p>`;
     const pode=!eduOcupado()&&S.din>=R.total;
     h+=`<button class="btn" id="bIrAtac" type="button" ${pode?'':'disabled'}>${V.ic} Ir ao atacarejo ${NOTA} ${fmt(R.total)}</button>`;
@@ -4346,7 +4349,7 @@ function caixaCorredor(){
   h+=`<p>📦 Caixas: ${fmt(R.prod)}</p>`;
   if(R.imp) h+=`<p>🔥 Promoções fora da lista: ${fmt(R.imp)}</p>`;
   if(R.fun) h+=`<p>🔧 Funilaria (${COR.batidas} ${COR.batidas>1?'batidas':'batida'}): ${fmt(R.fun)}</p>`;
-  h+=`<p>⛽ Gasolina e tempo: ${fmt(R.gas)}</p><p style="font-size:1.05rem">Total: <b>${fmt(R.total)}</b></p></div>`;
+  h+=`<p>⛽ Viagem: gasolina ${fmt(gasolinaSo())} + estacionamento ${fmt(VIAGEM.estacionamento)} + tempo de ir e vir ${fmt(VIAGEM.tempo)} = ${fmt(R.gas)}</p><p style="font-size:1.05rem">Total: <b>${fmt(R.total)}</b></p></div>`;
   if(certinho) h+=`<p class="atac-comp bom">✔ Compra certinha: só o que estava na lista! O Edu volta mais rápido.</p>`;
   if(R.faltou.length) h+=`<p class="atac-comp ruim">Faltou pegar: ${R.faltou.map(([id,n])=>`${EST[id].ic} ${n} ${n>1?'caixas':'caixa'}`).join(', ')}. Esses produtos podem acabar na loja.</p>`;
   if(R.imp+R.parado>0) h+=`<p class="atac-comp ruim">${fmt(R.imp+R.parado)} ficaram fora da lista${R.parado?' (ou não cabem nas prateleiras)':''}. Vão para o depósito e o dinheiro volta aos poucos, sem lucro: é <b>dinheiro parado</b> que podia estar repondo o que vende.</p>`;
@@ -4692,16 +4695,16 @@ const LICOES={
     errado:'Quase! Lembre: o fornecedor quer o pagamento na hora da entrega. Tente de novo.',
     libera:()=>!!(S.fiado&&S.fiado.pedidos>0)},
   compras:{ic:'🚗',tit:'Comprar pouco custa mais',
-    falas:['A Coca-Cola 2 L é vendida aqui por <b>R$ 12,00</b>. A adega paga uns <b>R$ 9,65</b> por garrafa ao distribuidor, <b>mais o frete</b> da entrega.',
-           'Toda compra tem frete, e ele é um valor fixo que se <b>divide pela quantidade</b>. Com R$ 15 de frete: em <b>6 garrafas</b>, são R$ 2,50 a mais em cada uma, e a garrafa sai <b>R$ 12,15</b> (mais cara do que o preço de venda!). Em <b>60 garrafas</b>, são só R$ 0,25, e ela sai <b>R$ 9,90</b>.',
-           'No atacarejo, o frete é a gasolina e o tempo de ir buscar. E uma rede de supermercado traz caminhões inteiros direto da fábrica: o frete quase some em cada garrafa. Quem compra muito paga menos por unidade.'],
+    falas:['Um refri de 2 litros vendido aqui por <b>R$ 12,00</b> custa para a adega uns <b>R$ 10,40</b> no distribuidor. E <b>toda compra</b> ainda tem o custo de chegar até a loja.',
+           'Pode ser o <b>frete</b> do distribuidor, um <b>Uber</b>, ou a <b>gasolina e o estacionamento</b> de ir buscar, sem falar no <b>tempo</b> de ir e vir. Esse custo é fixo e se <b>divide pela quantidade</b>: com R$ 15, em <b>6 garrafas</b> são R$ 2,50 a mais em cada, e a garrafa sai <b>R$ 12,90</b> (mais cara que o preço de venda!). Em <b>60 garrafas</b>, são R$ 0,25: ela sai <b>R$ 10,65</b>.',
+           'Dos R$ 12,00 sobra uns R$ 1,35, e ainda saem a maquininha, os impostos, a luz das geladeiras e o aluguel. No atacarejo a garrafa é um pouco mais barata, mas tem a viagem. Uma rede de supermercado traz caminhões inteiros da fábrica: o custo de entrega quase some em cada garrafa.'],
     perg:'Por que comprar pouco sai mais caro?',
-    ops:[{t:'Porque o frete é dividido por poucos produtos, e cada um fica mais caro.',ok:true},
+    ops:[{t:'Porque o frete, a gasolina e o tempo de buscar são divididos por poucos produtos, e cada um fica mais caro.',ok:true},
          {t:'Porque o distribuidor cobra mais caro de quem é educado.'},
          {t:'Porque o frete fica mais barato quando o pedido é pequeno.'}],
-    certo:'Isso! O frete é o mesmo para 6 ou para 60 garrafas, então quanto maior a compra, menos frete cada garrafa carrega. A adega compra pouco, mas está pertinho de você, aberta até tarde e com a bebida gelada na hora. 💛',
+    certo:'Isso! O custo de trazer é o mesmo para 6 ou para 60 garrafas, então quanto maior a compra, menos cada garrafa carrega. A adega compra menos que um supermercado, mas está pertinho de você, aberta até tarde e com a bebida gelada na hora. 💛',
     errado:'Quase! Pense no frete: o mesmo valor dividido por 6 ou por 60 garrafas. Tente de novo.',
-    nota:'Preço de compra da Coca 2 L informado pela Adega do Edu (nov/2026); frete de exemplo.',
+    nota:'Valores de exemplo, parecidos com os de verdade.',
     libera:()=>!!((S.compras&&S.compras.viagens>0)||(S.pedidos||0)>=6)},
   contas:{ic:'🧾',tit:'As contas do mês',
     falas:['Além de comprar os produtos, todo mês a adega paga <b>luz</b> das geladeiras, <b>aluguel</b>, <b>impostos</b> e a <b>taxa da maquininha</b>.',
