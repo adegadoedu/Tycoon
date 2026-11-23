@@ -503,6 +503,27 @@ body:not(.jogando) .alerta{display:none}
 .freg-linha b{font-weight:900;white-space:nowrap}
 .freg-licao{margin:10px 2px 0;font-size:.86rem;font-weight:700;line-height:1.4;color:var(--texto,#2A1A12)}
 .freg-ant{margin:8px 2px 0;font-size:.85rem;color:var(--sub);font-weight:700}
+.cor-lista{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.cor-chip{display:flex;align-items:center;gap:4px;background:#FFF3C4;border:2px solid var(--contorno);border-radius:999px;padding:3px 4px 3px 9px;font-weight:800;font-size:.84rem}
+.cor-chip.ok{background:#BDF2CB}.cor-chip.mais{background:#FFD1C7}
+.cor-chip button{border:2px solid var(--contorno);background:#fff;border-radius:50%;width:24px;height:24px;font-weight:900;line-height:1;cursor:pointer;padding:0}
+.cor-carro{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:.88rem;margin:2px 2px 8px}
+.cor-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#2F6E4F;color:#fff;border:3px solid var(--contorno);border-radius:14px 14px 0 0;padding:6px 8px}
+.cor-nav b{font-size:.95rem;text-align:center}
+.cor-nav button{background:#FFD43B;border:2.5px solid var(--contorno);border-radius:10px;font-weight:900;min-width:44px;min-height:40px;cursor:pointer}
+.cor-nav button:disabled{opacity:.35}
+.cor-prat{background:repeating-linear-gradient(180deg,#F3EDE2 0 104px,#B98A4E 104px 114px);border:3px solid var(--contorno);border-top:none;border-radius:0 0 14px 14px;padding:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px 6px;min-height:228px}
+.cor-cx{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;height:96px;background:#C8935A;border:2.5px solid var(--contorno);border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;padding:4px 3px;box-shadow:inset 0 -12px 0 rgba(0,0,0,.12)}
+.cor-cx .ic{font-size:1.7rem;line-height:1}
+.cor-cx b{font-size:.68rem;line-height:1.1;color:#2A1A12;background:#FFF;border-radius:4px;padding:1px 3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cor-cx small{font-size:.66rem;font-weight:900;color:#2A1A12}
+.cor-cx.promo{background:#F7D23B}
+.cor-cx.promo::before{content:'🔥 PROMO';position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:#E8433A;color:#fff;font-size:.6rem;font-weight:900;border:2px solid var(--contorno);border-radius:6px;padding:0 4px;white-space:nowrap}
+.cor-cx.pego{animation:pulo .25s}
+.cor-cx s{font-size:.6rem;color:#7A4F1A}
+.cor-dica{font-size:.82rem;color:var(--sub);font-weight:700;margin:8px 2px}
+.cor-nota{border:2.5px solid var(--contorno);border-radius:12px;padding:10px;background:#fff;margin:8px 0}
+.cor-nota p{margin:4px 0;font-weight:700;font-size:.9rem}
 </style>
 </head>
 <body>
@@ -692,6 +713,12 @@ body:not(.jogando) .alerta{display:none}
   </div>
 </section>
 
+<section class="tela" id="telaCorredor" hidden>
+  <div class="caixa">
+    <h2 class="titulo centro" style="font-size:1.5rem;margin-bottom:6px">🛒 Nos corredores do atacarejo</h2>
+    <div id="corConteudo"></div>
+  </div>
+</section>
 <section class="tela" id="telaFregueses" hidden>
   <div class="caixa">
     <div class="papo-topo"><h2 class="titulo" style="font-size:1.45rem">🏅 Melhores fregueses</h2><button class="pilula" id="btnFregFechar" type="button" aria-label="Fechar">✕</button></div>
@@ -3899,10 +3926,102 @@ function renderListaAtac(){
   if(!S.kombi) h+=`<div class="atac-kombi"><span>🚐 <b>Kombi</b>: leva ${VEICULOS.kombi.caixas} caixas por viagem (gasta um pouco mais de gasolina).</span>${btnCusto(precoKombi(),'Comprar a Kombi','bKombi')}</div>`;
   el.innerHTML=h;
   el.querySelectorAll('.atac-passo button').forEach(b=>b.onclick=()=>{ const id=b.dataset.id; listaAtac[id]=Math.max(0,Math.min(maxCaixas(id),(listaAtac[id]||0)+(+b.dataset.d))); if(!listaAtac[id]) delete listaAtac[id]; SOM.abrir(); renderListaAtac(); });
-  const bi=$('#bIrAtac'); if(bi) bi.onclick=irAtacarejo;
+  const bi=$('#bIrAtac'); if(bi) bi.onclick=abrirCorredor;
   const bk=$('#bKombi'); if(bk) bk.onclick=()=>{ const c=precoKombi(); if(S.din<c) return; S.din-=c; S.kombi=true; montarCarroEdu(); SOM.marco(); toastMissao('🚐 A Kombi chegou! Agora cabem 14 caixas por viagem.'); atualizarHUD(true); salvar(); renderListaAtac(); };
 }
 $('#btnAtacFechar').addEventListener('click',()=>{ $('#telaAtac').hidden=true; });
+// ---------- Minijogo: o jogador ajuda o Edu nos corredores do atacarejo ----------
+// Pegar só o que está na lista ensina a não comprar por impulso: o que fica fora da lista vira dinheiro parado.
+const CORREDORES=[{nome:'Corredor 1 · Bebidas',ids:['refri','agua']},{nome:'Corredor 2 · Mercearia e doces',ids:['mercearia','salgadinho']},{nome:'Corredor 3 · Gelo e carvão',ids:['gelo','carvao']}];
+const PROMOS=[['🍫','Chocolate em barra','cx 20',62,45],['🎄','Panetone','cx 6',95,72],['🍪','Biscoito recheado','cx 24',58,39],['🧃','Suco importado','cx 12',84,60],
+  ['🍭','Pirulito gigante','cx 50',70,48],['🥜','Amendoim japonês','cx 30',66,44],['🍿','Pipoca de micro-ondas','cx 18',52,36],['🍯','Doce em pote','cx 12',75,55]];
+let COR=null;
+function abrirCorredor(){
+  const R=resumoLista(); if(!R.cx||S.atac||eduOcupado()) return;
+  const pr=PROMOS.slice().sort(()=>Math.random()-0.5);
+  COR={lista:Object.assign({},listaAtac),pego:{},promo:{},c:0,
+    cor:CORREDORES.map((c,i)=>{ const cx=c.ids.filter(id=>S.est[id].aberta).map(id=>({id,n:nomeProdutoVendido(id)||EST[id].nome}));
+      const p=pr.slice(i*2,i*2+2).map((x,k)=>({promo:i*2+k,ic:x[0],n:x[1],cx:x[2],de:x[3],por:x[4]}));
+      return {nome:c.nome,itens:cx.concat(p).sort(()=>Math.random()-0.5)}; }),
+    ini:performance.now()};
+  $('#telaAtac').hidden=true; renderCorredor(); $('#telaCorredor').hidden=false; SOM.abrir();
+}
+const corCaixas=()=>Object.values(COR.pego).reduce((a,b)=>a+b,0)+Object.values(COR.promo).reduce((a,b)=>a+b,0);
+function corResumo(){
+  let prod=0, dist=0, parado=0, imp=0, carregar={}, faltou=[], fora=0;
+  for(const id in COR.pego){ const n=COR.pego[id], mx=maxCaixas(id), vai=Math.min(n,mx), lista=COR.lista[id]||0;
+    prod+=n*caixaAtac(id); if(vai) carregar[id]=vai*CAIXA_UN; dist+=vai*CAIXA_UN*custoUnit(id);
+    if(n>vai) parado+=(n-vai)*caixaAtac(id); if(n>lista) fora+=n-lista; }
+  for(const id in COR.lista){ const f=COR.lista[id]-(COR.pego[id]||0); if(f>0) faltou.push([id,f]); }
+  COR.cor.forEach(c=>c.itens.forEach(x=>{ if(x.promo!=null&&COR.promo[x.promo]){ imp+=COR.promo[x.promo]*x.por; fora+=COR.promo[x.promo]; } }));
+  const gas=gasolinaViagem(); return {prod,dist,parado,imp,gas,total:prod+imp+gas,carregar,faltou,fora};
+}
+function renderCorredor(){
+  const V=veiculo(), cx=corCaixas(), c=COR.cor[COR.c], el=$('#corConteudo');
+  let h=`<div class="cor-lista">`;
+  Object.keys(COR.lista).forEach(id=>{ const q=COR.pego[id]||0, l=COR.lista[id];
+    h+=`<span class="cor-chip ${q===l?'ok':q>l?'mais':''}">${EST[id].ic} ${q}/${l}${q===l?' ✔':''}${q?`<button type="button" data-tira="${id}" aria-label="Devolver uma caixa">−</button>`:''}</span>`; });
+  const np=Object.values(COR.promo).reduce((a,b)=>a+b,0);
+  if(np) h+=`<span class="cor-chip mais">🔥 fora da lista: ${np}<button type="button" data-tira="promo" aria-label="Devolver as promoções">−</button></span>`;
+  h+=`</div><div class="cor-carro"><span>${V.ic} ${cx} de ${V.caixas} caixas</span><span>Lista: ${Object.values(COR.lista).reduce((a,b)=>a+b,0)} caixas</span></div>`;
+  h+=`<div class="cor-nav"><button type="button" id="corAnt" ${COR.c?'':'disabled'} aria-label="Corredor anterior">◀</button><b>${c.nome}</b><button type="button" id="corProx" ${COR.c<COR.cor.length-1?'':'disabled'} aria-label="Próximo corredor">▶</button></div><div class="cor-prat">`;
+  c.itens.forEach((x,i)=>{
+    if(x.promo!=null) h+=`<button type="button" class="cor-cx promo" data-i="${i}"><span class="ic">${x.ic}</span><b>${x.n}</b><s>de ${fmt(x.de)}</s><small>${fmt(x.por)}</small></button>`;
+    else h+=`<button type="button" class="cor-cx" data-i="${i}"><span class="ic">${EST[x.id].ic}</span><b>${x.n}</b><small>cx ${CAIXA_UN} · ${fmt(caixaAtac(x.id))}</small></button>`;
+  });
+  if(!c.itens.length) h+=`<p class="cor-dica" style="grid-column:1/-1">Nada da sua lista neste corredor.</p>`;
+  h+=`</div><p class="cor-dica">Toque nas caixas da sua lista. Cuidado com as promoções: o que não está na lista fica parado no depósito.</p>`;
+  h+=`<button class="btn" type="button" id="corCaixa">🧾 Passar no caixa</button><button class="btn azul peq" type="button" id="corEdu" style="margin-top:8px">🤖 Deixar o Edu comprar sozinho</button>`;
+  el.innerHTML=h;
+  el.querySelectorAll('.cor-cx').forEach(b=>b.onclick=()=>{
+    const x=c.itens[+b.dataset.i]; if(corCaixas()>=V.caixas){ toastMissao(`${V.ic} O carro está cheio: cabem ${V.caixas} caixas.`); return; }
+    if(x.promo!=null) COR.promo[x.promo]=(COR.promo[x.promo]||0)+1; else COR.pego[x.id]=(COR.pego[x.id]||0)+1;
+    SOM.abrir(); renderCorredor(); const nb=el.querySelector(`.cor-cx[data-i="${b.dataset.i}"]`); if(nb) nb.classList.add('pego'); });
+  el.querySelectorAll('[data-tira]').forEach(b=>b.onclick=()=>{ const id=b.dataset.tira;
+    if(id==='promo') COR.promo={}; else { COR.pego[id]--; if(COR.pego[id]<=0) delete COR.pego[id]; } SOM.abrir(); renderCorredor(); });
+  $('#corAnt').onclick=()=>{ COR.c=Math.max(0,COR.c-1); SOM.abrir(); renderCorredor(); };
+  $('#corProx').onclick=()=>{ COR.c=Math.min(COR.cor.length-1,COR.c+1); SOM.abrir(); renderCorredor(); };
+  $('#corCaixa').onclick=caixaCorredor;
+  $('#corEdu').onclick=()=>{ $('#telaCorredor').hidden=true; COR=null; irAtacarejo(); };
+}
+function caixaCorredor(){
+  const R=corResumo(), el=$('#corConteudo');
+  if(!Object.keys(R.carregar).length&&!R.imp){ toastMissao('🛒 O carrinho está vazio. Pegue as caixas da lista.'); return; }
+  const certinho=!R.faltou.length&&!R.fora&&!R.parado;
+  let h=`<div class="cor-nota"><p>🧾 <b>Cupom do atacarejo</b></p>`;
+  h+=`<p>📦 Caixas: ${fmt(R.prod)}</p>`;
+  if(R.imp) h+=`<p>🔥 Promoções fora da lista: ${fmt(R.imp)}</p>`;
+  h+=`<p>⛽ Gasolina e tempo: ${fmt(R.gas)}</p><p style="font-size:1.05rem">Total: <b>${fmt(R.total)}</b></p></div>`;
+  if(certinho) h+=`<p class="atac-comp bom">✔ Compra certinha: só o que estava na lista! O Edu volta mais rápido.</p>`;
+  if(R.faltou.length) h+=`<p class="atac-comp ruim">Faltou pegar: ${R.faltou.map(([id,n])=>`${EST[id].ic} ${n} ${n>1?'caixas':'caixa'}`).join(', ')}. Esses produtos podem acabar na loja.</p>`;
+  if(R.imp+R.parado>0) h+=`<p class="atac-comp ruim">${fmt(R.imp+R.parado)} ficaram fora da lista${R.parado?' (ou não cabem nas prateleiras)':''}. Vão para o depósito e o dinheiro volta aos poucos, sem lucro: é <b>dinheiro parado</b> que podia estar repondo o que vende.</p>`;
+  const pode=S.din>=R.total;
+  if(!pode) h+=`<p class="compra-nota">Falta ${fmt(R.total-S.din)} no caixa da adega. Volte aos corredores e devolva alguma caixa.</p>`;
+  h+=`<button class="btn" type="button" id="corPagar" ${pode?'':'disabled'}>💳 Pagar ${fmt(R.total)} e voltar para a adega</button><button class="btn azul peq" type="button" id="corVoltarCor" style="margin-top:8px">◀ Voltar aos corredores</button>`;
+  el.innerHTML=h; SOM.abrir();
+  $('#corVoltarCor').onclick=()=>{ SOM.abrir(); renderCorredor(); };
+  $('#corPagar').onclick=()=>{
+    if(S.din<R.total||S.atac) return;
+    S.din-=R.total;
+    const t=S.tempoJogo||0;
+    S.atac={itens:R.carregar,entregues:[],custo:R.prod-R.parado+R.gas,distrib:R.dist,volta:t+(certinho?Math.round(ATAC_TEMPO*0.6):ATAC_TEMPO),saiu:t};
+    if(!Object.keys(R.carregar).length){ S.atac=null; }
+    if(R.imp+R.parado>0){ const P=S.parado||(S.parado={v:0,ini:0,desde:t}); P.v+=R.imp+R.parado; P.ini+=R.imp+R.parado; P.desde=P.desde||t; }
+    const A=S.compras||(S.compras={viagens:0,un:0,gasto:0,economia:0}); A.certinhas=(A.certinhas||0)+(certinho?1:0); A.impulso=(A.impulso||0)+R.imp;
+    atacFase=null; S.pedidos=(S.pedidos||0)+1; missaoEvento('repor',1); listaAtac={}; COR=null;
+    $('#telaCorredor').hidden=true; pop(eduDono.position.clone().setY(2.2),'🚗 Comprei tudo!','');
+    toastMissao(certinho?`${veiculo().ic} Compra certinha! O Edu já está voltando com as caixas.`:`${veiculo().ic} O Edu pagou e está voltando com as caixas.`);
+    SOM.comprar(); atualizarHUD(true); salvar();
+  };
+}
+// estoque parado (compra por impulso): sai aos poucos, pelo preço de custo
+setInterval(()=>{
+  const P=S&&S.parado; if(!P||!(P.v>0)||!document.body.classList.contains('jogando')) return;
+  const x=Math.min(P.v,Math.max(1,Math.round(P.ini*0.06*100)/100)); P.v=Math.round((P.v-x)*100)/100; S.din+=x; S.total+=x;
+  if(P.v<=0){ const min=Math.max(1,Math.round(((S.tempoJogo||0)-(P.desde||0))/60)); toastMissao(`📦 O estoque parado saiu: ${fmt(P.ini)} ficaram presos uns ${min} min, sem lucro nenhum.`); S.parado=null; }
+  salvar(); atualizarHUD(true);
+},15000);
+
 function irAtacarejo(){
   const R=resumoLista(); if(!R.cx||S.atac||eduOcupado()||S.din<R.total) return false;
   const itens={}; for(const id in listaAtac) itens[id]=listaAtac[id]*CAIXA_UN;
@@ -4845,8 +4964,9 @@ function abrirMapa(op){
 }
 function atualizarBadgeMapa(){ const d=$('#mapaBadge'); if(!d||!S) return; d.hidden=!(S.mapaVistos===undefined||contaFeitas()>S.mapaVistos); }
 function esconderMapa(){ $('#telaMapa').hidden=true; }
-function fecharMapa(){ esconderMapa(); if(location.hash==='#mapa'){ try{ history.back(); }catch(e){} } }
-addEventListener('popstate',()=>{ if(location.hash!=='#mapa'&&!$('#telaMapa').hidden) esconderMapa(); });
+var voltouDoMapa=false;
+function fecharMapa(){ esconderMapa(); if(location.hash==='#mapa'){ voltouDoMapa=true; try{ history.back(); }catch(e){} } }
+addEventListener('popstate',()=>{ if(location.hash!=='#mapa'&&!$('#telaMapa').hidden){ voltouDoMapa=true; esconderMapa(); } });
 // Ir para uma etapa e, ao sair dela, voltar ao mesmo ponto do mapa
 function irDoMapa(fn){
   retornoMapa={sel:mapaSel,rolagem:$('#mapaRolagem').scrollTop,abriu:false,t:Date.now()};
@@ -5396,6 +5516,54 @@ if(location.hash==='#mapa'){ // voltou do Motoca pelo mapa
   try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
   if(S.perfil&&S.viuInicio&&!S.falido&&!S.saiu) setTimeout(()=>{ if(document.body.classList.contains('jogando')&&!algumaTelaAberta()) abrirMapa({quieto:true}); },400);
 }
+
+// ================= Botão voltar do celular =================
+// Cada tela aberta entra no histórico: o voltar fecha a tela de cima (como o ✕) e o jogador continua na adega.
+// Sem nada aberto, o primeiro voltar só avisa; o segundo (em até 2,5 s) sai do jogo.
+(function(){
+  const VOLTAR={telaConta:'#btnContaFechar',telaSenha:'#btnSenhaDepois',telaPersonagem:'#btnPersFechar',telaCaderninho:'#btnCadernoFechar',
+    telaVitrine:'#btnVitrineFechar',telaCatalogo:'#btnCatFechar',telaAtac:'#btnAtacFechar',telaFregueses:'#btnFregFechar',telaBoletos:'#btnBoletosOk',
+    telaDez:'#btnDezFechar',telaLicao:'#btnLicaoFechar',telaCorretora:'#btnCorretoraFechar',telaGuiaCorr:'#guiaCorrFechar',telaMissoes:'#btnMissoesFechar',
+    telaVenda:'#btnVendaFechar',telaPdr:'#btnPdrFechar',telaPapo:'#btnPapoFechar',telaPedido:'#btnFecharPedido',telaFimEntrega:'#btnVoltarAdega',
+    telaRanking:'#btnFecharRanking',telaCupom:'#cpFechar',telaSairConfirma:'#btnSairNao',telaRecuperar:'#btnRecVoltar',telaMeta:'#btnMetaOk',
+    telaT2:'#btnT2Ok',telaPrestigio:'#btnFicar',telaOffline:'#btnOffline'};
+  const pilha=[]; let ignorar=0, ultimoAviso=0;
+  const aberto=id=>{ if(id==='painel') return $('#painel').classList.contains('aberto'); const t=document.getElementById(id); return !!(t&&!t.hidden); };
+  const visivel=b=>!!(b&&!b.disabled&&b.offsetParent!==null);
+  function marcar(id){ pilha.push(id); try{ history.pushState({adega:id},''); }catch(e){} }
+  function sincronizarPilha(){
+    for(let i=pilha.length-1;i>=0;i--){
+      if(aberto(pilha[i])) continue;
+      const topo=i===pilha.length-1; pilha.splice(i,1);
+      if(topo&&history.state&&history.state.adega&&history.state.adega!=='guarda'){ ignorar++; try{ history.back(); }catch(e){ ignorar--; } }
+    }
+    if(ignorar>0) return;   // espera o histórico terminar de voltar antes de marcar a tela nova
+    Object.keys(VOLTAR).concat(['painel']).forEach(id=>{ if(aberto(id)&&!pilha.includes(id)) marcar(id); });
+  }
+  const obs=new MutationObserver(()=>setTimeout(sincronizarPilha,0));
+  Object.keys(VOLTAR).forEach(id=>{ const t=document.getElementById(id); if(t) obs.observe(t,{attributes:true,attributeFilter:['hidden']}); });
+  obs.observe($('#painel'),{attributes:true,attributeFilter:['class']});
+  function fechar(id){
+    if(id==='painel'){ fecharPainel(); return; }
+    const b=document.querySelector(VOLTAR[id]);
+    if(visivel(b)) b.click(); else { const t=document.getElementById(id); if(t) t.hidden=true; }
+  }
+  const guarda=()=>{ try{ history.pushState({adega:'guarda'},'',location.pathname+location.search); }catch(e){} };
+  addEventListener('popstate',()=>{
+    if(ignorar>0){ ignorar--; setTimeout(sincronizarPilha,0); return; }
+    if(voltouDoMapa){ voltouDoMapa=false; return; }
+    const topo=pilha.pop();
+    if(topo){ fechar(topo); if(aberto(topo)&&VOLTAR[topo]){ pilha.push(topo); try{ history.pushState({adega:topo},''); }catch(e){} } return; }
+    if(!$('#telaMapa').hidden){ esconderMapa(); guarda(); return; }
+    if(document.body.classList.contains('entregando')){ guarda(); toastMissao('🛵 Para sair da entrega, use o botão de desistir.'); return; }
+    if(document.querySelector('.tela:not([hidden])')){ guarda(); return; }   // telas em que é preciso escolher (ex.: pedido de fiado)
+    if(Date.now()-ultimoAviso<2500){ try{ history.back(); }catch(e){} return; }
+    ultimoAviso=Date.now(); guarda(); if(document.body.classList.contains('jogando')) toastMissao('↩️ Toque em voltar de novo para sair do jogo.');
+  });
+  try{ history.replaceState({adega:'base'},'',location.pathname+location.search+(location.hash||'')); }catch(e){}
+  guarda();
+  setTimeout(sincronizarPilha,0);
+})();
 })();
 </script>
 <script>
