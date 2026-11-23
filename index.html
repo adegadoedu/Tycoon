@@ -432,6 +432,15 @@ body:not(.jogando) .alerta{display:none}
 .data-linha{display:flex;align-items:center;gap:10px;background:#FFF8E6;border:2.5px solid var(--contorno);border-radius:12px;padding:6px 10px}
 .data-ic{font-size:1.5rem;flex:none}.data-tx{flex:1;display:flex;flex-direction:column}.data-tx small{color:var(--sub);font-weight:700}
 .data-sai{font-size:.72rem;color:var(--sub);text-align:center;font-weight:800;line-height:1.3}
+.imprev-ic{font-size:3rem;text-align:center;margin:4px 0}
+.imprev-custo{text-align:center;font:900 1.5rem 'Nunito',sans-serif;margin:4px 0 10px;color:#C0392B}
+.imprev-reserva{background:#FFF3CD;border:2.5px solid var(--contorno);border-radius:12px;padding:8px 10px;font-size:.86rem;margin:10px 0}
+.imprev-reserva.tem{background:#DFF5E3}
+.des-card{background:#FFF8E6;border:3px solid var(--contorno);border-radius:14px;padding:10px 12px;margin:6px 0 10px}
+.des-card .des-tt{display:flex;align-items:center;gap:10px}.des-card .des-ic{font-size:2rem}
+.des-card .des-tt b{font-size:1.05rem}.des-card small{display:block;color:var(--sub);font-weight:700}
+.des-card .missao-barra{margin-top:8px}
+.rk-nv{display:inline-flex;align-items:center;justify-content:center;flex:none;min-width:22px;height:22px;margin-right:5px;font:900 .7rem 'Nunito',sans-serif;background:#FFC93C;color:#2A1A12;border:2px solid #2A1A12;border-radius:11px;padding:0 4px;box-sizing:border-box;vertical-align:middle}
 .santo-topo{background:#D70216;border:3px solid var(--contorno);border-radius:14px;padding:14px;display:flex;justify-content:center}
 .santo-topo img{width:100%;max-width:220px;border-radius:8px;height:auto;display:block}
 .santo-wa{background:linear-gradient(#5FD68A,#25D366 55%,#1DA851);text-decoration:none;margin:10px 0}
@@ -831,6 +840,12 @@ body:not(.jogando) .alerta{display:none}
     <div id="fregConteudo"></div>
   </div>
 </section>
+<section class="tela" id="telaImprev" hidden>
+  <div class="caixa">
+    <h2 class="titulo centro" style="font-size:1.6rem" id="imprevTitulo">⚠️ Imprevisto!</h2>
+    <div id="imprevConteudo"></div>
+  </div>
+</section>
 <section class="tela" id="telaBoletos" hidden>
   <div class="caixa">
     <h2 class="titulo centro" style="font-size:1.7rem">📬 Chegaram os boletos do mês</h2>
@@ -974,7 +989,7 @@ body:not(.jogando) .alerta{display:none}
 <section class="tela" id="telaRanking" hidden>
   <div class="caixa">
     <div class="cabeca"><h2 class="titulo" style="font-size:2rem">Ranking</h2><span class="pilula" id="rkEu"></span></div>
-    <div class="abas" role="tablist"><button class="aba ativa" type="button" data-aba="mes" role="tab">Este mês</button><button class="aba" type="button" data-aba="geral" role="tab">Geral</button><button class="aba" type="button" data-aba="vendas" role="tab">💼 Vendas</button><button class="aba" type="button" data-aba="licoes" role="tab">📚 Lições</button></div>
+    <div class="abas" role="tablist"><button class="aba ativa" type="button" data-aba="mes" role="tab">Este mês</button><button class="aba" type="button" data-aba="geral" role="tab">Geral</button><button class="aba" type="button" data-aba="vendas" role="tab">💼 Vendas</button><button class="aba" type="button" data-aba="licoes" role="tab">📚 Lições</button><button class="aba" type="button" data-aba="semana" role="tab">🗓️ Semana</button></div>
     <ol class="lista-rk" id="listaRanking"></ol>
     <p class="txt" id="rkInfo" style="color:var(--sub);font-size:.9rem"></p>
     <button class="btn amarelo" id="btnFecharRanking">Voltar ao jogo</button>
@@ -1880,6 +1895,11 @@ function pontoPagar(k){ return new THREE.Vector3(CX.x+[-0.7,0.7][k],0,CX.z+1.0);
 const automatico=k=>k<S.operadores;
 function novoCliente(){
   const abertas=IDS.filter(i=>S.est[i].aberta);
+  const rot=(tempoPronto&&typeof rotinaAgora==='function')?rotinaAgora():null;
+  if(rot){ const lista=Object.keys(rot.itens).filter(id=>S.est[id].aberta), qtd={}; lista.forEach(id=>qtd[id]=rot.itens[id]);
+    const g=montarPop(visualRotina(rot)); g.position.copy(ENTRADA).add(new THREE.Vector3(0,0,rnd(-0.2,0.2))); scene.add(g);
+    clientes.push({g,lista,qtd,combo:null,nome:rot.nome,fiel:rot.id,valor:0,estado:'chegando',caminho:[FORA_PORTA.clone(),PORTA.clone()],t:0,passo:rnd(0,6),est:null,slot:-1,vel:rnd(1.9,2.3)});
+    setTimeout(()=>{ pop(g.position.clone().setY(2.6),'⭐ '+rot.nome,''); },700); return; }
   const r=Math.random(), n=Math.min(abertas.length,r<0.35?1:r<0.75?2:3);
   const lista=tempoPronto?sortearSetores(abertas,n):abertas.slice(0,n);
   const g=pessoa(); g.position.copy(ENTRADA).add(new THREE.Vector3(0,0,rnd(-0.2,0.2))); scene.add(g);
@@ -1931,18 +1951,20 @@ function cobrar(c,modo){
     if(ok){ c.valor=Math.round(c.valor*(1-DESC_COMBO)*100)/100; const C=Cb(); C.vendidos[c.combo]=(C.vendidos[c.combo]||0)+1; setTimeout(()=>pop(c.g.position.clone().setY(2.6),COMBOS[c.combo].ic+' '+COMBOS[c.combo].nome,''),120); } } baloesCobrar[k].style.display='none';
   if(c.retirada&&!c.retirou) marcarRetirada(c);
   const topo=c.g.position.clone().setY(2.0);
+  c.pag=c.pag||sortearPagamento(); registrarPagamento(c.pag,c.valor);
   S.total+=c.valor; registrarGanho(c.valor); registrarFreguês(c,c.valor); missaoEvento('cobrar',1); if(modo==='manual') missaoEvento('cobrarManual',1);
   if(typeof talvezDivisao==='function') try{ talvezDivisao(c); }catch(e){}
+  if(typeof contarDesafio==='function') contarDesafio(c,modo);
   if(modo==='manual'){
-    const gorjeta=Math.round(c.valor*30*Math.max(0,1-c.t/JANELA_GORJETA))/100;
+    const gorjeta=Math.round(c.valor*30*Math.max(0,1-c.t/JANELA_GORJETA))/100; if(gorjeta>0&&typeof contarDesafio==='function') contarDesafio(c,'gorjeta');
     S.din+=c.valor+gorjeta; S.cobrados++; S.total+=gorjeta;
     SOM.maquininha(); voarNotas(topo,Math.min(6,2+Math.floor(Math.log10(c.valor+1))));
-    pop(topo,'+'+fmt(c.valor),'grande');
+    pop(topo,'+'+fmt(c.valor)+' · '+PAG[c.pag].curto,'grande');
     if(gorjeta>0) setTimeout(()=>pop(topo.clone().setY(2.6),'Gorjeta +'+fmt(gorjeta),''),180);
     atualizarHUD(true);
   } else {
     pilhaValor+=c.valor; SOM.venda();
-    pop(topo,'+'+fmt(c.valor),'');
+    pop(topo,'+'+fmt(c.valor)+' · '+PAG[c.pag].curto,'');
   }
   const livres=assentos.filter((a,i)=>assentoAtivo(i)&&a.estado==='livre');
   if(livres.length&&Math.random()<CHANCE_MESA){
@@ -2224,13 +2246,15 @@ async function sincronizar(forcar){
   }
   await salvarNuvem(forcar);
   if(typeof sincronizarLicoes==='function') sincronizarLicoes();
+  if(typeof enviarDesafio==='function') enviarDesafio();
 }
 setInterval(sincronizar,45000);
 let abaRk='mes';
-function linhaRk(pos,nome,valor,eu,falido,visual){
+function linhaRk(pos,nome,valor,eu,falido,visual,nivel){
   const li=document.createElement('li'); li.className=(eu?'eu ':'')+(falido?'falido':'');
   const p=document.createElement('span'); p.className='pos'; p.textContent=pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':pos+'º';
   const n=document.createElement('span'); n.className='nome'; n.textContent=(falido?'📉 ':'')+nome+(eu?' (você)':''); if(falido) li.title=nome+' faliu';
+  const nv=nivel||(eu?nivelJog():0); if(nv){ const bn=document.createElement('span'); bn.className='rk-nv'; bn.textContent=nv; bn.title='Nível '+nv; bn.setAttribute('aria-label','nível '+nv); n.prepend(bn); }
   if(visual){ const u=rostoURL(visual); if(u){ const im=document.createElement('img'); im.className='rosto'; im.alt=''; im.src=u; n.prepend(im); } }
   const v=document.createElement('span'); v.className='val'; v.innerHTML=NOTA; v.appendChild(document.createTextNode(' '+fmt(valor)));
   li.append(p,n,v); return li;
@@ -2240,6 +2264,7 @@ async function abrirRanking(aba){
   document.querySelectorAll('.aba').forEach(b=>{const at=b.dataset.aba===abaRk;b.classList.toggle('ativa',at);b.setAttribute('aria-selected',at?'true':'false');});
   if(abaRk==='vendas'){ abrirRkVendas(); return; }
   if(abaRk==='licoes'){ abrirRkLicoes(); return; }
+  if(abaRk==='semana'){ abrirRkSemana(); return; }
   const meu=abaRk==='mes'?fatMes():S.total+(S.totalBase||0);
   $('#rkEu').innerHTML='Você '+NOTA+' '+fmt(meu);
   const lista=$('#listaRanking'), info=$('#rkInfo'); lista.innerHTML=''; info.textContent='';
@@ -2249,9 +2274,9 @@ async function abrirRanking(aba){
   try{
     await sincronizar();
     const rows=await rpc('ver_ranking',{p_mes:abaRk==='mes'?mesAtual():null,p_id:S.perfil&&S.perfil.id?S.perfil.id:null})||[];
-    info.textContent=rows.length?(abaRk==='mes'?'O ranking do mês recomeça no dia 1º.':'Faturamento total desde o início do jogo.'):'Ninguém pontuou ainda. Seja o primeiro!';
+    info.textContent=rows.length?(abaRk==='mes'?'O ranking do mês recomeça no dia 1º.':'Faturamento total desde o início do jogo.')+' O número amarelo é o nível de cada jogador.':'Ninguém pontuou ainda. Seja o primeiro!';
     let ant=0;
-    rows.forEach(r=>{ if(r.posicao>ant+1&&ant>=50){ const sep=document.createElement('li'); sep.className='sep'; sep.textContent='⋯'; lista.appendChild(sep); } lista.appendChild(linhaRk(r.posicao,r.apelido,r.valor,r.eu,r.falido,r.visual||(r.eu&&S.perfil?S.perfil.visual:null))); ant=r.posicao; });
+    rows.forEach(r=>{ if(r.posicao>ant+1&&ant>=50){ const sep=document.createElement('li'); sep.className='sep'; sep.textContent='⋯'; lista.appendChild(sep); } lista.appendChild(linhaRk(r.posicao,r.apelido,r.valor,r.eu,r.falido,r.visual||(r.eu&&S.perfil?S.perfil.visual:null),r.nivel)); ant=r.posicao; });
   }catch(e){ info.textContent='Não foi possível carregar o ranking agora. Confira a internet e tente de novo.'; }
 }
 $('#btnRanking').addEventListener('click',()=>{SOM.abrir();abrirRanking();});
@@ -4516,6 +4541,18 @@ function atualizarAtacarejo(dt){ // devolve true enquanto o Edu está fora da ro
 
 // ================= As contas do mês (o que o cliente não vê) =================
 const MES_ADEGA=1200, MULTA_ATRASO=0.02;
+// ---------- Pix, débito e crédito (taxas de exemplo) ----------
+const PAG={pix:{ic:'⚡',nome:'Pix',curto:'⚡Pix',taxa:0,peso:45,info:'cai na hora e não tem taxa'},
+  debito:{ic:'💳',nome:'Débito',curto:'💳Débito',taxa:0.015,peso:30,info:'taxa pequena, cai no dia seguinte'},
+  credito:{ic:'💳',nome:'Crédito',curto:'💳Crédito',taxa:0.035,peso:25,info:'taxa maior e o dinheiro demora uns 30 dias'}};
+function sortearPagamento(){ let r=Math.random()*100; for(const k in PAG){ r-=PAG[k].peso; if(r<0) return k; } return 'pix'; }
+function registrarPagamento(k,v){ const C=S.contas; if(!C) return; C.pag=C.pag||{}; const x=C.pag[k]||(C.pag[k]={n:0,v:0}); x.n++; x.v=Math.round((x.v+v)*100)/100; S.cobradosTot=(S.cobradosTot||0)+1; if(S.cobradosTot>=40) oferecerLicao('pagamento'); }
+function taxaMaquininhaBoleto(F){
+  const P=S.contas&&S.contas.pag, tot=P?Object.values(P).reduce((t,x)=>t+x.v,0):0;
+  if(!tot) return {ic:'💳',nome:'Taxa da maquininha',info:'cartão de crédito cobra mais; Pix não tem taxa',v:F*0.013};
+  const v=Object.keys(P).reduce((t,k)=>t+(P[k].v/tot)*F*PAG[k].taxa,0), pct=k=>Math.round(100*((P[k]&&P[k].v)||0)/tot);
+  return {ic:'💳',nome:'Taxa da maquininha',info:`⚡ Pix ${pct('pix')}% (sem taxa) · 💳 débito ${pct('debito')}% (1,5%) · crédito ${pct('credito')}% (3,5%)`,v};
+}
 const contasLiberadas=()=>!!(S&&S.perfil&&!S.falido&&S.tarefa>=5);
 const GELADAS=['refri','agua','gelo'];
 function Ct(){ if(!S.contas) S.contas={inicio:S.tempoJogo||0,fat:0,aberto:0,meses:0,ultimo:null}; return S.contas; }
@@ -4525,7 +4562,7 @@ function calcularBoletos(F){
     {ic:'🧾',nome:'Impostos (Simples Nacional)',info:'uma parte de toda venda vai para o governo',v:F*0.04},
     {ic:'🏠',nome:'Aluguel do ponto',info:'a loja paga para ficar aqui na rua',v:F*0.02},
     {ic:'⚡',nome:'Conta de luz',info:`${gel} ${gel===1?'geladeira ligada':'geladeiras e freezers ligados'} dia e noite`,v:F*(0.008+0.0025*gel)},
-    {ic:'💳',nome:'Taxa da maquininha',info:'cartão de crédito cobra mais; Pix não tem taxa',v:F*0.013},
+    taxaMaquininhaBoleto(F),
     {ic:'🗑️',nome:'Perdas',info:'garrafa quebrada e produto que venceu',v:F*0.005}
   ].map(b=>({...b,v:Math.round(b.v*100)/100}));
 }
@@ -4533,7 +4570,7 @@ function gerarBoletos(){
   const C=Ct(), F=Math.round(C.fat), lista=calcularBoletos(F), total=lista.reduce((t,b)=>t+b.v,0);
   const pago=Math.min(total,Math.max(0,Math.floor(S.din))), falta=total-pago;
   S.din-=pago; if(falta>0) C.aberto+=Math.round(falta*(1+MULTA_ATRASO));
-  C.meses++; virarMesFregueses(); C.ultimo={mes:C.meses,fat:F,lista,total,pago,falta}; C.inicio=S.tempoJogo||0; C.fat=0;
+  C.meses++; virarMesFregueses(); C.ultimo={mes:C.meses,fat:F,lista,total,pago,falta}; C.inicio=S.tempoJogo||0; C.fat=0; C.pag={};
   salvar(); atualizarHUD(true); return C.ultimo;
 }
 function renderBoletos(B){
@@ -4550,11 +4587,50 @@ function renderBoletos(B){
   $('#btnVerFreg').onclick=()=>{ $('#telaBoletos').hidden=true; abaFreg='mes'; const R=Fq(); renderFregueses(); if(R.mesAnt){ const tmp=R.mes; R.mes=R.mesAnt; renderFregueses(); R.mes=tmp; $('#fregSub').textContent='Mês '+R.meses+' da adega (que acabou de fechar)'; } $('#telaFregueses').hidden=false; SOM.abrir(); };
 }
 function abrirBoletos(B){ B=B||(S.contas&&S.contas.ultimo); if(!B) return; renderBoletos(B); $('#telaBoletos').hidden=false; SOM.abrir(); }
+// ================= Imprevistos (a reserva de emergência na prática) =================
+const IMPREVISTOS=[
+  {id:'freezer',ic:'🧊',tit:'O freezer de gelo quebrou!',txt:'O motor parou no meio da tarde. O técnico vem hoje, mas o conserto é à vista.',k:0.6,req:()=>S.est.gelo.aberta},
+  {id:'geladeira',ic:'🥤',tit:'A geladeira de refri pifou!',txt:'Sem geladeira, o refri esquenta e ninguém compra. Precisa trocar a peça agora.',k:0.5,req:()=>true},
+  {id:'luz',ic:'⚡',tit:'A conta de luz veio dobrada!',txt:'Com o calor, as geladeiras trabalharam muito mais. A conta chegou bem acima do normal.',k:0.35,req:()=>true},
+  {id:'maquininha',ic:'💳',tit:'A maquininha quebrou!',txt:'Sem maquininha, só dá para vender no Pix e no dinheiro. Precisa alugar outra.',k:0.25,req:()=>true},
+  {id:'vencido',ic:'🗑️',tit:'Um lote de produtos venceu!',txt:'Uma caixa ficou esquecida no fundo do estoque e passou da validade. É prejuízo.',k:0.3,req:()=>true},
+  {id:'chuva',ic:'🌧️',tit:'Goteira no estoque!',txt:'A chuva forte molhou caixas de papelão e estragou produtos. E o telhado precisa de conserto.',k:0.45,req:()=>true}
+];
+const JUROS_EMP=0.25;
+function proximoImprev(){ S.imprevT=(S.tempoJogo||0)+1500+Math.random()*1800; }   // a cada 25 a 55 minutos de jogo
+function talvezImprevisto(){
+  const C=Ct(); if((C.meses||0)<2||S.imprevAtual) return;
+  if(S.imprevT==null){ proximoImprev(); return; }
+  if((S.tempoJogo||0)<S.imprevT) return;
+  if(document.querySelector('.tela:not([hidden])')||!$('#telaMapa').hidden||painelAtual||document.body.classList.contains('entregando')) return;
+  const op=IMPREVISTOS.filter(x=>x.req()); const I=pega(op);
+  S.imprevAtual={id:I.id,v:Math.max(30,Math.round(custoMesAdega()*I.k))}; proximoImprev(); salvar(); abrirImprevisto();
+}
+function abrirImprevisto(){
+  const A=S.imprevAtual; if(!A) return; const I=IMPREVISTOS.find(x=>x.id===A.id)||IMPREVISTOS[0];
+  const res=(typeof rf!=='undefined'&&rf&&typeof valorReserva==='function')?valorReserva():0, juros=Math.round(A.v*JUROS_EMP*100)/100;
+  let h=`<div class="imprev-ic">${I.ic}</div><p class="txt centro"><b>${I.tit}</b><br>${I.txt}</p><div class="imprev-custo">${fmt(A.v)}</div>`;
+  h+=res>=A.v?`<div class="imprev-reserva tem">🐷 Você tem <b>${fmt(res)}</b> de reserva de emergência na corretora. É para isso que ela existe: dá para resgatar lá sem pagar juros.</div>`
+    :`<div class="imprev-reserva">🐷 Quem tem <b>reserva de emergência</b> paga isso sem sufoco. Sem reserva, o dinheiro sai do caixa (que ia repor o estoque) ou vira dívida com juros.</div>`;
+  h+=`<button class="btn" type="button" id="imprevCaixa" ${S.din>=A.v?'':'disabled'}>💵 Pagar com o caixa${S.din>=A.v?'':' (não tem dinheiro)'}</button>`;
+  h+=`<button class="btn azul peq" type="button" id="imprevEmp" style="margin-top:8px">🏦 Pegar empréstimo: devolve ${fmt(A.v+juros)} (${fmt(juros)} de juros)</button>`;
+  if(res>=A.v) h+=`<button class="btn amarelo peq" type="button" id="imprevCorr" style="margin-top:8px">🐷 Ir à corretora resgatar a reserva</button>`;
+  h+=`<button class="pilula" type="button" id="imprevDepois" style="margin:10px auto 0;display:block">Decidir daqui a pouco</button>`;
+  $('#imprevTitulo').textContent='⚠️ Imprevisto!'; $('#imprevConteudo').innerHTML=h; $('#telaImprev').hidden=false; SOM.erro();
+  const fim=msg=>{ $('#telaImprev').hidden=true; S.imprevAtual=null; S.imprevN=(S.imprevN||0)+1; salvar(); atualizarHUD(true); toastMissao(msg); oferecerLicao('reserva'); };
+  $('#imprevCaixa').onclick=()=>{ if(S.din<A.v) return; S.din-=A.v; SOM.coletar(); fim(`${I.ic} Pago com o caixa: ${fmt(A.v)}. É dinheiro que ia para o estoque.`); };
+  $('#imprevEmp').onclick=()=>{ S.divida=Math.round(((S.divida||0)+A.v+juros)*100)/100; fim(`🏦 Empréstimo feito. A adega vai devolver ${fmt(A.v+juros)} assim que entrar dinheiro: ${fmt(juros)} são só juros.`); };
+  $('#imprevDepois').onclick=()=>{ $('#telaImprev').hidden=true; };
+  const bc=$('#imprevCorr'); if(bc) bc.onclick=()=>{ $('#telaImprev').hidden=true; toastMissao('🐷 Resgate a reserva para o caixa. Daqui a pouco o imprevisto volta para você pagar com o caixa, sem juros.'); if(typeof abrirCorretora==='function') abrirCorretora(); };
+}
 let tContas=0;
 function atualizarContas(dt){
   tContas+=dt; if(tContas<1) return; tContas=0;
   if(!contasLiberadas()) return;
   const C=Ct(), t=S.tempoJogo||0;
+  if(S.divida>0&&S.din>=S.divida){ S.din-=S.divida; toastMissao(`🏦 Empréstimo quitado: ${fmt(S.divida)}. Com reserva, não teria juros.`); S.divida=0; salvar(); atualizarHUD(true); }
+  if(S.imprevAtual&&$('#telaImprev').hidden&&!document.querySelector('.tela:not([hidden])')&&!painelAtual&&$('#telaMapa').hidden&&(t%30)<1.05) abrirImprevisto();
+  talvezImprevisto();
   if(C.aberto>0&&S.din>=C.aberto){ S.din-=C.aberto; toastMissao(`🧾 Conta atrasada paga: ${fmt(C.aberto)} (com multa)`); C.aberto=0; salvar(); atualizarHUD(true); }
   if(t-C.inicio<MES_ADEGA) return;
   if(document.querySelector('.tela:not([hidden])')||!$('#telaMapa').hidden||painelAtual) return;
@@ -4683,6 +4759,27 @@ function migrarNomesFregueses(){
 }
 if(S) migrarNomesFregueses();
 const PESO_FREG=FREGUESES.reduce((t,f)=>t+f[1],0);
+// ---------- Fregueses com rotina: vêm sempre no mesmo dia e horário, e levam quase sempre a mesma coisa ----------
+const ROTINAS=[
+  {id:'churrasco',nome:'Vizinho do Churrasco',dias:[5],h:[10,15],itens:{carvao:2,gelo:2,refri:1},txt:'todo sábado de manhã, antes do churrasco'},
+  {id:'marmita',nome:'Tia da Marmita',dias:[0,1,2,3,4],h:[11,13],itens:{mercearia:2,refri:1},txt:'de segunda a sexta, na hora do almoço'},
+  {id:'futebol',nome:'Turma do Futebol',dias:[2],h:[19,22],itens:{gelo:2,agua:3,salgadinho:2},txt:'toda quarta à noite, depois da pelada'},
+  {id:'academia',nome:'Moça da Academia',dias:[0,2,4],h:[6,9],itens:{agua:2},txt:'segunda, quarta e sexta cedinho'},
+  {id:'bolo',nome:'Vó do Bolo',dias:[6],h:[14,17],itens:{mercearia:2,refri:1},txt:'todo domingo à tarde, para o café com bolo'},
+  {id:'gamer',nome:'Gamer da Madrugada',dias:[4,5],h:[0,3],itens:{refri:2,salgadinho:3},txt:'sexta e sábado de madrugada'},
+  {id:'motoboy',nome:'Motoboy da Esquina',dias:[0,1,2,3,4,5,6],h:[18,20],itens:{agua:1,refri:1},txt:'todo dia no fim da tarde, entre uma entrega e outra'},
+  {id:'festinha',nome:'Pai da Festinha',dias:[5],h:[15,18],itens:{refri:3,salgadinho:3,gelo:1},txt:'sábado à tarde, para o aniversário das crianças'}
+];
+function rotinaAgora(){
+  if(!S||!tempoPronto) return null; const d=diaAgora(), h=horaAgora(), ds=diaSemana(d), volta=d+':'+voltaDia(); S.rotVistas=S.rotVistas||{};
+  for(const R of ROTINAS){ if(!R.dias.includes(ds)||h<R.h[0]||h>=R.h[1]||S.rotVistas[R.id]===volta) continue;
+    if(!Object.keys(R.itens).some(id=>S.est[id].aberta)) continue;
+    if(Math.random()<0.6){ S.rotVistas[R.id]=volta; return R; } }
+  return null; }
+function visualRotina(R){ let h=0; for(const ch of R.nome) h=(h*31+ch.charCodeAt(0))>>>0; const p=a=>{ h=(h*1103515245+12345)>>>0; return a[(h>>>8)%a.length]; };
+  const cabelo=p(['curto','coque','cacheado','careca','bone']);
+  return {pele:p(POP_PELES),cabelo,corCab:cabelo==='bone'?p(POP_ROUPAS):p(POP_CABELOS),estilo:p(['moletom','polo','blusa','listras']),roupa:p(POP_ROUPAS),calca:p([0x22345A,0x1A1A1A,0x5B4636,0x8A8F96]),barba:p([0,0,0,0x3B2414]),oculos:p([false,false,true]),cilios:cabelo==='coque'}; }
+const DIAS_CURTO=['seg','ter','qua','qui','sex','sáb','dom'];
 function sortearFreguês(){ let r=Math.random()*PESO_FREG; for(const [n,p] of FREGUESES){ r-=p; if(r<0) return n; } return FREGUESES[0][0]; }
 function Fq(){ if(!S.fregueses) S.fregueses={mes:{},ano:{},meses:0,mesAnt:null,anoAnt:null}; return S.fregueses; }
 function registrarFreguês(c,valor){
@@ -4709,6 +4806,9 @@ function renderFregueses(){
   }
   const R2=abaFreg==='mes'?R.mesAnt:R.anoAnt;
   if(R2){ const camp=Object.entries(R2).sort((a,b)=>b[1].t-a[1].t)[0]; if(camp) h+=`<p class="freg-ant">🏆 Campeão ${abaFreg==='mes'?'do mês passado':'do ano passado'}: <b>${camp[0]}</b> (${fmt(camp[1].t)})</p>`; }
+  h+=`<p class="txt" style="font-size:.9rem;margin-top:12px"><b>📅 Quem vem sempre</b> (prepare o estoque antes!)</p><div class="datas-lista">`;
+  ROTINAS.forEach(R=>{ h+=`<div class="data-linha"><span class="data-ic">⭐</span><span class="data-tx"><b>${R.nome}</b><small>${R.txt} (${String(R.h[0]).padStart(2,'0')}h às ${String(R.h[1]).padStart(2,'0')}h)</small></span><span class="data-sai">leva<br>${Object.keys(R.itens).map(id=>R.itens[id]+EST[id].ic).join(' ')}</span></div>`; });
+  h+=`</div>`;
   $('#fregConteudo').innerHTML=h;
   $('#fregSub').textContent=abaFreg==='mes'?`Mês ${R.meses+1} da adega (cada mês do jogo dura 20 minutos)`:`Ano da adega: meses ${Math.floor(R.meses/12)*12+1} a ${Math.floor(R.meses/12)*12+12}`;
 }
@@ -4894,6 +4994,18 @@ const LICOES={
     errado:'Quase! A LCA de 2 anos prende o dinheiro até o vencimento. Tente de novo.',
     nota:'Regras de exemplo, parecidas com as de verdade. Não é recomendação de investimento.',
     libera:()=>!!S.viuRF},
+  pagamento:{ic:'💳',tit:'Pix, débito ou crédito?',
+    falas:['Cada jeito de pagar custa diferente para a adega. No <b>Pix</b>, o dinheiro cai <b>na hora</b> e <b>não tem taxa</b>.',
+           'No <b>débito</b>, a maquininha fica com uns <b>1,5%</b>. No <b>crédito</b>, uns <b>3,5%</b>, e o dinheiro só chega <b>uns 30 dias depois</b>. Numa compra de R$ 50, são R$ 1,75 a menos.',
+           'Parece pouco, mas a adega ganha poucos reais em cada venda. Por isso muitas lojas perguntam: <b>"pode ser no Pix?"</b>. Não é desconfiança, é a conta fechando.'],
+    perg:'Por que muitas lojas preferem receber no Pix?',
+    ops:[{t:'Porque o dinheiro cai na hora e não tem a taxa da maquininha.',ok:true},
+         {t:'Porque o Pix dá mais lucro no produto.'},
+         {t:'Porque cartão não é aceito em adega.'}],
+    certo:'Isso! Pix cai na hora e sem taxa. O cartão é ótimo para o cliente, mas custa um pouco para a loja. 💛',
+    errado:'Quase! Pense na taxa da maquininha e em quando o dinheiro chega. Tente de novo.',
+    nota:'Taxas de exemplo. Cada banco e cada maquininha cobra um valor diferente.',
+    libera:()=>true},
   isca:{ic:'🎣',tit:'O produto isca',
     falas:['O refri é o produto que todo mundo procura e compara o preço. Por isso ele fica <b>baratinho</b>: a adega ganha só uns <b>10%</b> nele.',
            'Ele é a <b>isca</b>: traz o cliente até a loja. O lucro vem do que ele leva junto, como o <b>gelo</b> (30%) e o <b>salgadinho</b> (25%).',
@@ -4938,11 +5050,56 @@ async function enviarLicao(k){
   catch(err){ return false; }
 }
 async function sincronizarLicoes(){ if(!S.licoes) return; for(const k of Object.keys(LICOES)) if(S.licoes[k]&&!(S.licoesEnv&&S.licoesEnv[k])) await enviarLicao(k); }
+// ================= Desafio da semana (igual para todos, recomeça toda segunda) =================
+const DESAFIOS=[
+  {id:'clientes',ic:'🧍',txt:n=>`Atenda ${n} clientes`,meta:300,un:'clientes'},
+  {id:'refri',ic:'🥤',txt:n=>`Venda ${n} refrigerantes`,meta:220,un:'refris'},
+  {id:'manual',ic:'💳',txt:n=>`Cobre ${n} clientes tocando no balão`,meta:150,un:'cobranças'},
+  {id:'gorjeta',ic:'🪙',txt:n=>`Ganhe ${n} gorjetas (cobre rapidinho!)`,meta:80,un:'gorjetas'}
+];
+function semanaAtual(){ const d=diaAgora(), seg=d-diaSemana(d), x=new Date(seg*864e5); return {seg,iso:x.toISOString().slice(0,10)}; }
+function desafioAtual(){ const w=semanaAtual(); return DESAFIOS[((Math.floor(w.seg/7)%DESAFIOS.length)+DESAFIOS.length)%DESAFIOS.length]; }
+function Ds(){ const w=semanaAtual(), D=desafioAtual();
+  if(!S.des||S.des.sem!==w.iso){ S.des={sem:w.iso,id:D.id,p:0,premio:false,env:0,av:0};
+    if(S.perfil&&document.body.classList.contains('jogando')) setTimeout(()=>toastMissao(`🗓️ Desafio da semana: ${D.ic} ${D.txt(D.meta)}! Veja o ranking no 🏆.`),4000); }
+  return S.des; }
+const premioDesafio=()=>Math.max(50,Math.round(rendaRefMissao()*12));
+function contarDesafio(c,modo){
+  const X=Ds(), D=desafioAtual(); let n=0;
+  if(D.id==='clientes'&&modo!=='gorjeta') n=1;
+  else if(D.id==='refri'&&modo!=='gorjeta') n=(c.pegou&&c.pegou.refri)||0;
+  else if(D.id==='manual'&&modo==='manual') n=1;
+  else if(D.id==='gorjeta'&&modo==='gorjeta') n=1;
+  if(!n) return; X.p+=n;
+  const pct=X.p/D.meta;
+  if(pct>=0.5&&X.av<1){ X.av=1; toastMissao(`🗓️ Metade do desafio da semana: ${X.p}/${D.meta} ${D.un}!`); }
+  if(pct>=1&&!X.premio){ X.premio=true; X.av=2; const p=premioDesafio(); S.din+=p; SOM.marco(); atualizarHUD(true); toastMissao(`🏆 Desafio da semana cumprido! +${fmt(p)}. Continue para subir no ranking da semana.`); }
+}
+async function enviarDesafio(){
+  if(!rankingAtivo()||!S.perfil||!S.perfil.id) return; const X=Ds(); if(!X.p||X.env===X.p) return;
+  try{ await rpc('desafio_enviar',{p_id:S.perfil.id,p_token:S.perfil.token,p_semana:X.sem,p_desafio:X.id,p_pontos:X.p}); X.env=X.p; }catch(e){}
+}
+async function abrirRkSemana(){
+  const lista=$('#listaRanking'), info=$('#rkInfo'), X=Ds(), D=desafioAtual(), w=semanaAtual(), falta=w.seg+6-diaAgora(); lista.innerHTML='';
+  $('#rkEu').textContent=`Você: ${X.p} ${D.un}`;
+  const card=document.createElement('li'); card.className='sep'; card.style.listStyle='none';
+  card.innerHTML=`<div class="des-card"><div class="des-tt"><span class="des-ic">${D.ic}</span><span><b>${D.txt(D.meta)}</b><small>Desafio da semana · ${falta<=0?'termina hoje à meia-noite':'termina em '+falta+(falta===1?' dia':' dias')} (domingo)</small></span></div>
+    <div class="missao-barra"><i style="width:${Math.min(100,100*X.p/D.meta)}%"></i></div><small>${Math.min(X.p,D.meta)}/${D.meta} · ${X.premio?'✔ prêmio recebido! Agora é pelo ranking.':'prêmio: '+fmt(premioDesafio())}</small></div>`;
+  lista.appendChild(card); $('#telaRanking').hidden=false;
+  const linha=(pos,nome,pts,eu,visual,nv)=>{ const li=linhaRk(pos,nome,0,eu,false,visual,nv); li.querySelector('.val').textContent=`${pts} ${D.un}`; return li; };
+  const regra='Todo mundo tem o mesmo desafio. O ranking da semana recomeça toda segunda-feira.';
+  if(!rankingAtivo()){ lista.appendChild(linha(1,S.perfil?S.perfil.apelido:'Você',X.p,true,S.perfil&&S.perfil.visual)); info.textContent=regra; return; }
+  info.textContent='Carregando…';
+  try{ await enviarDesafio(); const rows=await rpc('ver_desafio',{p_id:S.perfil&&S.perfil.id?S.perfil.id:null})||[];
+    rows.forEach(r=>lista.appendChild(linha(r.posicao,r.apelido,r.pontos,r.eu,r.visual||(r.eu&&S.perfil?S.perfil.visual:null),r.nivel)));
+    info.textContent=(rows.length?'':'Ninguém pontuou nesta semana ainda. Seja o primeiro! ')+regra;
+  }catch(e){ lista.appendChild(linha(1,S.perfil?S.perfil.apelido:'Você',X.p,true,S.perfil&&S.perfil.visual)); info.textContent='Não foi possível carregar o ranking da semana agora. '+regra; }
+}
 async function abrirRkLicoes(){
   const lista=$('#listaRanking'), info=$('#rkInfo'), N=Object.keys(LICOES).length; lista.innerHTML='';
   $('#rkEu').textContent=`Você: ${licoesFeitasN()} de ${N} lições · ${pontosLicoes()} pts`;
   $('#telaRanking').hidden=false;
-  const linha=(pos,nome,pts,lic,eu,visual)=>{ const li=linhaRk(pos,nome,0,eu,false,visual); li.querySelector('.val').textContent=`📚 ${lic} · ${pts} pts`; return li; };
+  const linha=(pos,nome,pts,lic,eu,visual,nv)=>{ const li=linhaRk(pos,nome,0,eu,false,visual,nv); li.querySelector('.val').textContent=`📚 ${lic} · ${pts} pts`; return li; };
   const regras='📚 100 pontos por lição · ⭐ +50 se acertar de primeira. As lições aparecem durante o jogo, quando o assunto acontece na adega.';
   const minhas=`<div class="rk-licoes">${Object.entries(LICOES).map(([k,L])=>`<span class="${S.licoes&&S.licoes[k]?'feita':''}">${S.licoes&&S.licoes[k]?'✔':'🔒'} ${L.tit}</span>`).join('')}</div>`;
   if(!rankingAtivo()){ lista.appendChild(linha(1,S.perfil?S.perfil.apelido:'Você',pontosLicoes(),licoesFeitasN(),true,S.perfil&&S.perfil.visual)); info.innerHTML=regras+minhas; return; }
@@ -4951,7 +5108,7 @@ async function abrirRkLicoes(){
     await sincronizar(); await sincronizarLicoes();
     const rows=await rpc('ver_ranking_licoes',{p_id:S.perfil&&S.perfil.id?S.perfil.id:null})||[];
     let ant=0;
-    rows.forEach(r=>{ if(r.posicao>ant+1&&ant>=50){ const sep=document.createElement('li'); sep.className='sep'; sep.textContent='⋯'; lista.appendChild(sep); } lista.appendChild(linha(r.posicao,r.apelido,r.pontos,r.licoes,r.eu,r.visual||(r.eu&&S.perfil?S.perfil.visual:null))); ant=r.posicao; });
+    rows.forEach(r=>{ if(r.posicao>ant+1&&ant>=50){ const sep=document.createElement('li'); sep.className='sep'; sep.textContent='⋯'; lista.appendChild(sep); } lista.appendChild(linha(r.posicao,r.apelido,r.pontos,r.licoes,r.eu,r.visual||(r.eu&&S.perfil?S.perfil.visual:null),r.nivel)); ant=r.posicao; });
     info.innerHTML=(rows.length?'':'Ninguém fez uma lição ainda. Seja o primeiro! ')+regras+minhas;
   }catch(e){ lista.appendChild(linha(1,S.perfil?S.perfil.apelido:'Você',pontosLicoes(),licoesFeitasN(),true,S.perfil&&S.perfil.visual)); info.innerHTML='Não foi possível carregar o ranking das lições agora. '+regras+minhas; }
 }
@@ -6626,7 +6783,7 @@ grafPronto=true;
 (function(){
   const VOLTAR={telaConta:'#btnContaFechar',telaSenha:'#btnSenhaDepois',telaPersonagem:'#btnPersFechar',telaCaderninho:'#btnCadernoFechar',
     telaVitrine:'#btnVitrineFechar',telaCatalogo:'#btnCatFechar',telaAtac:'#btnAtacFechar',telaFregueses:'#btnFregFechar',telaBoletos:'#btnBoletosOk',
-    telaDez:'#btnDezFechar',telaSanto:'#btnSantoFechar',telaLicao:'#btnLicaoFechar',telaCorretora:'#btnCorretoraFechar',telaGuiaCorr:'#guiaCorrFechar',telaMissoes:'#btnMissoesFechar',
+    telaDez:'#btnDezFechar',telaImprev:'#imprevDepois',telaSanto:'#btnSantoFechar',telaLicao:'#btnLicaoFechar',telaCorretora:'#btnCorretoraFechar',telaGuiaCorr:'#guiaCorrFechar',telaMissoes:'#btnMissoesFechar',
     telaVenda:'#btnVendaFechar',telaPdr:'#btnPdrFechar',telaPapo:'#btnPapoFechar',telaPedido:'#btnFecharPedido',telaFimEntrega:'#btnVoltarAdega',
     telaRanking:'#btnFecharRanking',telaTempo:'#btnTempoFechar',telaCombos:'#btnCombosFechar',telaMargem:'#btnMargemFechar',telaCupom:'#cpFechar',telaSairConfirma:'#btnSairNao',telaRecuperar:'#btnRecVoltar',telaMeta:'#btnMetaOk',
     telaT2:'#btnT2Ok',telaPrestigio:'#btnFicar',telaOffline:'#btnOffline'};

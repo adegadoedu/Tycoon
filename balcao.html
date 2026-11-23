@@ -142,6 +142,16 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
     <div id="catBalcao"><p class="vazio">Digite a senha e toque em Carregar.</p></div>
   </section>
 
+  <section class="cartao" id="boxJuros">
+    <div class="cab-res"><h2>🏦 Juros da corretora</h2><button type="button" id="btnJurosCarregar">Carregar</button></div>
+    <p class="pequeno">Os rendimentos da Renda Fixa do jogo usam estes números. Quando o Copom mudar a Selic, atualize aqui. Use os valores do site do Banco Central.</p>
+    <div class="linha"><label class="pequeno" style="flex:1">Selic (% ao ano)<input id="jSelic" inputmode="decimal" placeholder="13,75"></label>
+      <label class="pequeno" style="flex:1">CDI (% ao ano)<input id="jCdi" inputmode="decimal" placeholder="13,65"></label>
+      <label class="pequeno" style="flex:1">TR (% ao mês)<input id="jTr" inputmode="decimal" placeholder="0,15"></label></div>
+    <div class="linha"><button id="btnJurosSalvar" type="button" class="prim" disabled>Salvar juros</button></div>
+    <div id="resJuros" role="status" aria-live="polite"></div>
+  </section>
+
   <section class="cartao" id="boxProgresso">
     <div class="cab-res"><h2>📈 Progresso dos jogadores</h2><button type="button" id="btnProgresso">Atualizar</button></div>
     <div id="progresso"><p class="vazio">Digite a senha e toque em Atualizar para ver o progresso de cada jogador.</p></div>
@@ -433,6 +443,25 @@ const semAc=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase
 const lerPreco=t=>Number(String(t).replace(/R\$\s*/i,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.'));
 function selSetor(valor){ const s=el('select'); Object.keys(SETORES_CAT).forEach(k=>{ const o=el('option','',SETORES_CAT[k]); o.value=k; if(k===valor) o.selected=true; s.appendChild(o); }); return s; }
 let catLista=[];
+// ---------- Juros da corretora ----------
+const pctTxt=v=>(Math.round(v*10000)/100).toFixed(2).replace('.',',');
+const lerPct=t=>{ t=String(t||'').trim().replace('%','').replace(/\s/g,''); if(t.indexOf(',')>=0) t=t.replace(/\./g,'').replace(',','.'); const v=parseFloat(t); return isFinite(v)?v/100:NaN; };
+function mostrarJuros(j){ $('#jSelic').value=pctTxt(j.selic); $('#jCdi').value=pctTxt(j.cdi); $('#jTr').value=pctTxt(j.tr); $('#btnJurosSalvar').disabled=false;
+  $('#resJuros').innerHTML='<p class="pequeno">'+(j.atualizado_em?'Última atualização: '+j.atualizado_em:'Ainda com os valores iniciais do jogo.')+'</p>'; }
+$('#btnJurosCarregar').addEventListener('click',async()=>{
+  const senha=$('#senha').value; if(!senha){ $('#resJuros').textContent='Digite a senha do balcão.'; return; }
+  $('#resJuros').textContent='Carregando…';
+  try{ mostrarJuros(await rpc('juros_ver',{p_senha:senha})); }
+  catch(e){ $('#resJuros').textContent=/senha_invalida/.test(e.message)?'Senha incorreta.':/juros_ver/.test(e.message)?'Rode o arquivo supabase-juros-balcao.sql no Supabase primeiro.':'Não foi possível carregar agora.'; }
+});
+$('#btnJurosSalvar').addEventListener('click',async()=>{
+  const selic=lerPct($('#jSelic').value), cdi=lerPct($('#jCdi').value), tr=lerPct($('#jTr').value);
+  if(!(selic>=0&&selic<=0.5)||!(cdi>=0&&cdi<=0.5)||!(tr>=0&&tr<=0.02)){ $('#resJuros').textContent='Confira os números: Selic e CDI entre 0 e 50, TR entre 0 e 2.'; return; }
+  if(!confirm(`Salvar Selic ${pctTxt(selic)}% a.a., CDI ${pctTxt(cdi)}% a.a. e TR ${pctTxt(tr)}% a.m.? Os rendimentos do jogo passam a usar estes valores na hora.`)) return;
+  $('#btnJurosSalvar').disabled=true;
+  try{ mostrarJuros(await rpc('juros_definir',{p_senha:$('#senha').value,p_selic:selic,p_cdi:cdi,p_tr:tr})); $('#resJuros').insertAdjacentHTML('afterbegin','<p class="pequeno" style="color:#2E7D32;font-weight:800">✔ Juros salvos.</p>'); }
+  catch(e){ $('#resJuros').textContent=/senha_invalida/.test(e.message)?'Senha incorreta.':'Não foi possível salvar: '+e.message; $('#btnJurosSalvar').disabled=false; }
+});
 async function carregarCatBalcao(){
   const box=$('#catBalcao'); box.innerHTML='';
   if(!$('#senha').value){ box.appendChild(el('p','vazio','Digite a senha do balcão lá em cima.')); return; }
