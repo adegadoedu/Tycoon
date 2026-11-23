@@ -6005,7 +6005,7 @@ let _diaCache=0, _diaT=-1e9;
 function diaAgora(){ const n=Date.now(); if(n-_diaT>5000){ _diaT=n; _diaCache=numDia(diaSP(n)); } return _diaCache; }   // o dia de verdade
 const dataCurta=d=>{ const x=new Date(d*864e5); return String(x.getUTCDate()).padStart(2,'0')+'/'+String(x.getUTCMonth()+1).padStart(2,'0'); };
 // ---------- previsão do tempo de verdade (Open-Meteo, grátis e sem cadastro) ----------
-const LOCAL_ADEGA={nome:'São Paulo',lat:-23.55,lon:-46.63};
+const LOCAL_ADEGA={nome:'Taboão da Serra',lat:-23.61,lon:-46.78};   // região da Adega do Edu
 const PREV_KEY='adegaEdu.previsao';
 let PREV=null; try{ PREV=JSON.parse(localStorage.getItem(PREV_KEY)||'null'); }catch(e){ PREV=null; }
 const CHUVA_COD=c=>(c>=51&&c<=67)||(c>=80&&c<=82)||c>=95;
