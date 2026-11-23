@@ -428,6 +428,10 @@ body:not(.jogando) .alerta{display:none}
 .dez-barra i{display:block;height:100%}
 .dez-cor{width:16px;height:16px;border-radius:4px;border:2px solid var(--contorno);flex:none}
 .dez-linha.lucro{background:#DFF5E3;border-radius:10px;border-bottom:none;margin-top:4px}
+.datas-lista{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.data-linha{display:flex;align-items:center;gap:10px;background:#FFF8E6;border:2.5px solid var(--contorno);border-radius:12px;padding:6px 10px}
+.data-ic{font-size:1.5rem;flex:none}.data-tx{flex:1;display:flex;flex-direction:column}.data-tx small{color:var(--sub);font-weight:700}
+.data-sai{font-size:.72rem;color:var(--sub);text-align:center;font-weight:800;line-height:1.3}
 .santo-topo{background:#D70216;border:3px solid var(--contorno);border-radius:14px;padding:14px;display:flex;justify-content:center}
 .santo-topo img{width:100%;max-width:220px;border-radius:8px;height:auto;display:block}
 .santo-wa{background:linear-gradient(#5FD68A,#25D366 55%,#1DA851);text-decoration:none;margin:10px 0}
@@ -6266,8 +6270,39 @@ function tempDia(d){ const p=prevDia(d); if(p) return Math.round(p.max); const c
 function tempMin(d){ const p=prevDia(d); return p?Math.round(p.min):null; }
 function tempHora(d,h){ const a=PREV&&PREV.horas&&PREV.horas[d]; const v=a&&a[Math.floor(h)]; return v!=null?Math.round(v):tempDia(d); }
 const diaSemana=d=>(((d+3)%7)+7)%7;   // 01/01/1970 foi quinta-feira; 0 = segunda
-function fluxoAgora(){ const d=diaAgora(); return FLUXO_HORA[Math.floor(horaAgora())]*CLIMAS[climaDia(d)].f*DIA_EF[diaSemana(d)].f; }
-function pesoSetor(id){ const d=diaAgora(), c=CLIMAS[climaDia(d)], w=DIA_EF[diaSemana(d)]; return ((c.peso&&c.peso[id])||1)*((w.peso&&w.peso[id])||1); }
+// ---------- Datas de verdade: feriados e eventos mexem no movimento e no que sai mais ----------
+const WD_EN=['Thu','Fri','Sat','Sun','Mon','Tue','Wed'];
+function tDia(d){ const x=new Date(d*864e5); return {y:x.getUTCFullYear(),m:x.getUTCMonth()+1,d:x.getUTCDate(),h:12,wd:WD_EN[((d%7)+7)%7]}; }
+function pascoa(y){ const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mes=Math.floor((h+l-7*m+114)/31),dia=((h+l-7*m+114)%31)+1; return Math.round(Date.UTC(y,mes-1,dia)/864e5); }
+const FERIADOS_FIXOS={101:'Ano Novo',421:'Tiradentes',501:'Dia do Trabalho',709:'Revolução Constitucionalista',907:'Independência',1012:'Nossa Senhora Aparecida',1102:'Finados',1115:'Proclamação da República',1120:'Consciência Negra',1225:'Natal'};
+function feriado(d){ const t=tDia(d), fx=FERIADOS_FIXOS[t.m*100+t.d]; if(fx) return fx; const p=pascoa(t.y); if(d===p-2) return 'Sexta-feira Santa'; if(d===p+60) return 'Corpus Christi'; return null; }
+// o que sai mais em cada data (o bônus de vendas de cada evento continua o mesmo)
+const PESO_EV={aniversario:{refri:1.3,gelo:1.3,salgadinho:1.3},natal:{refri:1.6,gelo:1.4,mercearia:1.4,salgadinho:1.2},reveillon:{gelo:2.2,refri:1.5,agua:1.3,carvao:1.3},
+  black:{mercearia:1.3,salgadinho:1.2},carnaval:{agua:2,gelo:2,refri:1.3,salgadinho:1.2},junina:{salgadinho:1.6,mercearia:1.4,refri:1.2},maes:{refri:1.3,mercearia:1.3,salgadinho:1.2},
+  pais:{carvao:2,gelo:1.5,refri:1.3},sextou:{gelo:1.4,refri:1.2,salgadinho:1.2}};
+const TXT_EV={aniversario:'aniversário da Adega: festa no bairro, refri, gelo e salgadinho saem muito.',natal:'Natal: ceia em família, refri, gelo e mercearia saem muito.',reveillon:'Réveillon: gelo e refri voam das geladeiras.',
+  black:'Black Friday: fornecedor um pouco mais barato, bom para repor.',carnaval:'Carnaval: calor e bloco na rua, água e gelo saem demais.',junina:'Festa junina: salgadinho e mercearia saem mais.',
+  maes:'Semana das Mães: almoço em família.',pais:'Semana dos Pais: churrasco! Carvão e gelo saem muito.',sextou:'Sextou: gelo e refri saem mais à noite.'};
+function eventoNoDia(d){ if(d===diaAgora()) return eventoAtual(); const t=tDia(d); return EVENTOS.find(e=>e.id!=='sextou'&&e.ativo(t))||null; }
+const _efCache={};
+function efDia(d){
+  const k=d+'|'+(d===diaAgora()&&eventoAtual()?eventoAtual().id:''); if(_efCache[k]) return _efCache[k];
+  const fer=feriado(d), base=fer?{f:1.15,peso:{carvao:1.8,gelo:1.5,refri:1.3},txt:`Feriado de ${fer}: dia de churrasco e família.`}:DIA_EF[diaSemana(d)];
+  const ev=eventoNoDia(d), peso=Object.assign({},base.peso||{});
+  if(ev&&PESO_EV[ev.id]) for(const id in PESO_EV[ev.id]) peso[id]=(peso[id]||1)*PESO_EV[ev.id][id];
+  const r={f:base.f,peso,txt:ev&&TXT_EV[ev.id]?ev.ic+' '+TXT_EV[ev.id][0].toUpperCase()+TXT_EV[ev.id].slice(1)+(fer?` (feriado de ${fer})`:''):base.txt,fer,ev};
+  return _efCache[k]=r;
+}
+function fluxoAgora(){ const d=diaAgora(); return FLUXO_HORA[Math.floor(horaAgora())]*CLIMAS[climaDia(d)].f*efDia(d).f; }
+function pesoSetor(id){ const d=diaAgora(), c=CLIMAS[climaDia(d)], w=efDia(d); return ((c.peso&&c.peso[id])||1)*((w.peso&&w.peso[id])||1); }
+// próximas datas que mexem com a adega (eventos e feriados)
+function proximasDatas(dias,max){
+  const d0=diaAgora(), out=[];
+  for(let dd=d0;dd<=d0+dias&&out.length<max;dd++){ const ev=eventoNoDia(dd), fer=feriado(dd);
+    if(ev&&ev.id!=='sextou'&&(dd===d0||!(eventoNoDia(dd-1)&&eventoNoDia(dd-1).id===ev.id))) out.push({d:dd,ic:ev.ic,nome:ev.nome,id:ev.id});
+    else if(fer&&!(ev&&ev.id==='natal'&&fer==='Natal')) out.push({d:dd,ic:'🇧🇷',nome:'Feriado: '+fer,fer:true}); }
+  return out; }
+const saiMaisIc=x=>{ const p=x.fer?{carvao:1.8,gelo:1.5,refri:1.3}:(PESO_EV[x.id]||{}); return Object.keys(p).sort((a,b)=>p[b]-p[a]).slice(0,3).map(id=>EST[id].ic).join(' '); };
 function sortearSetores(abertas,n){ const pool=abertas.slice(), out=[];
   for(let i=0;i<n&&pool.length;i++){ const tot=pool.reduce((a,id)=>a+pesoSetor(id),0); let r=Math.random()*tot, k=0; for(;k<pool.length-1;k++){ r-=pesoSetor(pool[k]); if(r<0) break; } out.push(pool.splice(k,1)[0]); }
   return out; }
@@ -6282,19 +6317,25 @@ function atualizarRelogio(){
   if(document.body.classList.contains('jogando')&&!algumaTelaAberta()){
     const v=d+':'+voltaDia();
     if(h>=7&&h<9&&S.tempoAvisos.manha!==v){ S.tempoAvisos.manha=v; toastMissao(`${c.ic} Bom dia! Hoje é ${DIAS_NOME[diaSemana(d)]}, ${dataCurta(d)}, máxima de ${tempDia(d)}°. ${textoDia(d)}`); }
+    else if(h>=10&&h<12&&S.tempoAvisos.datas!==d){ S.tempoAvisos.datas=d; const p=proximasDatas(3,3).find(x=>x.d>d);
+      if(p){ const f=p.d-d; toastMissao(`${p.ic} ${f===1?'Amanhã':'Faltam '+f+' dias'}: ${p.nome} (${dataCurta(p.d)})! Vai sair mais ${saiMaisIc(p)}: encha o estoque antes.`); } }
     else if(h>=18&&h<20&&S.tempoAvisos.prev!==v){ S.tempoAvisos.prev=v; const a=CLIMAS[climaDia(d+1)]; toastMissao(`📺 Previsão para amanhã (${DIAS_NOME[diaSemana(d+1)]}): ${a.ic} ${a.nome}, ${tempDia(d+1)}°. ${textoDia(d+1)}`); }
   }
 }
-function textoDia(d){ const k=climaDia(d), w=DIA_EF[diaSemana(d)]; if(['chuva','frio','calor'].includes(k)||!w.txt) return CLIMAS[k].txt; return w.txt; }
-function efeitosTxt(d){ const c=CLIMAS[climaDia(d)], w=DIA_EF[diaSemana(d)], ef=[];
+function textoDia(d){ const k=climaDia(d), w=efDia(d); if(w.ev||w.fer) return w.txt; if(['chuva','frio','calor'].includes(k)||!w.txt) return CLIMAS[k].txt; return w.txt; }
+function efeitosTxt(d){ const c=CLIMAS[climaDia(d)], w=efDia(d), ef=[];
   const f=c.f*w.f; ef.push(`<span class="${f<0.97?'menos':''}">👥 movimento ${f>=1.03?'+'+Math.round((f-1)*100)+'%':f<=0.97?Math.round((f-1)*100)+'%':'normal'}</span>`);
   IDS.forEach(id=>{ const p=((c.peso&&c.peso[id])||1)*((w.peso&&w.peso[id])||1); if(Math.abs(p-1)>0.05) ef.push(`<span class="${p<1?'menos':''}">${EST[id].ic} ${p>1?'sai mais':'sai menos'}</span>`); });
   return ef.join(''); }
 function abrirTempo(){
   const d=diaAgora(), h=horaAgora();
   let x='';
-  [d,d+1,d+2].forEach((dd,i)=>{ const c=CLIMAS[climaDia(dd)], w=DIA_EF[diaSemana(dd)];
-    x+=`<div class="tempo-dia${i?'':' hoje'}"><div class="tempo-cab"><span class="tempo-ic">${c.ic}</span><span><b>${i===0?'Hoje':i===1?'Amanhã':'Depois de amanhã'} · ${DIAS_NOME[diaSemana(dd)]}</b><small>${dataCurta(dd)} · ${c.nome}, ${tempMin(dd)!=null?tempMin(dd)+'° a ':''}${tempDia(dd)}° · ${textoDia(dd)}</small></span></div><div class="tempo-ef">${efeitosTxt(dd)}</div></div>`; });
+  [d,d+1,d+2].forEach((dd,i)=>{ const c=CLIMAS[climaDia(dd)], w=efDia(dd);
+    x+=`<div class="tempo-dia${i?'':' hoje'}"><div class="tempo-cab"><span class="tempo-ic">${c.ic}</span><span><b>${i===0?'Hoje':i===1?'Amanhã':'Depois de amanhã'} · ${DIAS_NOME[diaSemana(dd)]}${w.fer?' · 🇧🇷 feriado':''}</b><small>${dataCurta(dd)} · ${c.nome}, ${tempMin(dd)!=null?tempMin(dd)+'° a ':''}${tempDia(dd)}° · ${textoDia(dd)}</small></span></div><div class="tempo-ef">${efeitosTxt(dd)}</div></div>`; });
+  const prox=proximasDatas(60,5);
+  if(prox.length){ x+=`<p class="txt" style="font-size:.88rem;margin-top:10px"><b>📅 Próximas datas que mexem com a adega</b></p><div class="datas-lista">`;
+    prox.forEach(p=>{ const falta=p.d-d; x+=`<div class="data-linha"><span class="data-ic">${p.ic}</span><span class="data-tx"><b>${p.nome}</b><small>${DIAS_SEM[diaSemana(p.d)]} ${dataCurta(p.d)} · ${falta===0?'é hoje!':falta===1?'amanhã':'faltam '+falta+' dias'}</small></span><span class="data-sai">sai mais<br>${saiMaisIc(p)}</span></div>`; });
+    x+=`</div>`; }
   x+=`<p class="txt" style="font-size:.88rem;margin-top:10px"><b>Movimento ao longo do dia</b> (o pico é das 18h às 22h):</p><div class="tempo-horas">`;
   FLUXO_HORA.forEach((v,i)=>{ x+=`<i class="${i===Math.floor(h)?'agora':''}" style="height:${Math.round(v*32)}px" title="${i}h"></i>`; });
   x+=`</div><div class="tempo-leg"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>23h</span></div>`;
