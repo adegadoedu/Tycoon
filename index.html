@@ -2086,7 +2086,7 @@ function atualizarGerente(dt){
 }
 function atualizarFornecedor(dt){
   const F=FORN;
-  if(F.estado==='ocioso'){ if(F.fila.length&&!onibusNaRua()&&!vanNaRua()){ F.estado='chegando'; caminhao.visible=true; caminhao.position.set(-16,0,Z_RUA); } }
+  if(F.estado==='ocioso'){ if(F.fila.length&&!onibusNaRua()&&!vanNaRua()&&(!ruaPronta||ruaParaVeiculo())){ F.estado='chegando'; caminhao.visible=true; caminhao.position.set(-16,0,Z_RUA); } }
   else if(F.estado==='chegando'||F.estado==='saindo'){
     caminhao.position.x+=7*dt; rodas.forEach(r=>r.rotation.y-=dt*12);
     if(F.estado==='chegando'&&caminhao.position.x>=PARADA_X){ caminhao.position.x=PARADA_X; F.estado='parado'; }
@@ -2889,7 +2889,7 @@ function atualizarPdr(dt){
     if(pdrPodeLiberar()){ p.liberado=true; salvar(); atualizarCaixasPdr(); pop(estantePdr.position.clone().setY(2.5),'📦 Ponto de Retirada liberado!','grande'); SOM.marco(); setTimeout(abrirPdr,600); }
     return;
   }
-  if(VAN.estado==='ocioso'){ VAN.t-=dt; if(VAN.t<=0&&!onibusNaRua()&&FORN.estado==='ocioso'&&!FORN.fila.length){ const at=Object.keys(PARCEIROS).filter(k=>p.parceiros[k]); VAN.parceiro=pega(at); pintarVan(VAN.parceiro); VAN.estado='chegando'; vanPdr.visible=true; vanPdr.position.set(-16,0,Z_VAN); } }
+  if(VAN.estado==='ocioso'){ VAN.t-=dt; if(VAN.t<=0&&!onibusNaRua()&&FORN.estado==='ocioso'&&!FORN.fila.length&&(!ruaPronta||ruaParaVeiculo())){ const at=Object.keys(PARCEIROS).filter(k=>p.parceiros[k]); VAN.parceiro=pega(at); pintarVan(VAN.parceiro); VAN.estado='chegando'; vanPdr.visible=true; vanPdr.position.set(-16,0,Z_VAN); } }
   else if(VAN.estado==='chegando'||VAN.estado==='saindo'){
     vanPdr.position.x+=7*dt; rodasVan.forEach(r=>r.rotation.y-=dt*12);
     if(VAN.estado==='chegando'&&vanPdr.position.x>=PARADA_VAN){ vanPdr.position.x=PARADA_VAN; VAN.estado='parado'; VAN.n=2+Math.floor(Math.random()*4)+(VAN.parceiro==='amazon'?1:0); }
@@ -3583,7 +3583,7 @@ const FROTA_ONIBUS=LINHAS_ONIBUS.map(criarOnibus);
 const FAIXAS_ONIBUS={ida:{z:10.8,dir:1},volta:{z:8.75,dir:-1}};   // mão brasileira: cada sentido do seu lado
 let tOnibus=6;
 function onibusNaRua(){ return FROTA_ONIBUS.some(o=>o.ativo); }
-function ruaLivreParaOnibus(){ return FORN.estado==='ocioso'&&!FORN.fila.length&&(typeof VAN==='undefined'||(VAN.estado==='ocioso'&&!(PDR().liberado&&VAN.t<4))); }
+function ruaLivreParaOnibus(){ return (!ruaPronta||ruaParaVeiculo())&&FORN.estado==='ocioso'&&!FORN.fila.length&&(typeof VAN==='undefined'||(VAN.estado==='ocioso'&&!(PDR().liberado&&VAN.t<4))); }
 function atualizarOnibus(dt){
   FROTA_ONIBUS.forEach(o=>{ if(!o.ativo) return;
     if(o.estado==='parado'){                                   // no ponto: passageiros descem
@@ -3912,12 +3912,12 @@ setTimeout(checarWhats,1500);
 const ATAC_FATOR=0.87, REDE_FATOR=0.74, CAIXA_UN=12, ATAC_TEMPO=45;
 const VEICULOS={carro:{nome:'Carro',ic:'🚗',caixas:6,gas:6},kombi:{nome:'Kombi',ic:'🚐',caixas:14,gas:7.5}};
 const atacLiberado=()=>!!(S&&!S.falido&&(S.pedidos||0)>=2);
-const unitAtac=id=>Math.max(1,Math.round(custoUnit(id)*ATAC_FATOR));
+const unitAtac=id=>Math.max(0.05,Math.round(custoUnit(id)*ATAC_FATOR*100)/100);
 const caixaAtac=id=>CAIXA_UN*unitAtac(id);
 const veiculo=()=>VEICULOS[S.kombi?'kombi':'carro'];
 const custoMedio=()=>{ const ab=IDS.filter(i=>S.est[i].aberta); return ab.length?ab.reduce((t,i)=>t+custoUnit(i),0)/ab.length:1; };
 const custoBase=()=>{ const ab=IDS.filter(i=>S.est[i].aberta); return ab.length?Math.min(...ab.map(custoUnit)):1; };
-const gasolinaViagem=()=>Math.round(veiculo().gas*4);   // ida e volta ao atacarejo, em reais
+const gasolinaViagem=()=>Math.round(veiculo().gas*5);   // ida e volta ao atacarejo, em reais
 const precoKombi=()=>Math.round(6000*multPrest());
 const maxCaixas=id=>Math.floor(faltando(id)/CAIXA_UN);
 const atacQtd=id=>(S.atac&&S.atac.itens&&S.atac.itens[id])||0;
@@ -3930,7 +3930,7 @@ if(S.atac&&S.atac.id&&!S.atac.itens){ S.atac.itens={[S.atac.id]:S.atac.q}; S.ata
 function compararCompra(k){
   if(!atacLiberado()) return '';
   const q=faltando(k); if(q<=0&&!atacQtd(k)) return '';
-  const U=custoUnit(k), rede=Math.max(1,Math.round(U*REDE_FATOR));
+  const U=custoUnit(k), rede=Math.max(0.05,Math.round(U*REDE_FATOR*100)/100);
   let h=`<div class="compra-box"><div class="compra-tit">🧾 Onde comprar?</div>
    <div class="compra-linha"><span>🚚 <b>Distribuidor</b><small>entrega na porta, fardo a fardo</small></span><span><b>${fmt(U)}</b><small>por unidade</small></span></div>
    <div class="compra-linha"><span>🚗 <b>Atacarejo</b><small>caixa fechada de ${CAIXA_UN} · o Edu vai buscar</small></span><span><b>${fmt(unitAtac(k))}</b><small>+ gasolina da viagem</small></span></div>
@@ -4132,10 +4132,10 @@ function atualizarAtacarejo(dt){ // devolve true enquanto o Edu está fora da ro
     else { atacFase='fora'; g.visible=false; carroEdu.visible=false; }
   }
   if(atacFase==='indoCarro'){ if(mover(E,dt)){ g.visible=false; atacFase='partindo'; } }
-  else if(atacFase==='partindo'){ if(andarCarro(dt,-18,-1)){ carroEdu.visible=false; atacFase='fora'; } }
+  else if(atacFase==='partindo'){ if((carroEdu.position.x<CARRO_PARADO.x-0.05||!ruaPronta||ruaParaVeiculo())&&andarCarro(dt,-18,-1)){ carroEdu.visible=false; atacFase='fora'; } }
   else if(atacFase==='fora'){
     if(!S.gerente&&FORN.estado==='parado'&&!avisoForn){ avisoForn=true; toastMissao('🚚 O fornecedor chegou, mas o Edu está no atacarejo. Ninguém para receber!'); }
-    if(t>=A.volta){ carroEdu.visible=true; carroEdu.position.set(-18,0,CARRO_PARADO.z); atacFase='chegando'; }
+    if(t>=A.volta&&(!ruaPronta||ruaParaVeiculo())){ carroEdu.visible=true; carroEdu.position.set(-18,0,CARRO_PARADO.z); atacFase='chegando'; }
   }
   else if(atacFase==='chegando'){
     if(andarCarro(dt,CARRO_PARADO.x,1)){ carroNaVaga(); A.chegou=true; g.visible=true; g.position.copy(CARRO_PT); pop(CARRO_PT.clone().setY(2.2),'🚗 Voltei com as caixas!',''); toastMissao(`${veiculo().ic} O Edu voltou! Agora ele leva as caixas para cada setor.`); salvar(); if(!proximaCaixa()) concluirAtacarejo(); }
@@ -5568,7 +5568,7 @@ function laco(){
   requestAnimationFrame(laco);
   const dt=Math.min(relogio.getDelta(),0.05);
   if(ENT.ativo){ atualizarEntrega(dt); renderer.render(cenaEnt,camEnt); return; }
-  if(tempoPronto){ atualizarCeu(dt); tRel+=dt; if(tRel>0.5){ tRel=0; atualizarRelogio(); } }
+  if(tempoPronto){ atualizarCeu(dt); tRel+=dt; if(tRel>0.5){ tRel=0; atualizarRelogio(); if(ruaPronta) atualizarVizinhos(); } if(ruaPronta) atualizarTransito(dt); }
   if(document.body.classList.contains('jogando')){
     S.tempoJogo=(S.tempoJogo||0)+dt;
     proxCliente-=dt;
@@ -5629,7 +5629,7 @@ if(location.hash==='#mapa'){ // voltou do Motoca pelo mapa
 }
 
 
-var tempoPronto=false;
+var tempoPronto=false, ruaPronta=false;
 // ================= Relógio do dia, dia da semana e clima =================
 // Cada hora do jogo dura 15 segundos (um dia, 6 minutos). O movimento muda com o horário, o dia e o tempo,
 // e o clima muda o que o cliente leva: no calor sai gelo e água; na chuva vem menos gente.
@@ -5713,6 +5713,102 @@ function atualizarCeu(dt){
   if(chove&&dt){ const p=chuva.geometry.attributes.position.array; for(let j=0;j<p.length;j+=6){ p[j+1]-=dt*14; p[j+4]-=dt*14; if(p[j+4]<0){ const y=14+Math.random()*2; p[j+1]=y; p[j+4]=y-0.45; } } chuva.geometry.attributes.position.needsUpdate=true; }
 }
 let tRel=0; tempoPronto=true;
+
+// ================= Rua viva: vizinhos, postes, trânsito e pedestres =================
+// Os outros veículos (caminhão, van, ônibus e o carro do Edu) só entram quando a rua está livre do trânsito.
+const TRANSITO=[], PEDESTRES=[];
+let pedidoRua=0;
+const transitoNaRua=()=>TRANSITO.length>0;
+function ruaParaVeiculo(){ if(transitoNaRua()){ pedidoRua=performance.now(); return false; } return true; }
+const ruaOcupada=()=>caminhao.visible||onibusNaRua()||vanNaRua()||(carroEdu.visible&&(atacFase==='partindo'||atacFase==='chegando'))||performance.now()-pedidoRua<2500;
+// ---------- vizinhos ----------
+const VIZINHOS=[];
+function placaTex(txt,fundo,cor){ return texCanvas(512,128,(c)=>{ c.fillStyle=fundo; c.fillRect(0,0,512,128); c.strokeStyle='#2A1A12'; c.lineWidth=10; c.strokeRect(5,5,502,118); c.fillStyle=cor; let fs=64; do{ c.font='bold '+fs+'px Nunito, sans-serif'; fs-=2; }while(c.measureText(txt).width>470&&fs>20); c.textAlign='center'; c.textBaseline='middle'; c.fillText(txt,256,68); }); }
+function vizinho(o){
+  const g=new THREE.Group(); g.position.set(o.x,0,o.z); scene.add(g);
+  bloco(o.w,o.h,o.d,toon(o.cor),g,0,o.h/2,0,0.04,0.025);
+  bloco(o.w+0.2,0.18,o.d+0.2,toon(0x8E8A84),g,0,o.h+0.09,0,0.03,0.02);
+  const vitrine=new THREE.MeshBasicMaterial({color:0x6E8FA0});
+  const vid=malha(new THREE.PlaneGeometry(o.w*0.62,1.5),vitrine,g,-o.w*0.1,1.0,o.d/2+0.01,false);
+  bloco(0.9,1.9,0.04,toon(0x6B4A2E),g,o.w*0.33,0.95,o.d/2+0.02);
+  let porta=null;
+  if(o.abre!=null){ porta=malha(new THREE.PlaneGeometry(o.w*0.94,1.95),new THREE.MeshLambertMaterial({color:0x8E9396}),g,0,0.98,o.d/2+0.04,false); }
+  if(o.toldo){ for(let i=0;i<6;i++) bloco(o.w/6,0.08,0.7,toon(i%2?0xFFFFFF:o.toldo),g,-o.w/2+o.w/12+i*o.w/6,2.15,o.d/2+0.32); }
+  if(o.nome){ malha(new THREE.PlaneGeometry(o.w*0.8,0.5),new THREE.MeshBasicMaterial({map:placaTex(o.nome,o.fundo||'#FFF6E0',o.letra||'#2A1A12')}),g,0,o.h-0.45,o.d/2+0.02,false); }
+  if(o.janelas){ for(let i=0;i<o.janelas;i++){ const j=malha(new THREE.PlaneGeometry(0.6,0.6),vitrine,g,-o.w/2+o.w/(o.janelas+1)*(i+1),o.h-0.9,o.d/2+0.01,false); } }
+  VIZINHOS.push({o,vitrine,porta}); return g;
+}
+vizinho({x:-10.2,z:2.4,w:5,d:4,h:3.3,cor:0xF2D7A6,toldo:0xE8433A,nome:'🥖 Padaria Pão Quente',abre:6,fecha:21});
+vizinho({x:11.4,z:1.6,w:4.4,d:3.4,h:2.9,cor:0xDDEFE6,toldo:0x2E9B57,nome:'💊 Farmácia do Bairro',fundo:'#2E9B57',letra:'#FFFFFF',abre:7,fecha:23});
+[[-9,16.2,0xF4B8A8],[-4.6,16.4,0xA8D8F4],[0.2,16.2,0xF6E7A1],[4.8,16.4,0xC7E8B5],[9.4,16.2,0xE6C8F2]].forEach(([x,z,c])=>vizinho({x,z,w:3.4,d:2.6,h:2.1,cor:c,janelas:2}));
+// árvores
+function arvore(x,z,e){ const g=new THREE.Group(); g.position.set(x,0,z); g.scale.setScalar(e||1); scene.add(g);
+  malha(new THREE.CylinderGeometry(0.12,0.16,1.2,8),toon(0x7A4F2A),g,0,0.6,0);
+  contorno(malha(ESF,toon(0x4FAE5A),g,0,1.6,0),0.03).scale.set(0.75,0.7,0.75); }
+[[-14,7.6],[14,7.6],[-6.6,13.2],[2.6,13.2],[11.8,13.2],[-14.5,-2],[14.5,-1]].forEach(p=>arvore(p[0],p[1],0.9+Math.random()*0.3));
+// postes com luz que acende à noite
+const LUZ_POSTE=new THREE.MeshBasicMaterial({color:0xB9BEC4}), BRILHO=[];
+const texBrilho=texCanvas(128,128,(c)=>{ const g=c.createRadialGradient(64,64,4,64,64,62); g.addColorStop(0,'rgba(255,236,170,.75)'); g.addColorStop(1,'rgba(255,236,170,0)'); c.fillStyle=g; c.fillRect(0,0,128,128); });
+[-11.5,-6.8,8.6,13].forEach(x=>{
+  const g=new THREE.Group(); g.position.set(x,0,7.9); scene.add(g);
+  bloco(0.1,3.2,0.1,toon(0x5B6066),g,0,1.6,0); bloco(0.1,0.1,0.8,toon(0x5B6066),g,0,3.2,0.35);
+  malha(new THREE.BoxGeometry(0.3,0.1,0.3),LUZ_POSTE,g,0,3.12,0.7,false);
+  const b=malha(new THREE.PlaneGeometry(3.2,3.2),new THREE.MeshBasicMaterial({map:texBrilho,transparent:true,depthWrite:false,opacity:0}),g,0,0.03,0.7,false); b.rotation.x=-Math.PI/2; BRILHO.push(b);
+});
+let viznoite=null;
+function atualizarVizinhos(){
+  const h=horaAgora(), noite=ehNoite(h);
+  if(viznoite!==noite+'|'+Math.floor(h)){ viznoite=noite+'|'+Math.floor(h);
+    LUZ_POSTE.color.setHex(noite?0xFFF1B8:0xB9BEC4); BRILHO.forEach(b=>b.material.opacity=noite?1:0);
+    VIZINHOS.forEach(v=>{ const aberto=v.o.abre==null||(h>=v.o.abre&&h<v.o.fecha);
+      if(v.porta) v.porta.visible=!aberto;
+      v.vitrine.color.setHex(v.o.abre==null?(noite&&semente(Math.floor(v.o.x*7)+diaAgora())>0.3?0xFFE29A:0x6E8FA0):(aberto?(noite?0xFFF1C9:0x9FC7D8):0x3A4248)); });
+  }
+}
+// ---------- trânsito ----------
+const CORES_CARRO=[0xE8433A,0x2F6FD8,0xF2F2F2,0x2A2A2E,0x9AA3A8,0xF2C31B,0x3CB371,0x7A2C8F];
+const FAROL=new THREE.MeshBasicMaterial({color:0xFFF6C8}), LANTERNA=new THREE.MeshBasicMaterial({color:0xE8433A});
+function veiculoRua(){
+  const g=new THREE.Group(), rodas=[], moto=Math.random()<0.2, cor=pega(CORES_CARRO);
+  if(moto){
+    contorno(malha(geoArred(1.0,0.35,0.3,0.1),toon(cor),g,0,0.55,0),0.02);
+    const p=pessoa(); p.scale.setScalar(0.8); p.position.set(-0.1,0.25,0); p.rotation.y=Math.PI/2; g.add(p);
+    [-0.4,0.4].forEach(x=>{ const r=malha(new THREE.CylinderGeometry(0.2,0.2,0.1,12),toon(0x22252A),g,x,0.2,0); r.rotation.x=Math.PI/2; rodas.push(r); });
+    malha(new THREE.BoxGeometry(0.05,0.1,0.12),FAROL,g,0.52,0.65,0,false);
+  } else {
+    const lg=rnd(1.8,2.2);
+    contorno(malha(geoArred(lg,0.55,1.0,0.16),toon(cor),g,0,0.55,0),0.03);
+    contorno(malha(geoArred(lg*0.55,0.45,0.9,0.16),toon(cor),g,-0.12,1.02,0),0.03);
+    bloco(0.05,0.32,0.76,toon(0x9FD3EA),g,lg*0.27-0.1,1.03,0); bloco(lg*0.48,0.26,0.04,toon(0x9FD3EA),g,-0.12,1.04,0.46); bloco(lg*0.48,0.26,0.04,toon(0x9FD3EA),g,-0.12,1.04,-0.46);
+    [[-lg*0.32,0.48],[lg*0.32,0.48],[-lg*0.32,-0.48],[lg*0.32,-0.48]].forEach(p=>{ const r=malha(new THREE.CylinderGeometry(0.23,0.23,0.15,12),toon(0x22252A),g,p[0],0.23,p[1]); r.rotation.x=Math.PI/2; rodas.push(r); });
+    [-0.3,0.3].forEach(z=>{ malha(new THREE.BoxGeometry(0.04,0.1,0.18),FAROL,g,lg/2+0.01,0.62,z,false); malha(new THREE.BoxGeometry(0.04,0.1,0.18),LANTERNA,g,-lg/2-0.01,0.62,z,false); });
+  }
+  return {g,rodas,moto};
+}
+const FAIXAS_RUA=[{z:10.8,dir:1},{z:8.75,dir:-1}];
+let tTransito=2, tPed=1;
+function atualizarTransito(dt){
+  const h=horaAgora(), mov=FLUXO_HORA[Math.floor(h)];
+  // carros andando
+  for(let i=TRANSITO.length-1;i>=0;i--){ const c=TRANSITO[i];
+    c.g.position.x+=c.dir*c.vel*dt; c.rodas.forEach(r=>r.rotation.y-=dt*c.vel*3*c.dir);
+    if(Math.abs(c.g.position.x)>17.5){ scene.remove(c.g); TRANSITO.splice(i,1); } }
+  FAROL.color.setHex(ehNoite(h)?0xFFF6C8:0xD9DDE0);
+  tTransito-=dt;
+  if(tTransito<=0){ tTransito=rnd(2.5,5)/Math.max(0.3,mov);
+    if(!ruaOcupada()&&TRANSITO.length<5){ const F=pega(FAIXAS_RUA);
+      if(!TRANSITO.some(c=>c.dir===F.dir&&Math.abs(c.g.position.x+F.dir*16.5)<4.5)){
+        const v=veiculoRua(); v.dir=F.dir; v.vel=F.dir>0?7.5:6.8; v.g.position.set(-F.dir*16.5,0,F.z); v.g.rotation.y=F.dir>0?0:Math.PI; scene.add(v.g); TRANSITO.push(v); } } }
+  // pedestres na calçada (desviam do ponto de ônibus)
+  for(let i=PEDESTRES.length-1;i>=0;i--){ const p=PEDESTRES[i]; if(mover(p,dt)){ scene.remove(p.g); PEDESTRES.splice(i,1); } }
+  tPed-=dt;
+  if(tPed<=0){ tPed=rnd(4,8)/Math.max(0.3,mov);
+    if(PEDESTRES.length<6){ const d=Math.random()<0.5?1:-1, z=7.55+rnd(-0.08,0.08), g=pessoa(); g.position.set(-d*16,0,z); scene.add(g);
+      let pts=[new THREE.Vector3(PONTO_X-1.4,0,z),new THREE.Vector3(PONTO_X-1.1,0,6.75),new THREE.Vector3(PONTO_X+1.2,0,6.75),new THREE.Vector3(PONTO_X+1.5,0,z),new THREE.Vector3(16,0,z)];
+      if(d<0) pts=[new THREE.Vector3(PONTO_X+1.5,0,z),new THREE.Vector3(PONTO_X+1.2,0,6.75),new THREE.Vector3(PONTO_X-1.1,0,6.75),new THREE.Vector3(PONTO_X-1.4,0,z),new THREE.Vector3(-16,0,z)];
+      PEDESTRES.push({g,caminho:pts,vel:rnd(1.3,1.8),passo:rnd(0,6)}); } }
+}
+ruaPronta=true;
 
 // ================= Botão voltar do celular =================
 // Cada tela aberta entra no histórico: o voltar fecha a tela de cima (como o ✕) e o jogador continua na adega.
