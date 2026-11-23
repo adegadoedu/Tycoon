@@ -25,6 +25,11 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 html,body{height:100%;margin:0}
 body{background:var(--fundo);color:var(--texto);font-family:'Nunito',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:800;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:none}
 #cena{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#selos,#selos *,#cobrancas,#cobrancas *{touch-action:none}
+.cam-ctl{position:fixed;left:calc(env(safe-area-inset-left,0px) + 10px);bottom:calc(env(safe-area-inset-bottom,0px) + 96px);z-index:5;display:none;flex-direction:column;gap:8px}
+body.jogando .cam-ctl{display:flex} body.entregando .cam-ctl{display:none}
+.cam-ctl button{width:44px;height:44px;border-radius:14px;border:3px solid var(--contorno);background:rgba(255,253,246,.94);box-shadow:0 3px 0 var(--contorno);font:900 1.35rem 'Nunito',sans-serif;color:var(--texto);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;touch-action:manipulation}
+.cam-ctl button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--contorno)}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible{outline:3px solid #fff;outline-offset:3px}
 .titulo{font-family:'Lilita One','Arial Black',system-ui,sans-serif;font-weight:400;color:var(--amarelo);-webkit-text-stroke:6px var(--contorno);paint-order:stroke fill;text-shadow:0 4px 0 var(--contorno);margin:0;line-height:1.05}
@@ -1284,7 +1289,7 @@ function texCanvas(w,h,desenha){const c=document.createElement('canvas');c.width
 const ESF=new THREE.SphereGeometry(1,20,14);
 
 // ---------- Rua e calçada ----------
-malha(new THREE.PlaneGeometry(60,60),new THREE.MeshLambertMaterial({color:0x8FD18A}),scene,0,-0.02,0,false).rotation.x=-Math.PI/2;
+malha(new THREE.PlaneGeometry(200,200),new THREE.MeshLambertMaterial({color:0x8FD18A}),scene,0,-0.02,0,false).rotation.x=-Math.PI/2;
 const calcada=malha(new THREE.BoxGeometry(30,0.1,2.6),toon(0xD8D2C4),scene,0,0.0,6.5,false); calcada.receiveShadow=true;
 const rua=malha(new THREE.BoxGeometry(30,0.05,4),toon(0x4A4E55),scene,0,-0.01,9.8,false);
 for(let i=-6;i<=6;i++) malha(new THREE.BoxGeometry(1.0,0.06,0.16),toon(0xF2F2F2),scene,i*2.2,0.0,9.8,false);
@@ -4620,7 +4625,7 @@ function abrirSanto(){
 }
 $('#btnSantoFechar').addEventListener('click',()=>{ $('#telaSanto').hidden=true; });
 setInterval(()=>{ if(!S||typeof horaAgora!=='function'||!document.body.classList.contains('jogando')) return;
-  const h=horaAgora(), d=diaSP(Date.now()); if(h>=18&&h<19&&S.santoAviso!==d&&!algumaTelaAberta()){ S.santoAviso=d; toastMissao('🍕 A Santo Forno, vizinha da Adega, acendeu as luzinhas! Arraste para a esquerda e toque na pizzaria.'); } },5000);
+  const h=horaAgora(), d=diaSP(Date.now()); if(h>=18&&h<19&&S.santoAviso!==d&&!algumaTelaAberta()){ S.santoAviso=d; toastMissao('🍕 A Santo Forno, vizinha da Adega, acendeu as luzinhas! Arraste a tela até a esquina e toque na pizzaria.'); } },5000);
 function talvezDivisao(c){
   if(S.divOff) return; S.divN=(S.divN||0)+1;
   const vez=S.divN===3||(S.divN>3&&(S.divN-3)%20===0);
@@ -5983,23 +5988,62 @@ function ajustar(){
   cam.left=-hw;cam.right=hw;cam.top=hh;cam.bottom=-hh;cam.updateProjectionMatrix();
   posCam();
 }
-function posCam(){ alvoCam.x=THREE.MathUtils.clamp(alvoCam.x,-8.5,5); alvoCam.z=THREE.MathUtils.clamp(alvoCam.z,-4,5.5); cam.position.copy(alvoCam).add(OFF); cam.lookAt(alvoCam); }
-window.addEventListener('resize',ajustar); ajustar();
+// Limites da câmera medidos na direção da tela (direita/esquerda e cima/baixo), cobrindo a rua inteira:
+// da Santo Forno até a Farmácia, e da loja até as casas do outro lado.
+const MUNDO={x0:-13.5,x1:15,z0:-5.5,z1:17};
 const DIR_D=new THREE.Vector3(1,0,-1).normalize(), DIR_F=new THREE.Vector3(-1,0,-1).normalize();
+const LIM_UV=(()=>{ const us=[],vs=[]; [[MUNDO.x0,MUNDO.z0],[MUNDO.x0,MUNDO.z1],[MUNDO.x1,MUNDO.z0],[MUNDO.x1,MUNDO.z1]].forEach(([x,z])=>{ us.push(x*DIR_D.x+z*DIR_D.z); vs.push(x*DIR_F.x+z*DIR_F.z); });
+  return {u0:Math.min(...us),u1:Math.max(...us),v0:Math.min(...vs),v1:Math.max(...vs)}; })();
+const ZOOM_MIN=3.2, zoomMax=()=>window.innerWidth<window.innerHeight?8.5:12;
+function posCam(){
+  // a área visível encolhe o quanto dá para andar: mais longe (zoom out) = menos arrasto necessário
+  const mx=Math.max(0,(cam.right-cam.left)/2*0.55), my=Math.max(0,(cam.top-cam.bottom)/2*0.55);
+  let u=alvoCam.x*DIR_D.x+alvoCam.z*DIR_D.z, v=alvoCam.x*DIR_F.x+alvoCam.z*DIR_F.z;
+  const cu=(a,b,m)=>b-a>2*m?[a+m,b-m]:[(a+b)/2,(a+b)/2], [ua,ub]=cu(LIM_UV.u0,LIM_UV.u1,mx), [va,vb]=cu(LIM_UV.v0,LIM_UV.v1,my*0.6);
+  u=THREE.MathUtils.clamp(u,ua,ub); v=THREE.MathUtils.clamp(v,va,vb);
+  alvoCam.set(u*DIR_D.x+v*DIR_F.x,0,u*DIR_D.z+v*DIR_F.z);
+  cam.position.copy(alvoCam).add(OFF); cam.lookAt(alvoCam);
+}
+window.addEventListener('resize',ajustar); ajustar();
 const SEN=OFF.y/OFF.length();
-let toque=null;
-canvas.addEventListener('pointerdown',e=>{toque={x:e.clientX,y:e.clientY,ux:e.clientX,uy:e.clientY,arrastou:false,id:e.pointerId};canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener('pointermove',e=>{
-  if(!toque||e.pointerId!==toque.id) return;
-  const dx=e.clientX-toque.ux, dy=e.clientY-toque.uy;
-  if(!toque.arrastou&&Math.hypot(e.clientX-toque.x,e.clientY-toque.y)>8) toque.arrastou=true;
-  if(toque.arrastou){ const u=(cam.right-cam.left)/window.innerWidth; alvoCam.addScaledVector(DIR_D,-dx*u).addScaledVector(DIR_F,dy*u/SEN); posCam(); }
-  toque.ux=e.clientX; toque.uy=e.clientY;
-});
+function zoomCam(f){ meiaLarg=THREE.MathUtils.clamp(meiaLarg*f,ZOOM_MIN,zoomMax()); ajustar(); }
+function moverCam(dx,dy){ const u=(cam.right-cam.left)/window.innerWidth; alvoCam.addScaledVector(DIR_D,-dx*u).addScaledVector(DIR_F,dy*u/SEN); posCam(); }
+function centralizarCam(){ alvoCam.set(-0.6,0,-0.5); meiaLarg=4.7; ajustar(); }
+// Arrastar e pinçar valem em qualquer lugar do jogo: no chão, nas plaquinhas de nível e nos balões de cobrança.
+// Um toque sem arrastar continua sendo um toque normal.
+const DEDOS=new Map(); let arrasto=null, pinca=null, cancelarClique=0;
+const ehMundo=el=>el===canvas||!!(el&&el.closest&&el.closest('#selos,#cobrancas'));
+const podeMexer=()=>document.body.classList.contains('jogando')&&!(typeof ENT!=='undefined'&&ENT.ativo)&&!document.querySelector('.tela:not([hidden])');
+window.addEventListener('pointerdown',e=>{
+  if(!ehMundo(e.target)||!podeMexer()) return;
+  DEDOS.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(DEDOS.size===1) arrasto={x:e.clientX,y:e.clientY,ux:e.clientX,uy:e.clientY,arrastou:false,id:e.pointerId,noCanvas:e.target===canvas};
+  else if(DEDOS.size===2){ const [a,b]=[...DEDOS.values()]; pinca={d:Math.hypot(a.x-b.x,a.y-b.y)||1,z:meiaLarg}; if(arrasto) arrasto.arrastou=true; }
+},{capture:true});
+window.addEventListener('pointermove',e=>{
+  const p=DEDOS.get(e.pointerId); if(!p) return; p.x=e.clientX; p.y=e.clientY;
+  if(DEDOS.size>=2&&pinca){ const [a,b]=[...DEDOS.values()]; const d=Math.hypot(a.x-b.x,a.y-b.y)||1; meiaLarg=THREE.MathUtils.clamp(pinca.z*pinca.d/d,ZOOM_MIN,zoomMax()); ajustar(); return; }
+  if(!arrasto||e.pointerId!==arrasto.id) return;
+  if(!arrasto.arrastou&&Math.hypot(e.clientX-arrasto.x,e.clientY-arrasto.y)>8) arrasto.arrastou=true;
+  if(arrasto.arrastou){ moverCam(e.clientX-arrasto.ux,e.clientY-arrasto.uy); avisoArrastoVisto(); }
+  arrasto.ux=e.clientX; arrasto.uy=e.clientY;
+},{capture:true,passive:true});
+function soltarDedo(e,cancelado){
+  if(!DEDOS.has(e.pointerId)) return; DEDOS.delete(e.pointerId);
+  if(DEDOS.size<2) pinca=null;
+  if(!arrasto) return;
+  if(DEDOS.size>0){ if(e.pointerId===arrasto.id){ const [id,p]=[...DEDOS.entries()][0]; arrasto.id=id; arrasto.ux=p.x; arrasto.uy=p.y; } return; }
+  const t=arrasto; arrasto=null;
+  if(t.arrastou){ cancelarClique=performance.now()+400; return; }
+  if(!cancelado&&t.noCanvas&&e.target===canvas) tocarMundo(e);
+}
+window.addEventListener('pointerup',e=>soltarDedo(e,false),{capture:true});
+window.addEventListener('pointercancel',e=>soltarDedo(e,true),{capture:true});
+// depois de arrastar em cima de uma plaquinha, ela não abre sozinha
+window.addEventListener('click',e=>{ if(performance.now()<cancelarClique&&ehMundo(e.target)){ e.stopPropagation(); e.preventDefault(); } },{capture:true});
 const ray=new THREE.Raycaster(), ptr=new THREE.Vector2();
-canvas.addEventListener('pointerup',e=>{
-  if(!toque) return; const t=toque; toque=null;
-  if(t.arrastou||!document.body.classList.contains('jogando')) return;
+function tocarMundo(e){
+  if(!document.body.classList.contains('jogando')) return;
   ptr.x=(e.clientX/window.innerWidth)*2-1; ptr.y=-(e.clientY/window.innerHeight)*2+1;
   ray.setFromCamera(ptr,cam);
   const h=ray.intersectObjects(alvos,false)[0];
@@ -6011,8 +6055,25 @@ canvas.addEventListener('pointerup',e=>{
   else if(a.indexOf('mesa')===0){ const i=+a.slice(4); if(!recolherMesa(i)) abrirPainel('mesas'); }
   else if(vitrineDisponivel(a)) abrirVitrine(a);
   else abrirPainel(a);
+}
+canvas.addEventListener('wheel',e=>{ e.preventDefault(); zoomCam(e.deltaY>0?1.1:0.9); },{passive:false});
+// teclado no computador: setas ou WASD andam, + e - aproximam
+window.addEventListener('keydown',e=>{
+  if(!podeMexer()||/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||'')) return;
+  const p=40, k=e.key.toLowerCase();
+  if(k==='arrowleft'||k==='a') moverCam(p,0); else if(k==='arrowright'||k==='d') moverCam(-p,0);
+  else if(k==='arrowup'||k==='w') moverCam(0,p); else if(k==='arrowdown'||k==='s') moverCam(0,-p);
+  else if(k==='+'||k==='=') zoomCam(0.9); else if(k==='-'||k==='_') zoomCam(1.1);
+  else return; e.preventDefault();
 });
-canvas.addEventListener('wheel',e=>{e.preventDefault();meiaLarg=THREE.MathUtils.clamp(meiaLarg*(e.deltaY>0?1.1:0.9),3.5,9);ajustar();},{passive:false});
+// botões de câmera (zoom e voltar para a loja)
+(function(){ const c=document.createElement('div'); c.className='cam-ctl'; c.id='camCtl';
+  c.innerHTML='<button type="button" id="camMais" aria-label="Aproximar">＋</button><button type="button" id="camMenos" aria-label="Afastar">－</button><button type="button" id="camCentro" aria-label="Voltar para a loja">🏠</button>';
+  document.body.appendChild(c);
+  $('#camMais').onclick=()=>zoomCam(0.8); $('#camMenos').onclick=()=>zoomCam(1.25); $('#camCentro').onclick=()=>centralizarCam(); })();
+// dica para quem ainda não arrastou a tela
+function avisoArrastoVisto(){ if(S&&!S.viuArrasto){ S.viuArrasto=true; salvar(); } }
+setTimeout(()=>{ if(S&&!S.viuArrasto&&document.body.classList.contains('jogando')&&!document.querySelector('.tela:not([hidden])')) toastMissao(matchMedia('(pointer:coarse)').matches?'👆 Arraste para andar pela rua e use dois dedos para aproximar ou afastar.':'🖱️ Arraste para andar pela rua. Roda do mouse ou + e − para aproximar.'); },20000);
 
 // ================= Início, ganhos offline, prestígio =================
 function comecar(){
