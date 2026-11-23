@@ -335,6 +335,11 @@ body:not(.jogando) .alerta{display:none}
 .licao-res:empty{display:none}
 .licao-res.bom{color:var(--verde-esc)} .licao-res.ruim{color:#C0392B}
 .licao-premio{font-size:.82rem;color:var(--sub);margin:8px 0 0}
+.licao-fim{display:flex;flex-direction:column;gap:8px;margin:12px 0 2px}
+.licao-fim .btn.peq{font-size:1rem;padding:8px 12px}
+.rk-licoes{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.rk-licoes span{font-size:.78rem;font-weight:800;border:2px solid var(--contorno);border-radius:999px;padding:2px 9px;background:#EEE;color:var(--sub)}
+.rk-licoes span.feita{background:#D8F5DD;color:var(--verde-esc)}
 /* compras */
 .compra-box{margin-top:10px;border:3px solid var(--contorno);border-radius:14px;padding:8px 10px;background:#FFFDF6}
 .compra-tit{font-weight:900;margin-bottom:4px}
@@ -926,7 +931,7 @@ body:not(.jogando) .alerta{display:none}
 <section class="tela" id="telaRanking" hidden>
   <div class="caixa">
     <div class="cabeca"><h2 class="titulo" style="font-size:2rem">Ranking</h2><span class="pilula" id="rkEu"></span></div>
-    <div class="abas" role="tablist"><button class="aba ativa" type="button" data-aba="mes" role="tab">Este mês</button><button class="aba" type="button" data-aba="geral" role="tab">Geral</button><button class="aba" type="button" data-aba="vendas" role="tab">💼 Vendas</button></div>
+    <div class="abas" role="tablist"><button class="aba ativa" type="button" data-aba="mes" role="tab">Este mês</button><button class="aba" type="button" data-aba="geral" role="tab">Geral</button><button class="aba" type="button" data-aba="vendas" role="tab">💼 Vendas</button><button class="aba" type="button" data-aba="licoes" role="tab">📚 Lições</button></div>
     <ol class="lista-rk" id="listaRanking"></ol>
     <p class="txt" id="rkInfo" style="color:var(--sub);font-size:.9rem"></p>
     <button class="btn amarelo" id="btnFecharRanking">Voltar ao jogo</button>
@@ -2174,6 +2179,7 @@ async function sincronizar(forcar){
     }
   }
   await salvarNuvem(forcar);
+  if(typeof sincronizarLicoes==='function') sincronizarLicoes();
 }
 setInterval(sincronizar,45000);
 let abaRk='mes';
@@ -2189,6 +2195,7 @@ async function abrirRanking(aba){
   abaRk=aba||abaRk; checarMes();
   document.querySelectorAll('.aba').forEach(b=>{const at=b.dataset.aba===abaRk;b.classList.toggle('ativa',at);b.setAttribute('aria-selected',at?'true':'false');});
   if(abaRk==='vendas'){ abrirRkVendas(); return; }
+  if(abaRk==='licoes'){ abrirRkLicoes(); return; }
   const meu=abaRk==='mes'?fatMes():S.total+(S.totalBase||0);
   $('#rkEu').innerHTML='Você '+NOTA+' '+fmt(meu);
   const lista=$('#listaRanking'), info=$('#rkInfo'); lista.innerHTML=''; info.textContent='';
@@ -3627,7 +3634,7 @@ function renderRF(){
   add('<p class="txt" style="margin-top:10px"><b>Prateleira de renda fixa</b></p>');
   rf.produtos.forEach(p=>{
     const ano=rfAnoBruto(p);
-    const el=add(`<div class="rf-prod${rfSel===p.id?' aberto':''}"><button type="button" class="rf-prod-cab"><span class="rf-ic">${(p.id==='tesouro_reserva'?'🛟':{poupanca:'🐷',tesouro:'🏛️',cdb:'🏦',lci:'🏠',lca:'🌾'}[p.tipo])}</span>
+    const el=add(`<div class="rf-prod${rfSel===p.id?' aberto':''}"><button type="button" class="rf-prod-cab"><span class="rf-ic">${(p.id==='tesouro_reserva'?'🐷':{poupanca:'🐷',tesouro:'🏛️',cdb:'🏦',lci:'🏠',lca:'🌾'}[p.tipo])}</span>
       <span class="bol-tx"><b>${p.nome}</b><small>${p.emissor} · mínimo ${fmt(+p.minimo)}</small></span><span class="rf-ano"><b>${pctTxt(ano)}</b><small>ao ano${p.ir?' (bruto)':''}</small></span></button>
       <div class="tempo-ef">${chipsRF(p)}</div><div class="rf-sim"></div></div>`);
     el.querySelector('.rf-prod-cab').onclick=()=>{ rfSel=rfSel===p.id?null:p.id; SOM.abrir(); renderRF(); };
@@ -3646,13 +3653,13 @@ function simuladorRF(p,box){
     if(p.liquidez==='diaria'&&p.ir) { const c=rfConta(p,v,15); h+=`<p class="rf-nota">Resgatar com só 15 dias paga <b>IOF</b> (${fmt(c.iof)}) e IR de 22,5%: renda fixa gosta de tempo.</p>`; }
     if(!p.ir&&p.indexador==='cdi') { const irx=rfIr((p.prazo_meses||12)*MES_DIAS); h+=`<p class="rf-nota">Isento de IR: ${Math.round(p.taxa*100)}% do CDI aqui equivale a uns <b>${Math.round(p.taxa/(1-irx)*100)}% do CDI</b> num CDB do mesmo prazo, que paga IR de ${pctTxt(irx)}.</p>`; }
     if(p.tipo==='poupanca') h+=`<p class="rf-nota">A poupança só rende no "aniversário": a cada mês completo. Tirar antes perde o rendimento do mês.</p>`;
-    if(RESERVA_IDS.includes(p.id)) h+=`<p class="rf-nota">🛟 Serve para a reserva de emergência: seguro, rende e sai no mesmo dia.</p>`;
-    tab.innerHTML=h; bt.disabled=licaoFeita('reserva')&&(v<+p.minimo||v>+rf.saldo); bt.textContent=!licaoFeita('reserva')?'🛟 Primeiro: reserva de emergência':v>+rf.saldo?'Saldo insuficiente':v<+p.minimo?'Mínimo de '+fmt(+p.minimo):'Investir '+fmt(v); };
+    if(RESERVA_IDS.includes(p.id)) h+=`<p class="rf-nota">🐷 Serve para a reserva de emergência: seguro, rende e sai no mesmo dia.</p>`;
+    tab.innerHTML=h; bt.disabled=licaoFeita('reserva')&&(v<+p.minimo||v>+rf.saldo); bt.textContent=!licaoFeita('reserva')?'🐷 Primeiro: reserva de emergência':v>+rf.saldo?'Saldo insuficiente':v<+p.minimo?'Mínimo de '+fmt(+p.minimo):'Investir '+fmt(v); };
   inp.addEventListener('input',()=>{ const v=lerValor(inp.value); inp.value=v?v.toLocaleString('pt-BR'):''; conta(); });
   bt.onclick=async()=>{ const v=lerValor(inp.value);
-    if(!licaoFeita('reserva')){ toastMissao('🛟 Antes de investir, aprenda sobre a reserva de emergência.'); abrirReserva(true); return; }
+    if(!licaoFeita('reserva')){ toastMissao('🐷 Antes de investir, aprenda sobre a reserva de emergência.'); abrirReserva(true); return; }
     const prende=p.liquidez==='vencimento'||p.carencia_meses>0;
-    if(prende&&!reservaPronta()&&!confirm(`🛟 Sua reserva de emergência ainda não está pronta (${fmtC(valorReserva())} de ${fmtC(metaReserva())}).\n\n${p.nome} prende o dinheiro${p.liquidez==='vencimento'?' até o vencimento':' na carência'}. Se aparecer um imprevisto, você não vai conseguir tirar.\n\nQuer investir mesmo assim?`)) return;
+    if(prende&&!reservaPronta()&&!confirm(`🐷 Sua reserva de emergência ainda não está pronta (${fmtC(valorReserva())} de ${fmtC(metaReserva())}).\n\n${p.nome} prende o dinheiro${p.liquidez==='vencimento'?' até o vencimento':' na carência'}. Se aparecer um imprevisto, você não vai conseguir tirar.\n\nQuer investir mesmo assim?`)) return;
     if(!confirm(`Investir ${fmt(v)} em ${p.nome}?${p.liquidez==='vencimento'?'\n\nAtenção: só dá para resgatar no vencimento ('+p.prazo_meses+' meses = '+p.prazo_meses+' dias de verdade).':''}`)) return;
     bt.disabled=true;
     try{ rf=await rpc('rf_aplicar',{p_id:S.perfil.id,p_token:S.perfil.token,p_produto:p.id,p_valor:v}); rfT0=performance.now(); rfSel=null; SOM.marco(); toastMissao(`🏦 Investiu ${fmt(v)} em ${p.nome}. Volte amanhã para ver render!`); renderRF(); }
@@ -3675,23 +3682,23 @@ function valorReserva(){ if(!rf) return 0; return rf.aplicacoes.filter(a=>RESERV
 const reservaPronta=()=>valorReserva()>=metaReserva();
 function cardReserva(){
   const v=valorReserva(), m=metaReserva(), pct=Math.min(100,m?100*v/m:0);
-  return `<div class="rf-reserva${pct>=100?' ok':''}"><div class="rf-res-cab"><b>🛟 Reserva de emergência</b><small>${pct>=100?'✔ Pronta! Agora dá para pensar em títulos mais longos.':'Monte antes de prender dinheiro em títulos longos.'}</small></div>
+  return `<div class="rf-reserva${pct>=100?' ok':''}"><div class="rf-res-cab"><b>🐷 Reserva de emergência</b><small>${pct>=100?'✔ Pronta! Agora dá para pensar em títulos mais longos.':'Monte antes de prender dinheiro em títulos longos.'}</small></div>
     <div class="missao-barra"><i style="width:${pct}%"></i></div>
     <div class="rf-res-pe"><span>${fmtC(v)} de ${fmtC(m)}</span><span>meta: ${S.reservaMeses||6} meses de contas</span></div>
-    <div class="duas"><button type="button" class="btn azul peq" id="bReservaAprender">🛟 O que é?</button><button type="button" class="btn peq" id="bTesouroDireto">🏛️ Tesouro Direto</button></div></div>`;
+    <div class="duas"><button type="button" class="btn azul peq" id="bReservaAprender">🐷 O que é?</button><button type="button" class="btn peq" id="bTesouroDireto">🏛️ Tesouro Direto</button></div></div>`;
 }
 function abrirReserva(primeira){
   const cm=custoMesAdega(), meses=S.reservaMeses||6;
-  let h=`<div class="tempo-dia hoje"><div class="tempo-cab"><span class="tempo-ic">🛟</span><span><b>Antes de investir: a reserva de emergência</b><small>Um dinheiro guardado só para imprevistos, que fica num lugar seguro, rende e sai no mesmo dia.</small></span></div></div>
+  let h=`<div class="tempo-dia hoje"><div class="tempo-cab"><span class="tempo-ic">🐷</span><span><b>Antes de investir: a reserva de emergência</b><small>Um dinheiro guardado só para imprevistos, que fica num lugar seguro, rende e sai no mesmo dia.</small></span></div></div>
     <div class="tempo-dia"><div class="tempo-cab"><span class="tempo-ic">🧮</span><span><b>Quanto guardar?</b><small>De 3 a 6 meses das contas. As contas da sua adega dão uns <b>${fmtC(cm)}</b> por mês.</small></span></div>
       <div class="cat-filtros rf-meses">${[3,6,12].map(n=>`<button type="button" data-m="${n}" class="${n===meses?'ativo':''}">${n} meses · ${fmtC(cm*n)}</button>`).join('')}</div>
       <small class="rf-dica">Quem tem renda que varia, como dono de negócio ou autônomo, costuma escolher mais meses.</small></div>
     <div class="tempo-dia"><div class="tempo-cab"><span class="tempo-ic">✅</span><span><b>Onde guardar?</b><small>Seguro, rendendo e com liquidez diária: <b>Tesouro Reserva</b>, <b>Tesouro Selic</b> ou <b>CDB de liquidez diária</b> (100% do CDI). A poupança também serve, mas costuma render menos.</small></span></div></div>
     <div class="tempo-dia"><div class="tempo-cab"><span class="tempo-ic">⛔</span><span><b>Onde não guardar?</b><small>Em título que só devolve no vencimento (CDB 2 anos, LCA), em algo arriscado, ou parado sem render: a inflação vai comendo o dinheiro.</small></span></div></div>
     <div class="tempo-dia"><div class="tempo-cab"><span class="tempo-ic">🔁</span><span><b>E quando usar?</b><small>Só em emergência de verdade. Usou? Primeiro reponha a reserva, depois volte a investir no resto.</small></span></div></div>`;
-  h+=`<button class="btn" id="bResLicao" type="button">${licaoFeita('reserva')?'🛟 Rever a lição do Edu':'🛟 Fazer a lição e liberar os investimentos'}</button>`;
+  h+=`<button class="btn" id="bResLicao" type="button">${licaoFeita('reserva')?'🐷 Rever a lição do Edu':'🐷 Fazer a lição e liberar os investimentos'}</button>`;
   h+=`<p class="bol-nota">Dinheiro fictício do jogo. Não é recomendação de investimento.</p>`;
-  $('#tempoConteudo').innerHTML=h; document.querySelector('#telaTempo h2').textContent='🛟 Reserva de emergência'; $('#telaTempo').hidden=false; SOM.abrir();
+  $('#tempoConteudo').innerHTML=h; document.querySelector('#telaTempo h2').textContent='🐷 Reserva de emergência'; $('#telaTempo').hidden=false; SOM.abrir();
   $('#tempoConteudo').querySelectorAll('.rf-meses button').forEach(b=>b.onclick=()=>{ S.reservaMeses=+b.dataset.m; salvar(); SOM.abrir(); abrirReserva(); if(rf&&abaCorr==='rf') renderRF(); });
   $('#bResLicao').onclick=()=>{ $('#telaTempo').hidden=true; abrirLicao('reserva'); };
 }
@@ -3699,7 +3706,7 @@ function abrirReserva(primeira){
 function abrirTesouroDireto(){
   const itens=[['🏛️','O que é','É um programa do Tesouro Nacional para pessoas comuns comprarem títulos públicos pela internet. Você empresta dinheiro para o Governo Federal e recebe de volta com juros. É considerado o investimento mais seguro do país.'],
     ['📊','Tesouro Selic','Acompanha a taxa Selic ('+pctTxt(+rf.selic)+' ao ano hoje). O preço quase não oscila e dá para vender em qualquer dia útil. É o mais usado para a reserva de emergência.'],
-    ['🛟','Tesouro Reserva','Lançado em maio de 2026, também rende a Selic, começa com R$ 1 e o resgate cai na hora, até à noite e no fim de semana. Feito para a reserva de emergência.'],
+    ['🐷','Tesouro Reserva','Lançado em maio de 2026, também rende a Selic, começa com R$ 1 e o resgate cai na hora, até à noite e no fim de semana. Feito para a reserva de emergência.'],
     ['🔒','Tesouro Prefixado','A taxa fica travada no dia da compra (por exemplo, 14% ao ano). Bom quando você acha que os juros vão cair. Se vender antes do vencimento, o preço pode estar maior ou menor.'],
     ['📈','Tesouro IPCA+','Paga a inflação (IPCA) mais um juro. Protege o poder de compra no longo prazo, como uma aposentadoria. Também oscila se vender antes.'],
     ['🎓','Renda+ e Educa+','Títulos para objetivos: o Renda+ paga uma renda mensal na aposentadoria, e o Educa+ ajuda a pagar a faculdade dos filhos.'],
@@ -4537,10 +4544,19 @@ $('#btnDezFechar').addEventListener('click',()=>{ $('#telaDez').hidden=true; ofe
 // Educativo: mostra por que vender fiado atrapalha a adega (o fornecedor cobra à vista).
 const FIADO_CHANCE=0.1, FIADO_INTERVALO=90, FIADO_MAX_ABERTOS=6, FIADO_ESPERA=20, FIADO_DESISTE=0.1;
 // Fregueses fictícios do bairro (nenhum nome de cliente de verdade). Peso = quantas vezes aparece.
-const FREGUESES=[['Seu Zé',9],['Dona Cida',8],['Tião',7],['Marquinhos',7],['Dona Neide',6],['Juninho',6],['Seu Valdir',6],['Cris',5],['Dona Lurdes',5],['Betão',5],
-  ['Seu Nonato',4],['Dona Fátima',4],['Pedrinho',4],['Seu Jorge',4],['Dona Rosa',4],['Léo',4],['Bar do Gaúcho',3],['Pizzaria Forno Bom',3],['Lanchonete da Praça',3],['Seu Hélio',3],
-  ['Dona Zuleide',3],['Rafa',3],['Carla',3],['Seu Messias',2],['Dona Benê',2],['Toninho',2],['Paulinha',2],['Seu Osvaldo',2],['Vitória',2],['Seu Armando',2],
-  ['Gabi',1],['Dona Iracema',1],['Caio',1],['Seu Raimundo',1],['Lara',1],['Wesley',1]];
+// Fregueses do jogo: personagens inventados, descritos pelo jeito de ser. Nunca nomes de clientes de verdade.
+const FREGUESES=[['Vizinho do Churrasco',9],['Tia da Marmita',8],['Turma do Futebol',7],['Motoboy da Esquina',7],['Vó do Bolo',6],['Galera da Obra',6],['Moço da Bike',6],['Moça da Academia',5],['Casal do Prédio Azul',5],['Grupo do Truco',5],
+  ['Pai da Festinha',4],['Mãe do Aniversário',4],['Estudante da Van',4],['Motorista de App',4],['Vizinha do Jardim',4],['Rapaz do Skate',4],['Barraca da Feira',3],['Pizzaria Forno Bom',3],['Lanchonete da Praça',3],['Porteiro do Prédio',3],
+  ['Professora de Dança',3],['Turma do Pagode',3],['Caminhoneiro',3],['Família do Sobrado',2],['Corredor da Manhã',2],['Pescador de Domingo',2],['Gamer da Madrugada',2],['Enfermeira do Plantão',2],['Pedreiro do Muro',2],['Chef de Casa',2],
+  ['Torcedor Fiel',1],['Mochileiro',1],['Cantor do Karaokê',1],['Florista da Rua',1],['Músico da Praça',1],['Turista Perdido',1]];
+// nomes de versões antigas guardados no aparelho viram um dos personagens inventados
+const NOMES_NOVOS=new Set(FREGUESES.map(f=>f[0]));
+function migrarNomesFregueses(){
+  const tr=n=>{ if(NOMES_NOVOS.has(n)) return n; let h=0; for(const ch of String(n)) h=(h*31+ch.charCodeAt(0))>>>0; return FREGUESES[h%FREGUESES.length][0]; }, ren=T=>{ if(!T) return T; const o={}; for(const n in T){ const k=tr(n); if(o[k]){ o[k].c+=T[n].c; o[k].t=Math.round((o[k].t+T[n].t)*100)/100; } else o[k]=T[n]; } return o; };
+  if(S.fregueses){ const R=S.fregueses; R.mes=ren(R.mes)||{}; R.ano=ren(R.ano)||{}; R.mesAnt=ren(R.mesAnt); R.anoAnt=ren(R.anoAnt); }
+  if(S.fiado&&S.fiado.lista) S.fiado.lista.forEach(e=>{ e.nome=tr(e.nome); });
+}
+if(S) migrarNomesFregueses();
 const PESO_FREG=FREGUESES.reduce((t,f)=>t+f[1],0);
 function sortearFreguês(){ let r=Math.random()*PESO_FREG; for(const [n,p] of FREGUESES){ r-=p; if(r<0) return n; } return FREGUESES[0][0]; }
 function Fq(){ if(!S.fregueses) S.fregueses={mes:{},ano:{},meses:0,mesAnt:null,anoAnt:null}; return S.fregueses; }
@@ -4572,7 +4588,7 @@ function renderFregueses(){
   $('#fregSub').textContent=abaFreg==='mes'?`Mês ${R.meses+1} da adega (cada mês do jogo dura 20 minutos)`:`Ano da adega: meses ${Math.floor(R.meses/12)*12+1} a ${Math.floor(R.meses/12)*12+12}`;
 }
 function abrirFregueses(a){ abaFreg=a||'mes'; fecharPainel(); renderFregueses(); $('#telaFregueses').hidden=false; SOM.abrir(); }
-const NOMES_FIADO=['Seu Zé','Dona Cida','Tião','Marquinhos','Dona Neide','Juninho','Seu Valdir','Cris','Dona Lurdes','Betão','Seu Nonato','Dona Fátima','Pedrinho','Seu Jorge','Dona Rosa','Léo'];
+const NOMES_FIADO=FREGUESES.slice(0,16).map(f=>f[0]).filter(n=>!/Pizzaria|Lanchonete|Barraca/.test(n));
 const QUANDO_FIADO=['na sexta','no dia 10','semana que vem','quando eu receber','amanhã sem falta','no fim do mês'];
 function F(){ if(!S.fiado) S.fiado={lista:[],hist:[],vendido:0,recebido:0,perdido:0,pedidos:0,aceitos:0,recusados:0,prox:0,seq:0}; return S.fiado; }
 const fiadoLiberado=()=>!!(S&&S.perfil&&!S.falido&&S.tarefa>=3&&(S.pedidos||0)>=1);
@@ -4716,7 +4732,7 @@ const LICOES={
     errado:'Quase! Lembre: o produto, os funcionários, a luz, o aluguel, os impostos e a maquininha saem antes de sobrar alguma coisa.',
     nota:'Valores de exemplo, parecidos com os de verdade.',
     libera:()=>!!(S.contas&&S.contas.meses>0)},
-  reserva:{ic:'🛟',tit:'Reserva de emergência',
+  reserva:{ic:'🐷',tit:'Reserva de emergência',
     falas:['Antes de investir para ganhar mais, todo mundo precisa de uma <b>reserva de emergência</b>: um dinheiro guardado só para imprevistos.',
            'Na adega, imprevisto é a geladeira que quebra, um mês fraco de vendas ou uma conta que chega maior. Em casa, é um remédio, um conserto, ficar sem renda.',
            'O tamanho certo é de <b>3 a 6 meses de contas</b> (quem tem renda que varia, como dono de negócio, costuma guardar mais). E ela fica num lugar <b>seguro</b>, que <b>rende</b> e que dá para tirar <b>no mesmo dia</b>: Tesouro Selic, Tesouro Reserva ou CDB de liquidez diária.',
@@ -4769,7 +4785,7 @@ const LICOES={
 const licaoFeita=k=>!!(S&&S.licoes&&S.licoes[k]);
 const licaoDisponivel=k=>!!(S&&LICOES[k]&&!licaoFeita(k)&&LICOES[k].libera());
 const premioLicao=()=>Math.max(15,Math.round(rendaRefMissao()*3));
-let licaoAtual=null, licaoPendente=null;
+let licaoAtual=null, licaoPendente=null, licaoErros=0;
 function oferecerLicao(k){ if(!licaoDisponivel(k)||(S.licoesVistas&&S.licoesVistas[k])) return; licaoPendente=k; }
 function checarLicaoPendente(){
   const k=licaoPendente; if(!k) return;
@@ -4778,24 +4794,57 @@ function checarLicaoPendente(){
   licaoPendente=null; S.licoesVistas=S.licoesVistas||{}; S.licoesVistas[k]=true; salvar(); abrirLicao(k);
 }
 function abrirLicao(k){
-  const L=LICOES[k]; if(!L) return; licaoAtual=k; const feita=licaoFeita(k);
+  const L=LICOES[k]; if(!L) return; licaoAtual=k; licaoErros=0; const feita=licaoFeita(k);
   const ops=L.ops.map((o,i)=>({...o,i})).sort(()=>Math.random()-0.5);
   let h=`<div class="licao-edu"><span class="licao-ic">🧔🏽</span><div>${L.falas.map(x=>`<p>${x}</p>`).join('')}</div></div>`;
   h+=`<div class="licao-perg">${L.perg}</div><div class="licao-ops">${ops.map(o=>`<button type="button" class="licao-op" data-ok="${o.ok?1:0}">${o.t}</button>`).join('')}</div>`;
   if(L.nota) h+=`<p class="licao-nota">${L.nota}</p>`;
   h+=`<p class="licao-res" id="licaoRes" aria-live="polite"></p>`;
-  h+=feita?'<p class="licao-premio">✔ Você já fez esta lição.</p>':`<p class="licao-premio">Acerte e ganhe ${fmt(premioLicao())} e ⭐ experiência.</p>`;
+  h+=feita?'<p class="licao-premio">✔ Você já fez esta lição.</p>':`<p class="licao-premio">Acerte e ganhe ${fmt(premioLicao())}, ⭐ experiência e 100 pontos no 🏆 ranking das lições (+50 se acertar de primeira).</p>`;
   $('#licaoTitulo').textContent=L.ic+' Lição do Edu: '+L.tit; $('#licaoConteudo').innerHTML=h; $('#telaLicao').hidden=false; SOM.abrir();
   $('#licaoConteudo').querySelectorAll('.licao-op').forEach(b=>b.addEventListener('click',()=>responderLicao(b)));
 }
+const licoesFeitasN=()=>Object.keys(LICOES).filter(k=>S.licoes&&S.licoes[k]).length;
+const pontosLicoes=()=>Object.keys(LICOES).filter(k=>S.licoes&&S.licoes[k]).reduce((t,k)=>t+(S.licoesErr&&S.licoesErr[k]===0?150:100),0);
+async function enviarLicao(k){
+  if(!rankingAtivo()||!S.perfil||!S.perfil.id) return false;
+  const e=S.licoesErr&&S.licoesErr[k]; 
+  try{ await rpc('licao_concluir',{p_id:S.perfil.id,p_token:S.perfil.token,p_licao:k,p_erros:Number.isInteger(e)?e:null}); S.licoesEnv=S.licoesEnv||{}; S.licoesEnv[k]=1; salvar(); return true; }
+  catch(err){ return false; }
+}
+async function sincronizarLicoes(){ if(!S.licoes) return; for(const k of Object.keys(LICOES)) if(S.licoes[k]&&!(S.licoesEnv&&S.licoesEnv[k])) await enviarLicao(k); }
+async function abrirRkLicoes(){
+  const lista=$('#listaRanking'), info=$('#rkInfo'), N=Object.keys(LICOES).length; lista.innerHTML='';
+  $('#rkEu').textContent=`Você: ${licoesFeitasN()} de ${N} lições · ${pontosLicoes()} pts`;
+  $('#telaRanking').hidden=false;
+  const linha=(pos,nome,pts,lic,eu,visual)=>{ const li=linhaRk(pos,nome,0,eu,false,visual); li.querySelector('.val').textContent=`📚 ${lic} · ${pts} pts`; return li; };
+  const regras='📚 100 pontos por lição · ⭐ +50 se acertar de primeira. As lições aparecem durante o jogo, quando o assunto acontece na adega.';
+  const minhas=`<div class="rk-licoes">${Object.entries(LICOES).map(([k,L])=>`<span class="${S.licoes&&S.licoes[k]?'feita':''}">${S.licoes&&S.licoes[k]?'✔':'🔒'} ${L.tit}</span>`).join('')}</div>`;
+  if(!rankingAtivo()){ lista.appendChild(linha(1,S.perfil?S.perfil.apelido:'Você',pontosLicoes(),licoesFeitasN(),true,S.perfil&&S.perfil.visual)); info.innerHTML=regras+minhas; return; }
+  info.textContent='Carregando…';
+  try{
+    await sincronizar(); await sincronizarLicoes();
+    const rows=await rpc('ver_ranking_licoes',{p_id:S.perfil&&S.perfil.id?S.perfil.id:null})||[];
+    let ant=0;
+    rows.forEach(r=>{ if(r.posicao>ant+1&&ant>=50){ const sep=document.createElement('li'); sep.className='sep'; sep.textContent='⋯'; lista.appendChild(sep); } lista.appendChild(linha(r.posicao,r.apelido,r.pontos,r.licoes,r.eu,r.visual||(r.eu&&S.perfil?S.perfil.visual:null))); ant=r.posicao; });
+    info.innerHTML=(rows.length?'':'Ninguém fez uma lição ainda. Seja o primeiro! ')+regras+minhas;
+  }catch(e){ lista.appendChild(linha(1,S.perfil?S.perfil.apelido:'Você',pontosLicoes(),licoesFeitasN(),true,S.perfil&&S.perfil.visual)); info.innerHTML='Não foi possível carregar o ranking das lições agora. '+regras+minhas; }
+}
 function responderLicao(b){
   const k=licaoAtual, L=LICOES[k], res=$('#licaoRes'), ok=b.dataset.ok==='1';
-  if(!ok){ b.classList.add('errada'); b.disabled=true; res.className='licao-res ruim'; res.textContent=L.errado; SOM.erro(); return; }
+  if(!ok){ licaoErros++; b.classList.add('errada'); b.disabled=true; res.className='licao-res ruim'; res.textContent=L.errado; SOM.erro(); return; }
   $('#licaoConteudo').querySelectorAll('.licao-op').forEach(x=>x.disabled=true); b.classList.add('certa');
   res.className='licao-res bom'; res.textContent=L.certo;
   if(!licaoFeita(k)){ const p=premioLicao(); S.licoes=S.licoes||{}; S.licoes[k]=true; S.din+=p; somarXP(XP_EVENTO.licao||40);
-    res.textContent+=` +${fmt(p)}`; SOM.marco(); salvar(); atualizarHUD(true); if(typeof atualizarBadgeMapa==='function') atualizarBadgeMapa(); }
-  const pr=$('#licaoConteudo .licao-premio'); if(pr) pr.textContent='✔ Lição concluída!';
+    S.licoesErr=S.licoesErr||{}; S.licoesErr[k]=licaoErros; enviarLicao(k);
+    res.textContent+=` +${fmt(p)}`+(licaoErros===0?' · 🏆 +150 pontos (de primeira!)':' · 🏆 +100 pontos'); SOM.marco(); salvar(); atualizarHUD(true); if(typeof atualizarBadgeMapa==='function') atualizarBadgeMapa(); }
+  const pr=$('#licaoConteudo .licao-premio'); if(pr) pr.textContent=`✔ Lição concluída! Você já fez ${licoesFeitasN()} de ${Object.keys(LICOES).length} lições.`;
+  const fim=document.createElement('div'); fim.className='licao-fim';
+  fim.innerHTML='<button class="btn" type="button" id="btnLicaoOk">✔ Concluir</button><button class="btn azul peq" type="button" id="btnLicaoRk">🏆 Ranking das lições</button>';
+  $('#licaoConteudo').appendChild(fim);
+  $('#btnLicaoOk').addEventListener('click',()=>$('#btnLicaoFechar').click());
+  $('#btnLicaoRk').addEventListener('click',()=>{ $('#btnLicaoFechar').click(); abrirRanking('licoes'); });
+  setTimeout(()=>fim.scrollIntoView({behavior:'smooth',block:'end'}),60);
 }
 $('#btnLicaoFechar').addEventListener('click',()=>{ $('#telaLicao').hidden=true; if(typeof rf!=='undefined'&&rf&&abaCorr==='rf'&&!$('#telaCorretora').hidden) renderRF(); });
 setInterval(()=>{ if(S){ checarLicaoPendente(); atualizarBtnFiado(); } },1000);
@@ -6218,7 +6267,17 @@ function guardaChuva(g){
   const m=_matGuarda[cor]||(_matGuarda[cor]=toon(cor,{side:THREE.DoubleSide}));
   const copa=malha(geoCopa,m,u,0,1.98,0,false); contorno(copa,0.012);
   malha(geoCabo,matCabo,u,0.16,1.45,0.04,false).rotation.z=-0.17;
-  u.visible=false; g.add(u); g.userData.guarda=u; return u;
+  u.visible=false; g.add(u); g.userData.guarda=u; u.userData.cor=cor; return u;
+}
+// guarda-chuva fechado, na mão esquerda, com a ponta para baixo (a sacola fica na direita)
+const geoFechado=new THREE.ConeGeometry(0.075,0.4,8), geoPonta=new THREE.CylinderGeometry(0.009,0.009,0.08,5), geoAlca=new THREE.TorusGeometry(0.035,0.011,6,10,Math.PI);
+function guardaFechado(g){
+  const ud=g.userData; if(ud.fechado) return ud.fechado; if(!ud.bE||!ud.guarda) return null;
+  const cor=ud.guarda.userData.cor, f=new THREE.Group(), m=_matGuarda[cor];
+  const c=malha(geoFechado,m,f,0,-0.5,0.02,false); c.rotation.x=Math.PI; contorno(c,0.01);
+  malha(geoPonta,matCabo,f,0,-0.72,0.02,false); malha(geoPonta,matCabo,f,0,-0.28,0.02,false);
+  malha(geoAlca,matCabo,f,0.035,-0.24,0.02,false);
+  f.visible=false; ud.bE.add(f); ud.fechado=f; return f;
 }
 const naRua=p=>Math.abs(p.x)>5.25||p.z>5.05||p.z<-5.25;
 let tGuarda=0;
@@ -6227,8 +6286,8 @@ function atualizarGuardaChuvas(dt){
   const chove=climaDia(diaAgora())==='chuva';
   const lista=clientes.map(c=>c.g).concat(PEDESTRES.map(p=>p.g));
   lista.forEach(g=>{ const abre=chove&&naRua(g.position);
-    if(abre){ const u=guardaChuva(g); if(!u.visible){ u.visible=true; u.scale.setScalar(0.3); } if(u.scale.x<1) u.scale.setScalar(Math.min(1,u.scale.x+0.35)); }
-    else if(g.userData.guarda) g.userData.guarda.visible=false; });
+    if(abre){ const u=guardaChuva(g); if(!u.visible){ u.visible=true; u.scale.setScalar(0.3); } if(u.scale.x<1) u.scale.setScalar(Math.min(1,u.scale.x+0.35)); if(g.userData.fechado) g.userData.fechado.visible=false; }
+    else if(g.userData.guarda){ g.userData.guarda.visible=false; const f=guardaFechado(g); if(f) f.visible=true; } });   // na loja: fechado, na mão
 }
 // ================= Gráfico alto / baixo (realismo leve) =================
 // Alto: sombras nítidas, o sol anda no céu, sombra das nuvens, neblina, brilho do neon e dos faróis, asfalto molhado na chuva.
