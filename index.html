@@ -423,6 +423,22 @@ body:not(.jogando) .alerta{display:none}
 .dez-barra i{display:block;height:100%}
 .dez-cor{width:16px;height:16px;border-radius:4px;border:2px solid var(--contorno);flex:none}
 .dez-linha.lucro{background:#DFF5E3;border-radius:10px;border-bottom:none;margin-top:4px}
+.dez-linha.perde{background:#FDE3E0;border-radius:10px;border-bottom:none;margin-top:4px}
+.dez-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}
+.dez-chips button{font:800 .8rem 'Nunito',sans-serif;border:2px solid var(--contorno);border-radius:999px;padding:3px 10px;background:#FFF8E6;color:var(--texto);cursor:pointer}
+.dez-chips button.ativo{background:var(--amarelo)}
+.dez-isca{background:#FFF3CD;border:2px solid var(--contorno);border-radius:12px;padding:8px 10px;font-size:.85rem;margin:8px 0 0}
+.div-cartinha{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);transform:translateX(-50%);z-index:8;width:min(92vw,380px);background:#FFFDF6;border:4px solid var(--contorno);border-radius:16px;box-shadow:0 5px 0 var(--contorno);padding:10px 12px 9px;font:800 .85rem 'Nunito',sans-serif;color:var(--texto);animation:divEntra .35s ease-out}
+.div-cartinha b.tt{display:block;font-size:.92rem;margin-bottom:6px}
+.div-cartinha .dez-barra{height:20px;margin:4px 0 6px}
+.div-cartinha .div-res{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:.76rem;color:var(--sub)}
+.div-cartinha .div-res span{display:flex;flex-direction:column}
+.div-cartinha .div-res span b{color:var(--texto);font-size:.9rem}
+.div-cartinha .div-res span.perde b{color:#C0392B}.div-cartinha .div-res span.sobra b{color:var(--verde-esc)}
+.div-cartinha .div-acoes{display:flex;gap:8px;margin-top:8px;align-items:center}
+.div-cartinha .div-acoes button{font:900 .82rem 'Nunito',sans-serif;border:2.5px solid var(--contorno);border-radius:10px;padding:5px 10px;background:var(--amarelo);cursor:pointer}
+.div-cartinha .div-acoes button.leve{background:transparent;border-color:transparent;color:var(--sub);font-weight:800;margin-left:auto;padding:5px 2px}
+@keyframes divEntra{from{transform:translate(-50%,30px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
 /* carregando */
 #carregandoAdega{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#46736D;color:#fff;font-weight:900}
 #carregandoAdega .titulo{font-size:2.6rem}
@@ -843,6 +859,7 @@ body:not(.jogando) .alerta{display:none}
 </section>
 <button class="btn-missoes" id="btnMissoes" type="button" hidden><span id="missoesTxt">📅 Missões</span><span class="badge-missoes" id="missoesBadge" hidden>0</span></button>
 <div class="toast-missao" id="toastMissao" hidden role="status"></div>
+<div class="div-cartinha" id="divCartinha" hidden role="status"></div>
 
 <section class="tela" id="telaMissoes" hidden>
   <div class="caixa">
@@ -1889,6 +1906,7 @@ function cobrar(c,modo){
   if(c.retirada&&!c.retirou) marcarRetirada(c);
   const topo=c.g.position.clone().setY(2.0);
   S.total+=c.valor; registrarGanho(c.valor); registrarFreguês(c,c.valor); missaoEvento('cobrar',1); if(modo==='manual') missaoEvento('cobrarManual',1);
+  if(typeof talvezDivisao==='function') try{ talvezDivisao(c); }catch(e){}
   if(modo==='manual'){
     const gorjeta=Math.round(c.valor*30*Math.max(0,1-c.t/JANELA_GORJETA))/100;
     S.din+=c.valor+gorjeta; S.cobrados++; S.total+=gorjeta;
@@ -4482,7 +4500,7 @@ function calcularBoletos(F){
     {ic:'🏠',nome:'Aluguel do ponto',info:'a loja paga para ficar aqui na rua',v:F*0.02},
     {ic:'⚡',nome:'Conta de luz',info:`${gel} ${gel===1?'geladeira ligada':'geladeiras e freezers ligados'} dia e noite`,v:F*(0.008+0.0025*gel)},
     {ic:'💳',nome:'Taxa da maquininha',info:'cartão de crédito cobra mais; Pix não tem taxa',v:F*0.013},
-    {ic:'🍾',nome:'Perdas',info:'garrafa quebrada e produto que venceu',v:F*0.005}
+    {ic:'🗑️',nome:'Perdas',info:'garrafa quebrada e produto que venceu',v:F*0.005}
   ].map(b=>({...b,v:Math.round(b.v*100)/100}));
 }
 function gerarBoletos(){
@@ -4524,19 +4542,89 @@ const DEZ_REAIS=[
   {ic:'🏠',nome:'Aluguel',info:'o ponto da loja',v:0.30,cor:'#9B5DE5'},
   {ic:'⚡',nome:'Luz',info:'geladeiras ligadas dia e noite',v:0.25,cor:'#FFC93C'},
   {ic:'💳',nome:'Maquininha',info:'taxa do cartão',v:0.13,cor:'#6EC6EA'},
-  {ic:'🍾',nome:'Perdas',info:'quebra e vencimento',v:0.07,cor:'#B5651D'},
+  {ic:'🗑️',nome:'Perdas',info:'quebra e vencimento',v:0.07,cor:'#B5651D'},
   {ic:'💛',nome:'Sobra para a adega',info:'é daqui que saem reformas e geladeira nova',v:0.30,cor:'#3CB371',lucro:true}
 ];
 const reaisTxt=v=>'R$ '+v.toFixed(2).replace('.',',');
+// ---------- Para onde vão os R$ de um produto (valores de exemplo; nunca os custos reais da loja) ----------
+// A parte do produto vem da margem de exemplo do setor; as despesas seguem a mesma proporção da tela dos R$ 10.
+const FRETE_PCT=0.02;
+const DESP_PCT=DEZ_REAIS.filter(d=>d.nome!=='Produto'&&!d.lucro).map(d=>({...d,pct:d.v/10}));
+function dividirPreco(P,id){
+  const m=MARGEM[id]||0.2, cent=v=>Math.round(v*100)/100;
+  const frete=cent(P*FRETE_PCT), prod=cent(P*(1-m)-frete);
+  const desp=DESP_PCT.map(d=>({...d,val:cent(P*d.pct)}));
+  const sobra=cent(P-prod-frete-desp.reduce((t,d)=>t+d.val,0));
+  return {P,prod,frete,desp,sobra};
+}
+function produtoExemplo(id,aleatorio){
+  const l=produtosDoSetor(id).filter(p=>p.p>=2); if(!l.length){ const nm={refri:'Refrigerante',agua:'Água ou suco',salgadinho:'Salgadinho',gelo:'Saco de gelo',carvao:'Saco de carvão',mercearia:'Item de mercearia'}[id]; return nm?{n:nm,p:Math.round(valorEst(id)*2)/2,s:id}:null; }
+  if(id==='refri'){ const c=l.find(p=>/coca/i.test(p.n)&&/2 ?l/i.test(p.n)); if(c&&!aleatorio) return c; }
+  if(aleatorio) return pega(l);
+  const med=precosCache[id]||l[0].p; return l.slice().sort((a,b)=>Math.abs(a.p-med)-Math.abs(b.p-med))[0];
+}
+function linhasDivisao(D){
+  const L=[{ic:'📦',nome:'Produto',info:'o que a adega pagou ao fornecedor',v:D.prod,cor:'#8FB8DE'},{ic:'🚚',nome:'Frete, Uber ou gasolina',info:'trazer o produto até a loja, e o tempo de ir e vir',v:D.frete,cor:'#5C8FBF'}]
+    .concat(D.desp.map(d=>({ic:d.ic,nome:d.nome,info:d.info,v:d.val,cor:d.cor})));
+  return L;
+}
+function htmlDivisao(p){
+  const D=dividirPreco(p.p,p.s), L=linhasDivisao(D), perde=D.sobra<0;
+  let h=`<div class="dez-barra" aria-hidden="true">`; L.forEach(d=>{ h+=`<i style="flex:${Math.max(0.0001,d.v)};background:${d.cor}" title="${d.nome}"></i>`; }); if(D.sobra>0) h+=`<i style="flex:${D.sobra};background:#3CB371"></i>`; h+='</div><div class="dez-lista">';
+  L.forEach(d=>{ h+=`<div class="dez-linha"><span class="dez-cor" style="background:${d.cor}"></span><span class="bol-tx"><b>${d.ic} ${d.nome}</b><small>${d.info}</small></span><b>${reaisTxt(d.v)}</b></div>`; });
+  h+=`<div class="dez-linha ${perde?'perde':'lucro'}"><span class="dez-cor" style="background:${perde?'#E8433A':'#3CB371'}"></span><span class="bol-tx"><b>${perde?'📉 A adega perde':'💛 Sobra para a adega'}</b><small>${perde?'as despesas são maiores que a margem deste produto':'é daqui que saem reformas e geladeira nova'}</small></span><b>${perde?'− ':''}${reaisTxt(Math.abs(D.sobra))}</b></div></div>`;
+  if(perde) h+=`<p class="dez-isca">🎣 Este é um <b>produto isca</b>: a adega quase não ganha (ou até perde) nele, mas ele traz o cliente, que aproveita e leva outras coisas.</p>`;
+  return h;
+}
+let dezSel=null;
+function abrirDivisaoProduto(p){
+  dezSel=p; const ex=IDS.map(id=>produtoExemplo(id)).filter(Boolean);
+  if(!ex.some(x=>x.n===p.n)) ex.unshift(p);
+  let h=`<p class="txt">Quando você paga <b>${reaisTxt(p.p)}</b> pelo produto <b>${p.n}</b>, veja para onde vai cada pedaço:</p>`;
+  h+=htmlDivisao(p);
+  h+=`<p class="txt" style="font-size:.85rem;margin-top:10px"><b>Compare com outros produtos:</b></p><div class="dez-chips">${ex.map((x,i)=>`<button type="button" data-i="${i}" class="${x.n===p.n?'ativo':''}">${EST[x.s].ic} ${x.n}</button>`).join('')}</div>`;
+  h+=`<p class="bol-nota">Valores de exemplo, parecidos com os de uma adega de bairro de verdade. Na média de tudo o que vende, sobra uns 3% para a adega.</p>`;
+  h+=`<button class="btn azul peq" id="btnDezMedia" type="button">📊 Ver a média de R$ 10</button>`;
+  $('#telaDez h2').textContent='📊 Para onde vão os '+reaisTxt(p.p);
+  $('#dezConteudo').innerHTML=h; $('#telaDez').hidden=false; SOM.abrir();
+  $('#dezConteudo').querySelectorAll('.dez-chips button').forEach(b=>b.onclick=()=>{ abrirDivisaoProduto(ex[+b.dataset.i]); $('#dezConteudo').scrollTop=0; });
+  $('#btnDezMedia').onclick=()=>abrirDezReais();
+}
+// a cartinha aparece de vez em quando depois que um cliente paga
+const DIV_ESPERA=240;
+let tCartinha=null;
+function talvezDivisao(c){
+  if(S.divOff) return; S.divN=(S.divN||0)+1;
+  const vez=S.divN===3||(S.divN>3&&(S.divN-3)%20===0);
+  if(!vez||(S.tempoJogo||0)-(S.divT||-1e9)<DIV_ESPERA) return;
+  if(algumaTelaAberta()||!$('#divCartinha').hidden) return;
+  const ids=Object.keys(c.pegou||{}).filter(id=>(c.pegou[id]||0)>0); const id=ids.length?pega(ids):(c.lista&&c.lista[0]);
+  const p=id&&produtoExemplo(id,S.divN>3); if(!p) return;
+  S.divT=S.tempoJogo||0; mostrarCartinha(p);
+}
+function mostrarCartinha(p){
+  const D=dividirPreco(p.p,p.s), desp=Math.round((D.desp.reduce((t,d)=>t+d.val,0))*100)/100, perde=D.sobra<0, el=$('#divCartinha');
+  el.innerHTML=`<b class="tt">💡 ${p.n} a ${reaisTxt(p.p)}: para onde vai o dinheiro?</b>
+    <div class="dez-barra" aria-hidden="true"><i style="flex:${D.prod+D.frete};background:#8FB8DE"></i><i style="flex:${desp};background:#F2A65A"></i>${D.sobra>0?`<i style="flex:${D.sobra};background:#3CB371"></i>`:''}</div>
+    <div class="div-res"><span>📦 Produto e frete<b>${reaisTxt(D.prod+D.frete)}</b></span><span>🧾 Despesas<b>${reaisTxt(desp)}</b></span><span class="${perde?'perde':'sobra'}">${perde?'📉 A adega perde':'💛 Sobra'} <b>${perde?'−':''}${reaisTxt(Math.abs(D.sobra))}</b></span></div>
+    <div class="div-acoes"><button type="button" id="divVer">Ver detalhes</button><button type="button" class="leve" id="divFechar">Fechar</button><button type="button" class="leve" id="divOff" style="margin-left:0">🔕 Não mostrar mais</button></div>`;
+  el.hidden=false; clearTimeout(tCartinha); tCartinha=setTimeout(()=>{ el.hidden=true; },12000);
+  $('#divVer').onclick=()=>{ el.hidden=true; abrirDivisaoProduto(p); };
+  $('#divFechar').onclick=()=>{ el.hidden=true; };
+  $('#divOff').onclick=()=>{ el.hidden=true; S.divOff=true; salvar(); toastMissao('🔕 Tudo bem. A conta de cada produto continua no 🗺️ mapa, em "Para onde vão os R$".'); };
+}
 function abrirDezReais(){
+  $('#telaDez h2').textContent='📊 Para onde vão os seus R$ 10';
   let h=`<p class="txt">Imagine que você gastou <b>R$ 10,00</b> aqui na adega. Veja para onde vai cada pedaço:</p><div class="dez-barra" aria-hidden="true">`;
   DEZ_REAIS.forEach(d=>{ h+=`<i style="flex:${d.v};background:${d.cor}" title="${d.nome}"></i>`; });
   h+='</div><div class="dez-lista">';
   DEZ_REAIS.forEach(d=>{ h+=`<div class="dez-linha${d.lucro?' lucro':''}"><span class="dez-cor" style="background:${d.cor}"></span><span class="bol-tx"><b>${d.ic} ${d.nome}</b><small>${d.info}</small></span><b>${reaisTxt(d.v)}</b></div>`; });
   h+=`</div><p class="bol-nota">Valores de exemplo, parecidos com os de uma adega de bairro de verdade.</p>`;
+  h+=`<button class="btn amarelo peq" id="btnDezProd" type="button" style="margin-bottom:8px">🥤 Ver produto por produto</button>`;
   if(licaoDisponivel('contas')||licaoFeita('contas')) h+=`<button class="btn azul peq" id="btnDezLicao" type="button">🧾 ${licaoFeita('contas')?'Rever':'Fazer'} a lição do Edu</button>`;
   $('#dezConteudo').innerHTML=h; $('#telaDez').hidden=false; SOM.abrir();
   const bl=$('#btnDezLicao'); if(bl) bl.onclick=()=>{ $('#telaDez').hidden=true; abrirLicao('contas'); };
+  $('#btnDezProd').onclick=()=>{ const p=produtoExemplo('refri')||IDS.map(id=>produtoExemplo(id)).find(Boolean); if(p) abrirDivisaoProduto(p); };
 }
 $('#btnDezFechar').addEventListener('click',()=>{ $('#telaDez').hidden=true; oferecerLicao('contas'); });
 
@@ -5352,7 +5440,7 @@ const ETAPAS_MAPA=[
   {id:'contas',ic:'🧾',nome:'As contas do mês',chip:'Lição',zona:0,
    desc:'A cada 20 minutos de jogo chega o mês da adega: luz, aluguel, impostos, maquininha e perdas saem do caixa. Veja também para onde vão os seus R$ 10.',
    req:'Complete 5 tarefas e espere chegarem os primeiros boletos. Depois, faça a lição do Edu.',prog:()=>[Math.min(S.tarefa,5)+(S.contas&&S.contas.meses>0?1:0)+(licaoFeita('contas')?1:0),7],
-   feito:()=>licaoFeita('contas'),acao:{txt:'📊 Para onde vão os R$ 10',fn:()=>abrirDezReais()},
+   feito:()=>licaoFeita('contas'),acao:{txt:'📊 Para onde vão os R$',fn:()=>abrirDezReais()},
    acaoAntes:()=>licaoDisponivel('contas')?{txt:'🧾 Fazer a lição do Edu',fn:()=>abrirLicao('contas')}:null},
   {id:'meta10000',meta:10000,ic:'🎯',nome:'Meta: '+nomeMeta(10000),chip:nomeMeta(10000).replace('R$ ',''),zona:0,
    desc:'Fature '+nomeMeta(10000)+' nesta temporada, vendendo com os preços reais da Adega do Edu. Prêmio: '+fmt(premioMeta(10000))+'.',
