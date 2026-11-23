@@ -547,6 +547,23 @@ body:not(.jogando) .alerta{display:none}
 .tempo-horas i{flex:1;background:#F2B21B;border-radius:3px 3px 0 0}
 .tempo-horas i.agora{background:#E8433A}
 .tempo-leg{display:flex;justify-content:space-between;font-size:.7rem;font-weight:800;color:var(--sub)}
+#telaLicao,#telaTempo{z-index:11}
+.corr-abas{margin:0 0 10px}
+.rf-taxas{display:flex;justify-content:space-between;gap:8px;background:#E7F0FF;border:2.5px solid var(--contorno);border-radius:12px;padding:6px 10px;font-size:.84rem;font-weight:700}
+.rf-tempo{font-size:.84rem;font-weight:700;margin:8px 2px;color:var(--texto)}
+.rf-apl{border:2.5px solid var(--contorno);border-radius:14px;padding:9px 11px;margin:8px 0;background:#F2FBF5}
+.rf-apl-cab b{display:block}.rf-apl-cab small{color:var(--sub);font-weight:700}
+.rf-vivo{display:flex;justify-content:space-between;align-items:baseline;margin:4px 0}.rf-vivo b{font:400 1.4rem 'Lilita One',sans-serif;color:#24804F}
+.rf-linha{display:flex;flex-direction:column;gap:2px;font-size:.8rem;font-weight:700}
+.rf-acoes{margin-top:6px}.rf-acoes small{font-weight:700;color:var(--sub)}.rf-acoes .btn{margin:0}
+.rf-prod{border:2.5px solid var(--contorno);border-radius:14px;padding:8px 10px;margin:8px 0;background:#fff}
+.rf-prod.aberto{background:#FFFBEA}
+.rf-prod-cab{display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;padding:0;text-align:left;font-family:inherit;cursor:pointer;color:inherit}
+.rf-ic{font-size:1.7rem}.rf-ano{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end}.rf-ano b{font-size:1.05rem;color:#24804F}.rf-ano small{font-size:.7rem;color:var(--sub);font-weight:700}
+.rf-sim input{width:100%;box-sizing:border-box;margin-top:8px}
+.rf-simt{display:grid;grid-template-columns:1.1fr 1fr 1fr 1.1fr;gap:4px;font-size:.78rem;font-weight:700;padding:5px 0;border-bottom:1px dashed #D9CFBF;align-items:center}
+.rf-simt span:nth-child(n+2),.rf-simt b{text-align:right}.rf-simt small{display:block;color:var(--sub);font-size:.66rem}
+.rf-nota{font-size:.8rem;font-weight:700;margin:6px 0;color:var(--texto)}
 </style>
 </head>
 <body>
@@ -678,6 +695,7 @@ body:not(.jogando) .alerta{display:none}
     </div>
     <button class="btn amarelo peq" id="btnCartao" type="button">📤 Compartilhar meu cartão</button>
     <button class="btn azul peq" id="btnConta" type="button" style="margin-top:8px">🔐 Celular e senha</button>
+    <button class="btn peq" id="btnGrafico" type="button" style="margin-top:8px">🎨 Gráfico: alto</button>
     <button type="button" class="link-btn" id="btnPersFechar">Fechar</button>
   </div>
 </section>
@@ -3379,14 +3397,22 @@ async function carregarCorretora(){
     corrStatus=await rpc('corretora_status',{p_id:S.perfil.id,p_token:S.perfil.token}); renderCorretora(); }
   catch(e){ b.innerHTML='<p class="txt centro">'+(/corretora_status/.test(e.message)?'A corretora ainda não foi instalada no servidor.':'Não foi possível abrir a corretora agora. Confira a internet.')+'</p>'; }
 }
+let abaCorr='conta';
+function abasCorr(b){
+  const d=document.createElement('div'); d.className='cat-filtros corr-abas';
+  d.innerHTML=`<button type="button" data-a="conta" class="${abaCorr==='conta'?'ativo':''}">💼 Conta</button><button type="button" data-a="rf" class="${abaCorr==='rf'?'ativo':''}">🏦 Renda fixa</button>`;
+  d.querySelectorAll('button').forEach(x=>x.onclick=()=>{ abaCorr=x.dataset.a; SOM.abrir(); if(abaCorr==='rf') carregarRF(); else renderCorretora(); });
+  b.appendChild(d);
+}
 function renderCorretora(){
   const C=corrStatus, b=$('#corrConteudo'); b.innerHTML='';
   const add=h=>{ const d=document.createElement('div'); d.innerHTML=h; while(d.firstChild) b.appendChild(d.firstChild); };
+  abasCorr(b);
   add(`<div class="corr-saldo"><span>Saldo na corretora</span><b>${fmt(Number(C.saldo))}</b></div>`);
   const bg=document.createElement('button'); bg.type='button'; bg.className='pilula guia-btn'; bg.textContent='❓ Como funciona a corretora'; bg.addEventListener('click',abrirGuiaCorr); b.appendChild(bg);
-  add('<p class="txt">A corretora é onde fica o dinheiro que você separa para <b>investir</b>. Em breve, você poderá comprar ações das adegas de outros jogadores quando elas abrirem capital na bolsa (IPO).</p>');
+  add('<p class="txt">A corretora é onde fica o dinheiro que você separa para <b>investir</b>. Na aba <b>🏦 Renda fixa</b> você aplica em Poupança, Tesouro Selic, CDB, LCI e LCA e vê o dinheiro render. Em breve, também vai poder comprar ações das adegas de outros jogadores (IPO).</p>');
   const saldo=Number(C.saldo);
-  if(saldo>=1000){
+  if(saldo>=10){
     const rb=document.createElement('div'); rb.className='corr-aporte corr-resgate';
     rb.innerHTML=`<div class="missao-txt">Resgatar para o caixa da adega</div>
       <div class="missao-info">Disponível para resgate: ${fmt(saldo)}</div>
@@ -3440,12 +3466,143 @@ function renderCorretora(){
   mostrarExtratoCorr(C,add);
   add('<p class="txt" style="font-size:.78rem;color:var(--sub);margin-top:8px">Simulação educativa com dinheiro fictício do jogo. Não é recomendação de investimento.</p>');
 }
+
+// ================= Renda fixa (prateleira educativa da corretora) =================
+// Cada dia de verdade conta como 1 mês do investimento. As contas valem no servidor; aqui só mostramos o valor "rendendo".
+const MES_DIAS=365/12;
+let rf=null, rfT0=0, rfSel=null, tRF=0;
+const MSG_RF={valor_minimo_rf:'Esse investimento tem valor mínimo maior.',saldo_insuficiente:'Você não tem esse saldo na corretora. Aporte do caixa da adega na aba 💼 Conta.',
+  sem_liquidez:'Esse título não tem liquidez: o dinheiro só volta no vencimento.',em_carencia:'Ainda está na carência: espere o prazo mínimo para resgatar.',muitas_aplicacoes:'Você já tem 20 aplicações abertas.',jogador_falido:'Essa adega faliu.'};
+const fmtC=v=>'R$ '+(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});   // com centavos
+const pctTxt=v=>(v*100).toFixed(2).replace('.',',').replace(',00','')+'%';
+function rfTaxaTxt(p){ if(p.indexador==='cdi') return Math.round(p.taxa*100)+'% do CDI'; if(p.indexador==='selic') return 'Selic'; if(p.indexador==='pre') return pctTxt(+p.taxa)+' ao ano (pré)'; return '0,5% ao mês + TR'; }
+function rfAnoBruto(p){ const c=+rf.cdi, sl=+rf.selic, tr=+rf.tr; if(p.indexador==='cdi') return Math.pow(1+(Math.pow(1+c,1/252)-1)*p.taxa,252)-1; if(p.indexador==='selic') return sl; if(p.indexador==='pre') return +p.taxa; return Math.pow(1+0.005+tr,12)-1; }
+const rfIof=d=>d>=30?0:d<=0?1:[96,93,90,86,83,80,76,73,70,66,63,60,56,53,50,46,43,40,36,33,30,26,23,20,16,13,10,6,3][d-1]/100;
+const rfIr=d=>d<=180?0.225:d<=360?0.2:d<=720?0.175:0.15;
+function rfConta(p,valor,dias){
+  if(p.prazo_meses) dias=Math.min(dias,p.prazo_meses*MES_DIAS);
+  const du=dias*252/365, c=+rf.cdi, sl=+rf.selic, tr=+rf.tr; let fator;
+  if(p.indexador==='cdi') fator=Math.pow(1+(Math.pow(1+c,1/252)-1)*p.taxa,du);
+  else if(p.indexador==='selic') fator=Math.pow(1+sl,du/252);
+  else if(p.indexador==='pre') fator=Math.pow(1+(+p.taxa),du/252);
+  else fator=Math.pow(1+(sl>0.085?0.005+tr:0),Math.floor(dias/MES_DIAS+1e-9));
+  const bruto=Math.round(valor*fator*100)/100, rend=bruto-valor, iof=p.ir?Math.round(rend*rfIof(Math.floor(dias))*100)/100:0, ir=p.ir?Math.round((rend-iof)*rfIr(dias)*100)/100:0;
+  return {dias,bruto,iof,ir,liquido:bruto-iof-ir};
+}
+const rfProd=id=>rf.produtos.find(p=>p.id===id);
+const agoraRF=()=>new Date(rf.agora).getTime()+(performance.now()-rfT0);
+const diasDe=a=>Math.max(0,(agoraRF()-new Date(a.criado_em).getTime())/86400000*MES_DIAS);
+const mesesTxt=d=>{ const m=d/MES_DIAS; return m<1?Math.max(0,Math.floor(d))+' '+(Math.floor(d)===1?'dia':'dias'):m.toFixed(1).replace('.',',').replace(',0','')+' '+(m>=1&&m<2?'mês':'meses'); };
+async function carregarRF(){
+  const b=$('#corrConteudo'); b.innerHTML=''; abasCorr(b); const w=document.createElement('p'); w.className='txt centro'; w.textContent='Carregando a prateleira…'; b.appendChild(w);
+  try{ rf=await rpc('rf_status',{p_id:S.perfil.id,p_token:S.perfil.token}); rfT0=performance.now(); renderRF();
+    if(!S.viuRF){ S.viuRF=true; S.licoesVistas=S.licoesVistas||{}; S.licoesVistas.rendafixa=true; salvar(); setTimeout(()=>abrirLicao('rendafixa'),600); } }
+  catch(e){ w.textContent=/rf_status/.test(e.message)?'A renda fixa ainda não foi instalada no servidor.':'Não foi possível abrir a renda fixa agora. Confira a internet.'; }
+}
+function chipsRF(p){
+  const c=[];
+  c.push(`<span>📈 ${rfTaxaTxt(p)}</span>`);
+  c.push(p.liquidez==='diaria'?`<span>💧 Liquidez diária${p.carencia_meses?` depois de ${p.carencia_meses} meses`:''}</span>`:`<span class="menos">🔒 Só no vencimento</span>`);
+  if(p.prazo_meses) c.push(`<span>📅 Vence em ${p.prazo_meses} meses</span>`);
+  if(p.carencia_meses&&p.liquidez==='diaria') c.push(`<span class="menos">⏳ Carência de ${p.carencia_meses} meses</span>`);
+  c.push(p.ir?`<span class="menos">🧾 IR de 22,5% a 15%</span>`:`<span>✅ Isento de IR</span>`);
+  c.push(`<span>🛡️ ${p.garantia}</span>`);
+  return c.join('');
+}
+function renderRF(){
+  const b=$('#corrConteudo'); b.innerHTML=''; abasCorr(b);
+  const add=h=>{ const d=document.createElement('div'); d.innerHTML=h; while(d.firstChild) b.appendChild(d.firstChild); return b.lastElementChild; };
+  add(`<div class="corr-saldo"><span>Saldo para investir</span><b>${fmt(+rf.saldo)}</b></div>`);
+  add(`<div class="rf-taxas"><span>CDI hoje <b>${pctTxt(+rf.cdi)} ao ano</b></span><span>Selic <b>${pctTxt(+rf.selic)}</b></span></div>
+    <p class="rf-tempo">⏱ Na corretora, <b>cada dia de verdade conta como 1 mês</b> do investimento. Volte amanhã para ver o dinheiro render!</p>`);
+  const bg=add(`<button type="button" class="pilula guia-btn">📚 O que é CDI, liquidez, IR e FGC?</button>`); bg.onclick=abrirGlossarioRF;
+  // minhas aplicações
+  if(rf.aplicacoes.length){
+    add('<p class="txt" style="margin-top:10px"><b>Minhas aplicações</b></p>');
+    rf.aplicacoes.forEach(a=>{ const p=rfProd(a.produto); if(!p) return;
+      const el=add(`<div class="rf-apl" data-id="${a.id}"><div class="rf-apl-cab"><b>${p.nome}</b><small>${p.emissor} · aplicado ${fmt(+a.valor)}</small></div>
+        <div class="rf-vivo"><span>Hoje</span><b class="rf-bruto">${fmt(+a.bruto)}</b></div>
+        <div class="rf-linha rf-info"></div><div class="missao-barra rf-barra"><i></i></div><div class="rf-acoes"></div></div>`);
+      const ac=el.querySelector('.rf-acoes'), dias=diasDe(a), car=p.carencia_meses*MES_DIAS;
+      if(p.liquidez==='vencimento') ac.innerHTML=`<small>🔒 Sem liquidez: o dinheiro volta sozinho no vencimento.</small>`;
+      else if(dias<car) ac.innerHTML=`<small>⏳ Em carência: libera o resgate em ${mesesTxt(car-dias)} (${Math.ceil((car-dias)/MES_DIAS)} ${Math.ceil((car-dias)/MES_DIAS)===1?'dia':'dias'} de verdade).</small>`;
+      else { const bt=document.createElement('button'); bt.type='button'; bt.className='btn amarelo peq'; bt.textContent='Resgatar para o saldo'; bt.onclick=()=>resgatarRF(a,bt); ac.appendChild(bt); }
+    });
+  }
+  // prateleira
+  add('<p class="txt" style="margin-top:10px"><b>Prateleira de renda fixa</b></p>');
+  rf.produtos.forEach(p=>{
+    const ano=rfAnoBruto(p);
+    const el=add(`<div class="rf-prod${rfSel===p.id?' aberto':''}"><button type="button" class="rf-prod-cab"><span class="rf-ic">${{poupanca:'🐷',tesouro:'🏛️',cdb:'🏦',lci:'🏠',lca:'🌾'}[p.tipo]}</span>
+      <span class="bol-tx"><b>${p.nome}</b><small>${p.emissor} · mínimo ${fmt(+p.minimo)}</small></span><span class="rf-ano"><b>${pctTxt(ano)}</b><small>ao ano${p.ir?' (bruto)':''}</small></span></button>
+      <div class="tempo-ef">${chipsRF(p)}</div><div class="rf-sim"></div></div>`);
+    el.querySelector('.rf-prod-cab').onclick=()=>{ rfSel=rfSel===p.id?null:p.id; SOM.abrir(); renderRF(); };
+    if(rfSel===p.id) simuladorRF(p,el.querySelector('.rf-sim'));
+  });
+  add('<p class="txt" style="font-size:.78rem;color:var(--sub);margin-top:8px">Simulação educativa com dinheiro fictício do jogo, com regras parecidas com as de verdade (taxas de exemplo). Não é recomendação de investimento.</p>');
+  atualizarRFVivo();
+}
+function simuladorRF(p,box){
+  const sugest=Math.max(+p.minimo,Math.min(1000,Math.floor(+rf.saldo)));
+  box.innerHTML=`<input class="rf-val" inputmode="numeric" autocomplete="off" placeholder="Quanto investir" value="${sugest.toLocaleString('pt-BR')}"><div class="rf-tab"></div><button type="button" class="btn rf-ir">Investir</button>`;
+  const inp=box.querySelector('.rf-val'), tab=box.querySelector('.rf-tab'), bt=box.querySelector('.rf-ir');
+  const conta=()=>{ const v=lerValor(inp.value); const prazos=p.prazo_meses?[p.prazo_meses]:[1,6,12,24];
+    let h=`<div class="rf-simt"><span>Em</span><span>Bruto</span><span>Impostos</span><b>Você recebe</b></div>`;
+    prazos.forEach(m=>{ const c=rfConta(p,v,m*MES_DIAS); h+=`<div class="rf-simt"><span>${m} ${m===1?'mês':'meses'}<small>${m} ${m===1?'dia':'dias'} reais</small></span><span>${fmtC(c.bruto)}</span><span>${c.ir+c.iof?fmtC(c.ir+c.iof):'isento'}</span><b>${fmtC(c.liquido)}</b></div>`; });
+    if(p.liquidez==='diaria'&&p.ir) { const c=rfConta(p,v,15); h+=`<p class="rf-nota">Resgatar com só 15 dias paga <b>IOF</b> (${fmt(c.iof)}) e IR de 22,5%: renda fixa gosta de tempo.</p>`; }
+    if(!p.ir&&p.indexador==='cdi') { const irx=rfIr((p.prazo_meses||12)*MES_DIAS); h+=`<p class="rf-nota">Isento de IR: ${Math.round(p.taxa*100)}% do CDI aqui equivale a uns <b>${Math.round(p.taxa/(1-irx)*100)}% do CDI</b> num CDB do mesmo prazo, que paga IR de ${pctTxt(irx)}.</p>`; }
+    if(p.tipo==='poupanca') h+=`<p class="rf-nota">A poupança só rende no "aniversário": a cada mês completo. Tirar antes perde o rendimento do mês.</p>`;
+    tab.innerHTML=h; bt.disabled=v<+p.minimo||v>+rf.saldo; bt.textContent=v>+rf.saldo?'Saldo insuficiente':v<+p.minimo?'Mínimo de '+fmt(+p.minimo):'Investir '+fmt(v); };
+  inp.addEventListener('input',()=>{ const v=lerValor(inp.value); inp.value=v?v.toLocaleString('pt-BR'):''; conta(); });
+  bt.onclick=async()=>{ const v=lerValor(inp.value); if(!confirm(`Investir ${fmt(v)} em ${p.nome}?${p.liquidez==='vencimento'?'\n\nAtenção: só dá para resgatar no vencimento ('+p.prazo_meses+' meses = '+p.prazo_meses+' dias de verdade).':''}`)) return;
+    bt.disabled=true;
+    try{ rf=await rpc('rf_aplicar',{p_id:S.perfil.id,p_token:S.perfil.token,p_produto:p.id,p_valor:v}); rfT0=performance.now(); rfSel=null; SOM.marco(); toastMissao(`🏦 Investiu ${fmt(v)} em ${p.nome}. Volte amanhã para ver render!`); renderRF(); }
+    catch(e){ const k=Object.keys(MSG_RF).find(x=>e.message.indexOf(x)>=0); alert(k?MSG_RF[k]:'Não foi possível investir agora. Confira a internet.'); bt.disabled=false; } };
+  conta();
+}
+async function resgatarRF(a,bt){
+  const p=rfProd(a.produto), c=rfConta(p,+a.valor,diasDe(a));
+  if(!confirm(`Resgatar ${p.nome}?\n\nBruto: ${fmt(c.bruto)}\n${p.ir?`IOF: ${fmt(c.iof)}\nIR (${pctTxt(rfIr(c.dias))}): ${fmt(c.ir)}\n`:'Isento de IR\n'}Você recebe: ${fmt(c.liquido)} no saldo da corretora.`)) return;
+  bt.disabled=true;
+  try{ rf=await rpc('rf_resgatar',{p_id:S.perfil.id,p_token:S.perfil.token,p_aplicacao:a.id}); rfT0=performance.now(); SOM.coletar(); toastMissao(`💰 Resgate de ${p.nome}: ${fmt(c.liquido)} voltou para o saldo.`); renderRF(); }
+  catch(e){ const k=Object.keys(MSG_RF).find(x=>e.message.indexOf(x)>=0); alert(k?MSG_RF[k]:'Não foi possível resgatar agora. Confira a internet.'); bt.disabled=false; }
+}
+// o valor "rendendo" na tela, a cada segundo
+function atualizarRFVivo(){
+  if(!rf||abaCorr!=='rf'||$('#telaCorretora').hidden) return;
+  document.querySelectorAll('.rf-apl').forEach(el=>{ const a=rf.aplicacoes.find(x=>String(x.id)===el.dataset.id); if(!a) return; const p=rfProd(a.produto), d=diasDe(a), c=rfConta(p,+a.valor,d);
+    el.querySelector('.rf-bruto').textContent=fmtC(c.bruto);
+    const fim=p.prazo_meses?p.prazo_meses*MES_DIAS:null;
+    const dia=fim&&d>=fim?0:rfConta(p,+a.valor,Math.min(d+MES_DIAS,fim||1e9)).bruto-c.bruto;
+    el.querySelector('.rf-info').innerHTML=`<span>${mesesTxt(Math.min(d,fim||d))} investido · rendeu <b>${fmtC(c.bruto-(+a.valor))}</b>${dia>0?` · amanhã: +${fmtC(dia)}`:''}</span><span>${p.ir?`se resgatar: IR ${pctTxt(rfIr(c.dias))}${c.iof?' + IOF':''}`:'isento'} → <b>${fmtC(c.liquido)}</b></span>`;
+    const barra=el.querySelector('.rf-barra i'); barra.style.width=fim?Math.min(100,100*d/fim)+'%':Math.min(100,100*(d%MES_DIAS)/MES_DIAS)+'%';
+    el.querySelector('.rf-barra').title=fim?'Até o vencimento':'Até o próximo mês'; });
+}
+setInterval(atualizarRFVivo,1000);
+function abrirGlossarioRF(){
+  const itens=[['📈','CDI','É a taxa que os bancos usam entre eles, quase igual à Selic. "100% do CDI" quer dizer que o seu dinheiro rende o mesmo que essa taxa. Hoje: '+pctTxt(+rf.cdi)+' ao ano.'],
+    ['🏛️','Selic','É a taxa básica de juros do Brasil, decidida pelo Banco Central. Quando ela sobe, a renda fixa rende mais.'],
+    ['🔁','Pós-fixado e prefixado','Pós-fixado acompanha o CDI ou a Selic (se a taxa mudar, o rendimento muda). Prefixado tem a taxa travada no dia da compra.'],
+    ['💧','Liquidez','É poder pegar o dinheiro de volta quando quiser. Títulos que prendem o dinheiro até o vencimento costumam pagar mais.'],
+    ['⏳','Carência','Prazo mínimo antes de poder resgatar. LCI e LCA têm carência (no jogo, 6 meses).'],
+    ['🧾','Imposto de Renda','CDB e Tesouro pagam IR sobre o que rendeu, e ele diminui com o tempo: 22,5% até 6 meses, 20% até 1 ano, 17,5% até 2 anos e 15% depois.'],
+    ['⚡','IOF','Imposto de quem tira o dinheiro com menos de 30 dias: começa em 96% do rendimento e cai até zero no 30º dia.'],
+    ['✅','LCI e LCA isentas','Para pessoa física, não pagam IR. Por isso 92% do CDI isento pode render mais que um CDB de 110% do CDI.'],
+    ['🛡️','FGC','Fundo Garantidor de Créditos: se o banco quebrar, devolve até R$ 250 mil por pessoa, por banco (Poupança, CDB, LCI, LCA). O Tesouro é garantido pelo Governo.'],
+    ['🐷','Poupança','Rende 0,5% ao mês + TR quando a Selic está acima de 8,5%, e só no aniversário de cada mês. É isenta, mas costuma render menos.']];
+  $('#tempoConteudo').innerHTML=itens.map(([ic,t,x])=>`<div class="tempo-dia"><div class="tempo-cab"><span class="tempo-ic" style="font-size:1.6rem">${ic}</span><span><b>${t}</b><small>${x}</small></span></div></div>`).join('')+
+    (licaoDisponivel('rendafixa')||licaoFeita('rendafixa')?`<button class="btn azul peq" id="bRfLicao" type="button">🏦 ${licaoFeita('rendafixa')?'Rever':'Fazer'} a lição do Edu</button>`:'')+
+    `<p class="bol-nota">Regras de exemplo, parecidas com as de verdade em 2026. Taxas mudam com o tempo.</p>`;
+  document.querySelector('#telaTempo h2').textContent='📚 Renda fixa'; $('#telaTempo').hidden=false; SOM.abrir();
+  const bl=$('#bRfLicao'); if(bl) bl.onclick=()=>{ $('#telaTempo').hidden=true; abrirLicao('rendafixa'); };
+}
+
 function mostrarExtratoCorr(C,add){
   add('<p class="txt" style="margin-top:8px"><b>Extrato</b></p>');
   if(!C.extrato.length) add('<p class="txt" style="color:var(--sub)">Nenhuma movimentação ainda.</p>');
   C.extrato.forEach(e=>{ const v=Number(e.valor); add(`<div class="stat"><span>${e.descricao}<br><small>${new Date(e.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small></span><b style="color:${v<0?'#C2362B':'inherit'}">${v<0?'−':'+'}${fmt(Math.abs(v))}</b></div>`); });
 }
-function abrirCorretora(){ $('#telaCorretora').hidden=false; SOM.abrir(); carregarCorretora(); if(!S.guiaCorrVisto) abrirGuiaCorr(); }
+function abrirCorretora(){ $('#telaCorretora').hidden=false; SOM.abrir(); if(abaCorr==='rf') carregarRF(); else carregarCorretora(); if(!S.guiaCorrVisto) abrirGuiaCorr(); }
 $('#btnCorretora').addEventListener('click',abrirCorretora);
 $('#btnCorretoraFechar').addEventListener('click',()=>{ $('#telaCorretora').hidden=true; });
 
@@ -4406,6 +4563,18 @@ const LICOES={
     errado:'Quase! Lembre: o produto, os funcionários, a luz, o aluguel, os impostos e a maquininha saem antes de sobrar alguma coisa.',
     nota:'Valores de exemplo, parecidos com os de verdade.',
     libera:()=>!!(S.contas&&S.contas.meses>0)},
+  rendafixa:{ic:'🏦',tit:'Renda fixa',
+    falas:['Na renda fixa você <b>empresta</b> dinheiro para um banco ou para o governo, e eles devolvem com <b>juros</b>.',
+           'O que muda entre eles: quanto rende (o <b>CDI</b>), quando dá para tirar (<b>liquidez</b>) e se paga <b>Imposto de Renda</b>. CDB e Tesouro pagam IR, que cai com o tempo; LCI e LCA são isentas.',
+           'Dinheiro que pode precisar logo vai para algo com liquidez diária. Dinheiro que pode esperar rende mais preso por mais tempo. E o FGC protege até R$ 250 mil por banco.'],
+    perg:'Você vai precisar do dinheiro daqui a 1 mês. Qual escolha faz mais sentido?',
+    ops:[{t:'Um investimento com liquidez diária, como o CDB de liquidez diária ou o Tesouro Selic.',ok:true},
+         {t:'Uma LCA de 2 anos, porque rende mais.'},
+         {t:'Deixar parado sem render nada.'}],
+    certo:'Isso! Primeiro a gente pensa em <b>quando</b> vai precisar do dinheiro, depois em quanto rende. 💛',
+    errado:'Quase! A LCA de 2 anos prende o dinheiro até o vencimento. Tente de novo.',
+    nota:'Regras de exemplo, parecidas com as de verdade. Não é recomendação de investimento.',
+    libera:()=>!!S.viuRF},
   isca:{ic:'🎣',tit:'O produto isca',
     falas:['O refri é o produto que todo mundo procura e compara o preço. Por isso ele fica <b>baratinho</b>: a adega ganha só uns <b>10%</b> nele.',
            'Ele é a <b>isca</b>: traz o cliente até a loja. O lucro vem do que ele leva junto, como o <b>gelo</b> (30%) e o <b>salgadinho</b> (25%).',
@@ -4979,7 +5148,7 @@ const ETAPAS_MAPA=[
    req:'Leve todos os setores ao nível 40.',prog:()=>[Math.min(menorNivelSetores(),40),40],nivel:true,
    feito:()=>PDR().liberado||pdrPodeLiberar(),acao:{txt:'Abrir o ponto',fn:()=>abrirPdr()}},
   {id:'corretora',ic:'📈',nome:'Corretora',chip:'Nv 40',zona:1,
-   desc:'Separe parte do caixa para investir, aprenda como a bolsa funciona e acompanhe o seu extrato.',
+   desc:'Separe parte do caixa para investir em renda fixa (Poupança, Tesouro Selic, CDB, LCI e LCA), veja o dinheiro render e acompanhe o seu extrato.',
    req:'Leve todos os setores ao nível 40 (com o cadastro online).',prog:()=>[Math.min(menorNivelSetores(),40),40],nivel:true,
    feito:()=>corretoraLiberadaLocal(),acao:{txt:'Abrir a corretora',fn:()=>abrirCorretora()}},
   {id:'meta500000',meta:500000,ic:'🎯',nome:'Meta: '+nomeMeta(500000),chip:nomeMeta(500000).replace('R$ ',''),zona:1,
@@ -5568,7 +5737,7 @@ function laco(){
   requestAnimationFrame(laco);
   const dt=Math.min(relogio.getDelta(),0.05);
   if(ENT.ativo){ atualizarEntrega(dt); renderer.render(cenaEnt,camEnt); return; }
-  if(tempoPronto){ atualizarCeu(dt); tRel+=dt; if(tRel>0.5){ tRel=0; atualizarRelogio(); if(ruaPronta) atualizarVizinhos(); } if(ruaPronta) atualizarTransito(dt); }
+  if(tempoPronto){ atualizarCeu(dt); tRel+=dt; if(tRel>0.5){ tRel=0; atualizarRelogio(); if(ruaPronta) atualizarVizinhos(); } if(ruaPronta) atualizarTransito(dt); if(grafPronto) atualizarRealismo(dt); }
   if(document.body.classList.contains('jogando')){
     S.tempoJogo=(S.tempoJogo||0)+dt;
     proxCliente-=dt;
@@ -5629,7 +5798,7 @@ if(location.hash==='#mapa'){ // voltou do Motoca pelo mapa
 }
 
 
-var tempoPronto=false, ruaPronta=false;
+var tempoPronto=false, ruaPronta=false, grafPronto=false;
 // ================= Relógio do dia, dia da semana e clima =================
 // Cada hora do jogo dura 15 segundos (um dia, 6 minutos). O movimento muda com o horário, o dia e o tempo,
 // e o clima muda o que o cliente leva: no calor sai gelo e água; na chuva vem menos gente.
@@ -5684,7 +5853,7 @@ function abrirTempo(){
   FLUXO_HORA.forEach((v,i)=>{ x+=`<i class="${i===Math.floor(h)?'agora':''}" style="height:${Math.round(v*32)}px" title="${i}h"></i>`; });
   x+=`</div><div class="tempo-leg"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>23h</span></div>`;
   x+=`<p class="bol-nota">Olhe a previsão e encha o estoque do que vai sair mais. No calor, o gelo acaba rápido!</p>`;
-  $('#tempoConteudo').innerHTML=x; fecharPainel(); $('#telaTempo').hidden=false; SOM.abrir();
+  $('#tempoConteudo').innerHTML=x; document.querySelector('#telaTempo h2').textContent='📺 Previsão do tempo'; fecharPainel(); $('#telaTempo').hidden=false; SOM.abrir();
 }
 $('#relogio').addEventListener('click',abrirTempo);
 $('#btnTempoFechar').addEventListener('click',()=>{ $('#telaTempo').hidden=true; });
@@ -5694,8 +5863,13 @@ const LUZ_CEU=[[0,0x141833,0.3,0.08,0x9DB0FF],[5,0x1E2448,0.32,0.1,0x9DB0FF],[6.
 const _c3=new THREE.Color(), _c4=new THREE.Color(), BRANCO_LUZ=new THREE.Color(0xFFF6E8);
 const hemiLuz=scene.children.find(o=>o.isHemisphereLight), ambLuz=scene.children.find(o=>o.isAmbientLight);
 const _c1=new THREE.Color(), _c2=new THREE.Color(), CEU_CHUVA=new THREE.Color(0x6E7A86);
-const chuva=(function(){ const n=1200, g=new THREE.BufferGeometry(), p=new Float32Array(n*6);
-  for(let i=0;i<n;i++){ const x=rnd(-12,12), y=rnd(0,14), z=rnd(-12,12); p.set([x,y,z,x-0.05,y-0.45,z+0.05],i*6); }
+// A chuva cai só do lado de fora: a loja tem telhado. Como a câmera olha de cima e de lado, uma gota alta "aparece"
+// por cima da loja; por isso cada gota é sorteada num lugar cuja coluna inteira, vista da câmera, fica fora da loja.
+const CHUVA_TOPO=4.2, LOJA_R=5.7;
+function gotaFora(x,z){ const dentro=(a,b)=>Math.abs(a)<LOJA_R&&Math.abs(b)<LOJA_R, k=CHUVA_TOPO*0.875;
+  for(let f=0;f<=1.001;f+=0.25){ if(dentro(x-k*f,z-k*f)) return false; } return true; }
+const chuva=(function(){ const n=900, g=new THREE.BufferGeometry(), p=new Float32Array(n*6);
+  for(let i=0;i<n;i++){ let x,z,tent=0; do{ x=rnd(-14,16); z=rnd(-14,16); tent++; }while(!gotaFora(x,z)&&tent<50); const y=rnd(0,CHUVA_TOPO); p.set([x,y,z,x-0.03,y-0.38,z+0.03],i*6); }
   g.setAttribute('position',new THREE.BufferAttribute(p,3));
   const l=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0xE4F0FB,transparent:true,opacity:0.8})); l.visible=false; l.frustumCulled=false; scene.add(l); return l; })();
 function atualizarCeu(dt){
@@ -5710,7 +5884,7 @@ function atualizarCeu(dt){
   sol.intensity=(a[3]+(b[3]-a[3])*k)*(nub?0.6:1); sol.color.copy(_c3).lerp(BRANCO_LUZ,0.3);
   if(ambLuz) ambLuz.intensity=0.2+(ehNoite(h)?0.14:0);   // a loja continua iluminada por dentro
   chuva.visible=chove;
-  if(chove&&dt){ const p=chuva.geometry.attributes.position.array; for(let j=0;j<p.length;j+=6){ p[j+1]-=dt*14; p[j+4]-=dt*14; if(p[j+4]<0){ const y=14+Math.random()*2; p[j+1]=y; p[j+4]=y-0.45; } } chuva.geometry.attributes.position.needsUpdate=true; }
+  if(chove&&dt){ const p=chuva.geometry.attributes.position.array; for(let j=0;j<p.length;j+=6){ p[j+1]-=dt*14; p[j+4]-=dt*14; if(p[j+4]<0){ const y=CHUVA_TOPO+Math.random()*0.4; p[j+1]=y; p[j+4]=y-0.38; } } chuva.geometry.attributes.position.needsUpdate=true; }
 }
 let tRel=0; tempoPronto=true;
 
@@ -5781,7 +5955,7 @@ function veiculoRua(){
     contorno(malha(geoArred(lg*0.55,0.45,0.9,0.16),toon(cor),g,-0.12,1.02,0),0.03);
     bloco(0.05,0.32,0.76,toon(0x9FD3EA),g,lg*0.27-0.1,1.03,0); bloco(lg*0.48,0.26,0.04,toon(0x9FD3EA),g,-0.12,1.04,0.46); bloco(lg*0.48,0.26,0.04,toon(0x9FD3EA),g,-0.12,1.04,-0.46);
     [[-lg*0.32,0.48],[lg*0.32,0.48],[-lg*0.32,-0.48],[lg*0.32,-0.48]].forEach(p=>{ const r=malha(new THREE.CylinderGeometry(0.23,0.23,0.15,12),toon(0x22252A),g,p[0],0.23,p[1]); r.rotation.x=Math.PI/2; rodas.push(r); });
-    [-0.3,0.3].forEach(z=>{ malha(new THREE.BoxGeometry(0.04,0.1,0.18),FAROL,g,lg/2+0.01,0.62,z,false); malha(new THREE.BoxGeometry(0.04,0.1,0.18),LANTERNA,g,-lg/2-0.01,0.62,z,false); });
+    [-0.3,0.3].forEach(z=>{ malha(new THREE.BoxGeometry(0.04,0.1,0.18),FAROL,g,lg/2+0.01,0.62,z,false); malha(new THREE.BoxGeometry(0.04,0.1,0.18),LANTERNA,g,-lg/2-0.01,0.62,z,false); if(grafPronto) glow(GLOW_FAROL,g,lg/2+0.35,0.62,z,1.1); });
   }
   return {g,rodas,moto};
 }
@@ -5809,6 +5983,71 @@ function atualizarTransito(dt){
       PEDESTRES.push({g,caminho:pts,vel:rnd(1.3,1.8),passo:rnd(0,6)}); } }
 }
 ruaPronta=true;
+
+// ================= Gráfico alto / baixo (realismo leve) =================
+// Alto: sombras nítidas, o sol anda no céu, sombra das nuvens, neblina, brilho do neon e dos faróis, asfalto molhado na chuva.
+// Baixo: só o essencial, para celulares mais simples. Se o jogo ficar lento, ele mesmo passa para o baixo.
+const GRAF_AUTO=(()=>{ const n=navigator.hardwareConcurrency||4, m=navigator.deviceMemory||4; return (n<=4||m<=2)?'baixo':'alto'; })();
+const graficoAlto=()=>((S&&S.grafico)||GRAF_AUTO)==='alto';
+const texGlow=texCanvas(128,128,(c)=>{ const g=c.createRadialGradient(64,64,2,64,64,62); g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.25,'rgba(255,255,255,.55)'); g.addColorStop(1,'rgba(255,255,255,0)'); c.fillStyle=g; c.fillRect(0,0,128,128); });
+const glowMat=cor=>new THREE.SpriteMaterial({map:texGlow,color:cor,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0});
+const GLOW_POSTE=glowMat(0xFFD98A), GLOW_FAROL=glowMat(0xFFF3D0), GLOW_NEON=glowMat(0xFFB347), GLOW_VITRINE=glowMat(0xFFE7A8);
+function glow(mat,pai,x,y,z,esc){ const sp=new THREE.Sprite(mat); sp.position.set(x,y,z); sp.scale.set(esc,esc,1); pai.add(sp); return sp; }
+// brilho do quadro da Adega na parede do fundo e do cavalete
+glow(GLOW_NEON,scene,0,2.3,-4.6,3.6);
+// postes e vitrines dos vizinhos
+scene.children.filter(o=>o.isGroup&&Math.abs(o.position.z-7.9)<0.01).forEach(g=>glow(GLOW_POSTE,g,0,3.05,0.7,1.6));
+VIZINHOS.forEach(v=>{ if(v.o.abre!=null) glow(GLOW_VITRINE,scene,v.o.x-v.o.w*0.1,1.1,v.o.z+v.o.d/2+0.3,3); });
+// asfalto molhado: reflexo das luzes na rua quando chove ou à noite com chuva
+const texReflexo=texCanvas(32,256,(c)=>{ const g=c.createLinearGradient(0,0,0,256); g.addColorStop(0,'rgba(255,230,170,0)'); g.addColorStop(0.5,'rgba(255,230,170,.55)'); g.addColorStop(1,'rgba(255,230,170,0)'); c.fillStyle=g; c.fillRect(0,0,32,256); });
+const matReflexo=new THREE.MeshBasicMaterial({map:texReflexo,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0});
+const REFLEXOS=[-11.5,-6.8,8.6,13].map(x=>{ const m=malha(new THREE.PlaneGeometry(0.5,3.4),matReflexo,scene,x,0.04,9.9,false); m.rotation.x=-Math.PI/2; return m; });
+const matPoca=new THREE.MeshBasicMaterial({color:0x9DB4C8,transparent:true,opacity:0,depthWrite:false});
+[[-9,9.2,1.6],[-2.5,10.6,1.1],[5.5,9.4,1.3],[11,10.8,1.0],[0.8,6.8,0.8]].forEach(([x,z,e])=>{ const m=malha(new THREE.CircleGeometry(0.5,20),matPoca,scene,x,0.035,z,false); m.rotation.x=-Math.PI/2; m.scale.set(e*1.6,e,1); });
+const corRuaSeca=rua.material.color.clone(), corRuaMolhada=new THREE.Color(0x2E343C);
+// sombra das nuvens passando
+const texNuvem=texCanvas(128,128,(c)=>{ const g=c.createRadialGradient(64,64,4,64,64,62); g.addColorStop(0,'rgba(20,30,40,.32)'); g.addColorStop(1,'rgba(20,30,40,0)'); c.fillStyle=g; c.fillRect(0,0,128,128); });
+const matNuvem=new THREE.MeshBasicMaterial({map:texNuvem,transparent:true,depthWrite:false,opacity:1});
+const NUVENS=[0,1,2,3].map(i=>{ const m=malha(new THREE.PlaneGeometry(9,6),matNuvem,scene,-20+i*12,0.06,-6+i*5,false); m.rotation.x=-Math.PI/2; m.renderOrder=2; return m; });
+// neblina (mais forte de madrugada e na chuva)
+scene.fog=new THREE.Fog(0x7FC4B8,200,400);
+let fpsAcum=0, fpsN=0, fpsT=0, fpsRuim=0;
+function aplicarGrafico(){
+  const alto=graficoAlto();
+  renderer.setPixelRatio(alto?Math.min(window.devicePixelRatio||1,2):Math.min(window.devicePixelRatio||1,1.25));
+  const tam=alto?2048:1024; if(sol.shadow.mapSize.x!==tam){ sol.shadow.mapSize.set(tam,tam); if(sol.shadow.map){ sol.shadow.map.dispose(); sol.shadow.map=null; } }
+  NUVENS.forEach(n=>n.visible=alto);
+  const b=$('#btnGrafico'); if(b) b.textContent='🎨 Gráfico: '+(alto?'alto (mais bonito)':'baixo (mais leve)');
+  ajustar();
+}
+$('#btnGrafico').addEventListener('click',()=>{ S.grafico=graficoAlto()?'baixo':'alto'; fpsRuim=0; salvar(); aplicarGrafico(); SOM.abrir(); toastMissao(graficoAlto()?'🎨 Gráfico alto: sombras, neblina, brilho do neon e chuva no asfalto.':'🎨 Gráfico baixo: mais leve para o celular.'); });
+function atualizarRealismo(dt){
+  const alto=graficoAlto(), h=horaAgora(), noite=ehNoite(h), d=diaAgora(), k=climaDia(d), chove=k==='chuva';
+  // o sol anda no céu: nasce a leste às 6h, alto ao meio-dia, se põe a oeste às 18h (as sombras acompanham)
+  const ang=((h-6)/12)*Math.PI, dia=h>=6&&h<=18;
+  if(alto&&dia){ sol.position.set(Math.cos(ang)*-12,Math.max(3,Math.sin(ang)*16)+2,6+Math.sin(ang)*-2); }
+  else sol.position.set(8,14,5);
+  // brilhos à noite
+  const brilho=alto&&noite?1:0;
+  GLOW_POSTE.opacity=brilho*0.9; GLOW_FAROL.opacity=brilho; GLOW_NEON.opacity=brilho*0.55; GLOW_VITRINE.opacity=brilho*0.5;
+  // asfalto molhado na chuva
+  const molhado=chove?1:0;
+  rua.material.color.copy(corRuaSeca).lerp(corRuaMolhada,molhado*0.8);
+  matPoca.opacity=alto&&chove?0.45:0;
+  matReflexo.opacity=alto&&chove&&noite?0.9:alto&&chove?0.25:0;
+  // nuvens: mais nubladas em dia nublado ou chuvoso
+  if(alto){ matNuvem.opacity=noite?0:(k==='nublado'||chove?1:k==='sol'?0.55:0.35);
+    NUVENS.forEach(n=>{ n.position.x+=dt*0.6; if(n.position.x>24) n.position.x=-24; }); }
+  // neblina: madrugada e chuva
+  if(alto){ const mad=h>=1&&h<6.5, perto=mad?16:chove?22:34, longe=mad?44:chove?52:80;
+    scene.fog.color.copy(scene.background); scene.fog.near+=(perto-scene.fog.near)*Math.min(1,dt); scene.fog.far+=(longe-scene.fog.far)*Math.min(1,dt); }
+  else { scene.fog.near=200; scene.fog.far=400; }
+  // se o celular sofrer, passa sozinho para o gráfico baixo
+  if(alto&&!S.grafico){ fpsT+=dt; fpsN++; if(fpsT>=4){ const fps=fpsN/fpsT; fpsT=0; fpsN=0; fpsRuim=fps<22?fpsRuim+1:0;
+    if(fpsRuim>=3){ S.grafico='baixo'; salvar(); aplicarGrafico(); toastMissao('🎨 Deixei o gráfico mais leve para o jogo rodar liso. Dá para trocar no 👤 Perfil.'); } } }
+}
+aplicarGrafico();
+grafPronto=true;
 
 // ================= Botão voltar do celular =================
 // Cada tela aberta entra no histórico: o voltar fecha a tela de cima (como o ✕) e o jogador continua na adega.
