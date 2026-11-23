@@ -4548,14 +4548,18 @@ const DEZ_REAIS=[
 const reaisTxt=v=>'R$ '+v.toFixed(2).replace('.',',');
 // ---------- Para onde vão os R$ de um produto (valores de exemplo; nunca os custos reais da loja) ----------
 // A parte do produto vem da margem de exemplo do setor; as despesas seguem a mesma proporção da tela dos R$ 10.
-const FRETE_PCT=0.02;
+const FRETE_PCT=0.02, P_MIN_BARRA=0.012;
 const DESP_PCT=DEZ_REAIS.filter(d=>d.nome!=='Produto'&&!d.lucro).map(d=>({...d,pct:d.v/10}));
 function dividirPreco(P,id){
   const m=MARGEM[id]||0.2, cent=v=>Math.round(v*100)/100;
   const frete=cent(P*FRETE_PCT), prod=cent(P*(1-m)-frete);
   const desp=DESP_PCT.map(d=>({...d,val:cent(P*d.pct)}));
-  const sobra=cent(P-prod-frete-desp.reduce((t,d)=>t+d.val,0));
-  return {P,prod,frete,desp,sobra};
+  let sobra=cent(P-prod-frete-desp.reduce((t,d)=>t+d.val,0)), quaseNada=false;
+  // produto isca: a adega não quer lucro nele, então sobra quase nada (as despesas ficam por conta dos outros produtos)
+  const minimo=cent(Math.max(0.05,P*0.01));
+  if(sobra<P*0.025){ quaseNada=true; const tot=desp.reduce((t,d)=>t+d.val,0), f=Math.max(0,(tot-(minimo-sobra))/tot);
+    desp.forEach(d=>{ d.val=cent(d.val*f); }); sobra=cent(P-prod-frete-desp.reduce((t,d)=>t+d.val,0)); }
+  return {P,prod,frete,desp,sobra,quaseNada};
 }
 function produtoExemplo(id,aleatorio){
   const l=produtosDoSetor(id).filter(p=>p.p>=2); if(!l.length){ const nm={refri:'Refrigerante',agua:'Água ou suco',salgadinho:'Salgadinho',gelo:'Saco de gelo',carvao:'Saco de carvão',mercearia:'Item de mercearia'}[id]; return nm?{n:nm,p:Math.round(valorEst(id)*2)/2,s:id}:null; }
@@ -4569,11 +4573,11 @@ function linhasDivisao(D){
   return L;
 }
 function htmlDivisao(p){
-  const D=dividirPreco(p.p,p.s), L=linhasDivisao(D), perde=D.sobra<0;
-  let h=`<div class="dez-barra" aria-hidden="true">`; L.forEach(d=>{ h+=`<i style="flex:${Math.max(0.0001,d.v)};background:${d.cor}" title="${d.nome}"></i>`; }); if(D.sobra>0) h+=`<i style="flex:${D.sobra};background:#3CB371"></i>`; h+='</div><div class="dez-lista">';
+  const D=dividirPreco(p.p,p.s), L=linhasDivisao(D), perde=D.quaseNada;
+  let h=`<div class="dez-barra" aria-hidden="true">`; L.forEach(d=>{ h+=`<i style="flex:${Math.max(0.0001,d.v)};background:${d.cor}" title="${d.nome}"></i>`; }); h+=`<i style="flex:${Math.max(D.sobra,P_MIN_BARRA*D.P)};background:#3CB371"></i>`; h+='</div><div class="dez-lista">';
   L.forEach(d=>{ h+=`<div class="dez-linha"><span class="dez-cor" style="background:${d.cor}"></span><span class="bol-tx"><b>${d.ic} ${d.nome}</b><small>${d.info}</small></span><b>${reaisTxt(d.v)}</b></div>`; });
-  h+=`<div class="dez-linha ${perde?'perde':'lucro'}"><span class="dez-cor" style="background:${perde?'#E8433A':'#3CB371'}"></span><span class="bol-tx"><b>${perde?'📉 A adega perde':'💛 Sobra para a adega'}</b><small>${perde?'as despesas são maiores que a margem deste produto':'é daqui que saem reformas e geladeira nova'}</small></span><b>${perde?'− ':''}${reaisTxt(Math.abs(D.sobra))}</b></div></div>`;
-  if(perde) h+=`<p class="dez-isca">🎣 Este é um <b>produto isca</b>: a adega quase não ganha (ou até perde) nele, mas ele traz o cliente, que aproveita e leva outras coisas.</p>`;
+  h+=`<div class="dez-linha lucro"><span class="dez-cor" style="background:#3CB371"></span><span class="bol-tx"><b>${perde?'💛 Sobra quase nada':'💛 Sobra para a adega'}</b><small>${perde?'neste produto a adega não busca lucro':'é daqui que saem reformas e geladeira nova'}</small></span><b>${reaisTxt(D.sobra)}</b></div></div>`;
+  if(perde) h+=p.s==='refri'?`<p class="dez-isca">🎣 Este é um <b>produto isca</b>: a adega quase não ganha nada nele, mas ele traz o cliente, que aproveita e leva outras coisas.</p>`:`<p class="dez-isca">🤏 Neste produto a margem é pequena: a adega ganha muito pouco em cada um. Quem paga as contas é a soma de tudo o que a adega vende.</p>`;
   return h;
 }
 let dezSel=null;
@@ -4603,10 +4607,10 @@ function talvezDivisao(c){
   S.divT=S.tempoJogo||0; mostrarCartinha(p);
 }
 function mostrarCartinha(p){
-  const D=dividirPreco(p.p,p.s), desp=Math.round((D.desp.reduce((t,d)=>t+d.val,0))*100)/100, perde=D.sobra<0, el=$('#divCartinha');
+  const D=dividirPreco(p.p,p.s), desp=Math.round((D.desp.reduce((t,d)=>t+d.val,0))*100)/100, perde=D.quaseNada, el=$('#divCartinha');
   el.innerHTML=`<b class="tt">💡 ${p.n} a ${reaisTxt(p.p)}: para onde vai o dinheiro?</b>
-    <div class="dez-barra" aria-hidden="true"><i style="flex:${D.prod+D.frete};background:#8FB8DE"></i><i style="flex:${desp};background:#F2A65A"></i>${D.sobra>0?`<i style="flex:${D.sobra};background:#3CB371"></i>`:''}</div>
-    <div class="div-res"><span>📦 Produto e frete<b>${reaisTxt(D.prod+D.frete)}</b></span><span>🧾 Despesas<b>${reaisTxt(desp)}</b></span><span class="${perde?'perde':'sobra'}">${perde?'📉 A adega perde':'💛 Sobra'} <b>${perde?'−':''}${reaisTxt(Math.abs(D.sobra))}</b></span></div>
+    <div class="dez-barra" aria-hidden="true"><i style="flex:${D.prod+D.frete};background:#8FB8DE"></i><i style="flex:${desp};background:#F2A65A"></i>${`<i style="flex:${Math.max(D.sobra,P_MIN_BARRA*D.P)};background:#3CB371"></i>`}</div>
+    <div class="div-res"><span>📦 Produto e frete<b>${reaisTxt(D.prod+D.frete)}</b></span><span>🧾 Despesas<b>${reaisTxt(desp)}</b></span><span class="sobra">${perde?'💛 Sobra quase nada':'💛 Sobra'} <b>${reaisTxt(D.sobra)}</b></span></div>
     <div class="div-acoes"><button type="button" id="divVer">Ver detalhes</button><button type="button" class="leve" id="divFechar">Fechar</button><button type="button" class="leve" id="divOff" style="margin-left:0">🔕 Não mostrar mais</button></div>`;
   el.hidden=false; clearTimeout(tCartinha); tCartinha=setTimeout(()=>{ el.hidden=true; },12000);
   $('#divVer').onclick=()=>{ el.hidden=true; abrirDivisaoProduto(p); };
@@ -6272,7 +6276,36 @@ function vizinho(o){
   if(o.janelas){ for(let i=0;i<o.janelas;i++){ const j=malha(new THREE.PlaneGeometry(0.6,0.6),vitrine,g,-o.w/2+o.w/(o.janelas+1)*(i+1),o.h-0.9,o.d/2+0.01,false); } }
   VIZINHOS.push({o,vitrine,porta}); return g;
 }
-vizinho({x:-10.2,z:2.4,w:5,d:4,h:3.3,cor:0xF2D7A6,toldo:0xE8433A,nome:'🥖 Padaria Pão Quente',abre:6,fecha:21});
+// Pizzaria Santo Forno, vizinha de esquina da Adega do Edu: parede creme, colunas verdes, barra vermelha embaixo,
+// letreiro escuro na moldura vermelha e o varal de luzinhas. Só o nome; sem logo, telefone ou QR code.
+const LUZINHAS=new THREE.MeshBasicMaterial({color:0xF3DFA0});
+function pizzaria(o){
+  const g=new THREE.Group(); g.position.set(o.x,0,o.z); scene.add(g);
+  const fz=o.d/2, VERDE=toon(0x2F7D3B), VERMELHO=toon(0xD32A30);
+  bloco(o.w,o.h,o.d,toon(0xEFE2B6),g,0,o.h/2,0,0.04,0.025);
+  bloco(o.w+0.2,0.18,o.d+0.2,toon(0x8E8A84),g,0,o.h+0.09,0,0.03,0.02);
+  bloco(o.w,0.32,0.06,VERMELHO,g,0,0.16,fz+0.02);                                   // barra vermelha embaixo
+  [-o.w/2+0.1,0.15,o.w/2-0.1].forEach(x=>bloco(0.16,2.35,0.08,VERDE,g,x,1.17,fz+0.04)); // colunas verdes
+  // janela com persiana (acende quando está aberta) e porta branca
+  const vitrine=new THREE.MeshBasicMaterial({color:0x3A4248});
+  malha(new THREE.PlaneGeometry(1.45,1.15),vitrine,g,-1.15,1.45,fz+0.03,false);
+  for(let i=0;i<7;i++) bloco(1.4,0.035,0.02,toon(0xD9D6CE),g,-1.15,0.95+i*0.16,fz+0.045);
+  bloco(0.9,1.85,0.04,toon(0xF2F0EA),g,0.85,0.93,fz+0.03);
+  bloco(0.05,0.05,0.06,toon(0x8E8A84),g,0.5,0.95,fz+0.07);
+  // plaquinhas embaixo do letreiro
+  [[-1.55,1.5,'#1F5A3A'],[0.05,1.4,'#F4EEDD'],[1.55,1.5,'#C9252C']].forEach(([x,w,c])=>malha(new THREE.PlaneGeometry(w,0.32),new THREE.MeshBasicMaterial({color:new THREE.Color(c)}),g,x,2.27,fz+0.05,false));
+  malha(new THREE.PlaneGeometry(1.4,0.3),new THREE.MeshBasicMaterial({map:placaTex('Delivery de pizzas','#F4EEDD','#2A1A12')}),g,0.05,2.27,fz+0.06,false);
+  // moldura vermelha com o letreiro escuro e o painel branco
+  bloco(o.w+0.1,0.82,0.12,VERMELHO,g,0,o.h-0.42,fz+0.06);
+  malha(new THREE.PlaneGeometry(o.w*0.56,0.6),new THREE.MeshBasicMaterial({map:placaTex('🍕 Santo Forno','#1E2A44','#FFFFFF')}),g,-o.w*0.18,o.h-0.42,fz+0.13,false);
+  malha(new THREE.PlaneGeometry(o.w*0.34,0.6),new THREE.MeshBasicMaterial({map:placaTex('Semi artesanal','#FFFFFF','#1A1A1A')}),g,o.w*0.3,o.h-0.42,fz+0.13,false);
+  // varal de luzinhas em ondas, por baixo da moldura
+  const geoLuz=new THREE.SphereGeometry(0.045,8,6);
+  for(let i=0;i<34;i++){ const x=-o.w/2+0.15+i*(o.w-0.3)/33, onda=Math.abs(Math.sin(i*0.9))*0.28;
+    malha(geoLuz,LUZINHAS,g,x,2.85-onda,fz+0.22,false); }
+  VIZINHOS.push({o,vitrine,porta:null,luzes:true}); return g;
+}
+pizzaria({x:-10.2,z:2.4,w:5,d:4,h:3.3,nome:'🍕 Pizzaria Santo Forno',abre:18,fecha:24});
 vizinho({x:11.4,z:1.6,w:4.4,d:3.4,h:2.9,cor:0xDDEFE6,toldo:0x2E9B57,nome:'💊 Farmácia do Bairro',fundo:'#2E9B57',letra:'#FFFFFF',abre:7,fecha:23});
 [[-9,16.2,0xF4B8A8],[-4.6,16.4,0xA8D8F4],[0.2,16.2,0xF6E7A1],[4.8,16.4,0xC7E8B5],[9.4,16.2,0xE6C8F2]].forEach(([x,z,c])=>vizinho({x,z,w:3.4,d:2.6,h:2.1,cor:c,janelas:2}));
 // árvores
@@ -6294,6 +6327,7 @@ function atualizarVizinhos(){
   const h=horaAgora(), noite=ehNoite(h);
   if(viznoite!==noite+'|'+Math.floor(h)){ viznoite=noite+'|'+Math.floor(h);
     LUZ_POSTE.color.setHex(noite?0xFFF1B8:0xB9BEC4); BRILHO.forEach(b=>b.material.opacity=noite?1:0);
+    LUZINHAS.color.setHex(noite?0xFFE27A:0xF3DFA0);
     VIZINHOS.forEach(v=>{ const aberto=v.o.abre==null||(h>=v.o.abre&&h<v.o.fecha);
       if(v.porta) v.porta.visible=!aberto;
       v.vitrine.color.setHex(v.o.abre==null?(noite&&semente(Math.floor(v.o.x*7)+diaAgora())>0.3?0xFFE29A:0x6E8FA0):(aberto?(noite?0xFFF1C9:0x9FC7D8):0x3A4248)); });
@@ -6391,6 +6425,7 @@ glow(GLOW_NEON,scene,0,2.3,-4.6,3.6);
 // postes e vitrines dos vizinhos
 scene.children.filter(o=>o.isGroup&&Math.abs(o.position.z-7.9)<0.01).forEach(g=>glow(GLOW_POSTE,g,0,3.05,0.7,1.6));
 VIZINHOS.forEach(v=>{ if(v.o.abre!=null) glow(GLOW_VITRINE,scene,v.o.x-v.o.w*0.1,1.1,v.o.z+v.o.d/2+0.3,3); });
+VIZINHOS.forEach(v=>{ if(v.luzes) for(let i=0;i<5;i++) glow(GLOW_POSTE,scene,v.o.x-v.o.w/2+0.5+i*(v.o.w-1)/4,2.7,v.o.z+v.o.d/2+0.3,0.9); });   // brilho do varal de luzinhas
 // asfalto molhado: reflexo das luzes na rua quando chove ou à noite com chuva
 const texReflexo=texCanvas(32,256,(c)=>{ const g=c.createLinearGradient(0,0,0,256); g.addColorStop(0,'rgba(255,230,170,0)'); g.addColorStop(0.5,'rgba(255,230,170,.55)'); g.addColorStop(1,'rgba(255,230,170,0)'); c.fillStyle=g; c.fillRect(0,0,32,256); });
 const matReflexo=new THREE.MeshBasicMaterial({map:texReflexo,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0});
