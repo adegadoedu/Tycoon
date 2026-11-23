@@ -524,6 +524,16 @@ body:not(.jogando) .alerta{display:none}
 .cor-dica{font-size:.82rem;color:var(--sub);font-weight:700;margin:8px 2px}
 .cor-nota{border:2.5px solid var(--contorno);border-radius:12px;padding:10px;background:#fff;margin:8px 0}
 .cor-nota p{margin:4px 0;font-weight:700;font-size:.9rem}
+.combo{border:2.5px solid var(--contorno);border-radius:14px;padding:8px 10px;margin:8px 0;background:#fff}
+.combo.on{background:#E7F8EC}.combo.off{opacity:.6}
+.combo-cab{display:flex;align-items:center;gap:8px}.combo-ic{font-size:1.8rem}
+.combo-preco{display:flex;flex-direction:column;align-items:flex-end;margin-left:auto}.combo-preco s{font-size:.75rem;color:var(--sub)}.combo-preco b{font-size:1.05rem}
+.combo-pe{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:.84rem;font-weight:700}
+.combo-pe .btn{width:auto;margin:0;padding:6px 12px}
+.margem-quadro{display:flex;justify-content:space-around;align-items:flex-end;height:150px;background:#F7F4EC;border:3px solid var(--contorno);border-radius:12px;padding:8px 6px 4px;margin:10px 0}
+.margem-col{display:flex;flex-direction:column;align-items:center;gap:3px;font-weight:900}
+.margem-col i{width:30px;border:2px solid var(--contorno);border-radius:5px 5px 0 0}
+.margem-col.off{opacity:.4}.margem-v{font-size:.8rem}.margem-ic{font-size:1.2rem}
 </style>
 </head>
 <body>
@@ -717,6 +727,18 @@ body:not(.jogando) .alerta{display:none}
   <div class="caixa">
     <h2 class="titulo centro" style="font-size:1.5rem;margin-bottom:6px">🛒 Nos corredores do atacarejo</h2>
     <div id="corConteudo"></div>
+  </div>
+</section>
+<section class="tela" id="telaCombos" hidden>
+  <div class="caixa">
+    <div class="papo-topo"><h2 class="titulo" style="font-size:1.5rem">🎁 Combos do balcão</h2><button class="pilula" id="btnCombosFechar" type="button" aria-label="Fechar">✕</button></div>
+    <div id="combosConteudo"></div>
+  </div>
+</section>
+<section class="tela" id="telaMargem" hidden>
+  <div class="caixa">
+    <div class="papo-topo"><h2 class="titulo" style="font-size:1.5rem">📊 Margem da adega</h2><button class="pilula" id="btnMargemFechar" type="button" aria-label="Fechar">✕</button></div>
+    <div id="margemConteudo"></div>
   </div>
 </section>
 <section class="tela" id="telaFregueses" hidden>
@@ -993,21 +1015,21 @@ function fmt(n){
 
 // ================= Dados do jogo =================
 const EST={
-  refri:{nome:'Geladeira de refri',ic:'🥤',valor:9,abrir:0,custo:2,tempo:2.0,pos:[-4.0,0,-2.4],face:[1,0,0],cor:0xE8433A},
-  agua:{nome:'Geladeira de água e suco',ic:'💧',valor:5,abrir:1500,custo:2.5,tempo:2.2,pos:[-4.0,0,0.9],face:[1,0,0],cor:0x2F8FD8},
-  salgadinho:{nome:'Prateleira de salgadinhos',ic:'🍿',valor:3.5,abrir:3000,custo:3,tempo:2.4,pos:[-1.5,0,-4.0],face:[0,0,1],cor:0xFFB020},
-  gelo:{nome:'Freezer de gelo',ic:'🧊',valor:12,abrir:6000,custo:3.5,tempo:2.6,pos:[1.6,0,-4.0],face:[0,0,1],cor:0x6EC6EA},
-  carvao:{nome:'Carvão (sacos de 2 kg e 4 kg)',ic:'🔥',valor:22,abrir:10000,custo:3.5,tempo:2.4,pos:[4.15,0,3.1],face:[-1,0,0],cor:0xB5651D},
-  mercearia:{nome:'Mercearia',ic:'🛒',valor:8,abrir:18000,custo:4,tempo:3.0,pos:[3.95,0,-1.8],face:[-1,0,0],cor:0x9B5DE5}
+  refri:{nome:'Geladeira de refri',ic:'🥤',valor:9,abrir:0,custo:0.3,tempo:2.0,pos:[-4.0,0,-2.4],face:[1,0,0],cor:0xE8433A},
+  agua:{nome:'Geladeira de água e suco',ic:'💧',valor:5,abrir:100,custo:0.35,tempo:2.2,pos:[-4.0,0,0.9],face:[1,0,0],cor:0x2F8FD8},
+  salgadinho:{nome:'Prateleira de salgadinhos',ic:'🍿',valor:3.5,abrir:300,custo:0.4,tempo:2.4,pos:[-1.5,0,-4.0],face:[0,0,1],cor:0xFFB020},
+  gelo:{nome:'Freezer de gelo',ic:'🧊',valor:12,abrir:700,custo:0.45,tempo:2.6,pos:[1.6,0,-4.0],face:[0,0,1],cor:0x6EC6EA},
+  carvao:{nome:'Carvão (sacos de 2 kg e 4 kg)',ic:'🔥',valor:22,abrir:1200,custo:0.45,tempo:2.4,pos:[4.15,0,3.1],face:[-1,0,0],cor:0xB5651D},
+  mercearia:{nome:'Mercearia',ic:'🛒',valor:8,abrir:2200,custo:0.5,tempo:3.0,pos:[3.95,0,-1.8],face:[-1,0,0],cor:0x9B5DE5}
 };
 const IDS=['refri','agua','salgadinho','gelo','carvao','mercearia'];
 const MARCOS=[10,25,50,100];
-const CUSTO_CAIXA=[0,2500], MAX_CAIXAS=2;
-const CUSTO_GERENTE=4000;
-const CUSTO_OPERADOR=[1200,6000,15000];
-const CUSTO_MESA=[300,500,800,1200,2000,3000], CUSTO_GARCOM=2500, TEMPO_MESA=7, CHANCE_MESA=0.55;
+const CUSTO_CAIXA=[0,700], MAX_CAIXAS=2;
+const CUSTO_GERENTE=1200;
+const CUSTO_OPERADOR=[300,2000,6000];
+const CUSTO_MESA=[120,200,320,480,800,1200], CUSTO_GARCOM=900, TEMPO_MESA=7, CHANCE_MESA=0.55;
 function valorMesa(n){n=n||S.mesas.nivel;return Math.round((2+0.25*n)*multPrest()*100)/100;}   // o que o cliente consome a mais sentado, em reais
-function custoMesaNivel(){return Math.ceil(40*Math.pow(S.mesas.nivel,1.5)*multPrest());}
+function custoMesaNivel(){return Math.ceil(15*Math.pow(S.mesas.nivel,1.5)*multPrest());}
 const MAX_CLIENTES_MIN=5, MAX_CAIXA_V=12;
 // o letreiro leva a adega de 3 para 5 clientes por minuto (cada cliente leva uma cesta, como na Adega de verdade)
 const INTERVALOS=[20,17.1,15,13.3,12], MAX_LETREIRO=INTERVALOS.length;
@@ -1072,6 +1094,9 @@ var trocandoConta=false;
 function salvar(){if(trocandoConta)return;S.salvo=Date.now();try{S.pendente=valorPendente();}catch(e){}if(typeof taxaPorMin==='function'){const t=taxaPorMin();if(t>0)S.taxa=t;}try{localStorage.setItem(CHAVE,JSON.stringify(S));}catch(e){}}
 
 const multPrest=()=>1+0.25*((S&&S.prest)||0);
+// Margem de exemplo de cada setor (média de 20%, como numa adega de bairro). Custos reais da loja nunca entram no jogo.
+const MARGEM={refri:0.10,agua:0.15,salgadinho:0.25,gelo:0.30,carvao:0.22,mercearia:0.15};
+const papelSetor=id=>MARGEM[id]<=0.12?'produto isca: atrai o cliente':MARGEM[id]>=0.25?'dá o lucro':'margem média';
 var precosCache={};   // preço médio de cada setor no catálogo da Adega real (o catálogo preenche)
 function marcosAte(n){return MARCOS.filter(m=>n>=m).length;}
 function valorEst(id){ return precosCache[id]||EST[id].valor; }   // preço médio real do setor (não sobe com o nível)
@@ -1082,9 +1107,9 @@ function tempoEst(id,n){n=n||S.est[id].nivel;return EST[id].tempo/(1+0.35*marcos
 // Preço das melhorias em reais: cresce devagar (n^1,5), como um investimento de verdade numa adega
 function custoNivelSetor(id,n){ return Math.ceil(EST[id].custo*(4+Math.pow(n,1.5))); }
 function custoEst(id){ return custoNivelSetor(id,S.est[id].nivel); }
-function custoCaixaV(){return Math.ceil(400*Math.pow(1.4,S.caixaV-1));}
+function custoCaixaV(){return Math.ceil(150*Math.pow(1.4,S.caixaV-1));}
 function tempoPagar(v){return 2.4*Math.pow(0.86,(v||S.caixaV)-1);}
-function custoLetreiro(){return Math.ceil(200*Math.pow(2.2,S.letreiro-1));}
+function custoLetreiro(){return Math.ceil(30*Math.pow(2,S.letreiro-1));}
 function intervalo(l){return INTERVALOS[Math.min(INTERVALOS.length,l||S.letreiro)-1];}
 const porMinTxt=l=>(60/intervalo(l)).toFixed(1).replace('.0','').replace('.',',');
 
@@ -1767,7 +1792,9 @@ function novoCliente(){
   for(let i=0;i<n;i++){ const k=Math.floor(Math.random()*pool.length); lista.push(pool.splice(k,1)[0]); }
   const g=pessoa(); g.position.copy(ENTRADA).add(new THREE.Vector3(0,0,rnd(-0.2,0.2))); scene.add(g);
   const qtd={}; lista.forEach(id=>{ const x=Math.random(); qtd[id]=x<0.45?1:x<0.8?2:3; });
-  clientes.push({g,lista,qtd,nome:sortearFreguês(),valor:0,estado:'chegando',caminho:[FORA_PORTA.clone(),PORTA.clone()],t:0,passo:rnd(0,6),est:null,slot:-1,vel:rnd(1.9,2.3)});
+  const cb=(typeof clienteCombo==='function')?clienteCombo():null;
+  if(cb){ lista.length=0; for(const id in COMBOS[cb].itens){ lista.push(id); qtd[id]=COMBOS[cb].itens[id]; } }
+  clientes.push({g,lista,qtd,combo:cb,nome:sortearFreguês(),valor:0,estado:'chegando',caminho:[FORA_PORTA.clone(),PORTA.clone()],t:0,passo:rnd(0,6),est:null,slot:-1,vel:rnd(1.9,2.3)});
 }
 function irPara(c,dest){ c.caminho=rota(c.g.position,dest); }
 function proximoAlvo(c){
@@ -1807,7 +1834,9 @@ const baloesCobrar=[0,1,2].map(k=>{
   $('#cobrancas').appendChild(b); return b;
 });
 function cobrar(c,modo){
-  const k=c.caixa; pagando[k]=null; c.pago=true; baloesCobrar[k].style.display='none';
+  const k=c.caixa; pagando[k]=null; c.pago=true;
+  if(c.combo&&COMBOS[c.combo]){ const it=COMBOS[c.combo].itens, ok=Object.keys(it).every(id=>c.pegou&&(c.pegou[id]||0)>=it[id]);
+    if(ok){ c.valor=Math.round(c.valor*(1-DESC_COMBO)*100)/100; const C=Cb(); C.vendidos[c.combo]=(C.vendidos[c.combo]||0)+1; setTimeout(()=>pop(c.g.position.clone().setY(2.6),COMBOS[c.combo].ic+' '+COMBOS[c.combo].nome,''),120); } } baloesCobrar[k].style.display='none';
   if(c.retirada&&!c.retirou) marcarRetirada(c);
   const topo=c.g.position.clone().setY(2.0);
   S.total+=c.valor; registrarGanho(c.valor); registrarFreguês(c,c.valor); missaoEvento('cobrar',1); if(modo==='manual') missaoEvento('cobrarManual',1);
@@ -1895,7 +1924,7 @@ function atualizarClientes(dt){
           vagasEst[c.est][c.slot]=null; c.lista.shift();
           if(S.est[c.est].estoque>0){ S.est[c.est].estoque--; (c.pegou=c.pegou||{})[c.est]=(c.pegou[c.est]||0)+1; atualizarProdutos(c.est); missaoEvento('vender',1,c.est);
             if(false){}
-            else { const id=c.est, pr=produtoVendido(id), quer=((c.qtd&&c.qtd[id])||1)+(Math.random()<chanceExtra(id)?1:0), q2=Math.min(quer,S.est[id].estoque+1);
+            else { const id=c.est, pr=produtoVendido(id), quer=((c.qtd&&c.qtd[id])||1)+(!c.combo&&Math.random()<chanceExtra(id)?1:0), q2=Math.min(quer,S.est[id].estoque+1);
               if(q2>1){ S.est[id].estoque-=q2-1; c.pegou[id]+=q2-1; missaoEvento('vender',q2-1,id); atualizarProdutos(id); }
               c.valor=Math.round((c.valor+pr.p*q2)*100)/100; pop(c.g.position.clone().setY(1.7),'+'+EST[id].ic+' '+(q2>1?q2+'× ':'')+pr.n,''); }
             c.g.userData.sacola.visible=true; }
@@ -1933,7 +1962,7 @@ function atualizarClientes(dt){
 
 // ================= Estoque e fornecedor =================
 function cap(id,n){n=n||S.est[id].nivel;return 20+2*(n-1);}
-function custoUnit(id){return Math.max(0.05,Math.round(valorEst(id)*0.7*fatorFornecedor()*100)/100);}   // custo de exemplo: margem média de 30%
+function custoUnit(id){return Math.max(0.05,Math.round(valorEst(id)*(1-MARGEM[id])*fatorFornecedor()*100)/100);}   // custo de exemplo pela margem do setor
 function faltando(id){const e=S.est[id], a=S.atac?(S.atac.itens?(S.atac.itens[id]||0):(S.atac.id===id?S.atac.q:0)):0;return Math.max(0,cap(id)-e.estoque-e.pedido-a);}
 function custoPedido(id){return faltando(id)*custoUnit(id);}
 const autoRepor=()=>false; // reposição sempre manual: o jogador faz os pedidos
@@ -2774,8 +2803,8 @@ addEventListener('keydown',e=>{ if(!ENT.ativo) return; const k=e.key;
 // ================= Ponto de Retirada (Mercado Livre, Shopee e Amazon) =================
 const PARCEIROS={
   ml:{nome:'Mercado Livre',cor:'#FFE14D',txt:'#2D3277',fator:1.5,ativar:0},
-  shopee:{nome:'Shopee',cor:'#EE4D2D',txt:'#FFFFFF',fator:1.2,ativar:800},
-  amazon:{nome:'Amazon',cor:'#232F3E',txt:'#FF9900',fator:2,ativar:1500}
+  shopee:{nome:'Shopee',cor:'#EE4D2D',txt:'#FFFFFF',fator:1.2,ativar:300},
+  amazon:{nome:'Amazon',cor:'#232F3E',txt:'#FF9900',fator:2,ativar:600}
 };
 const pdrNovo=()=>({liberado:false,nivel:1,estante:0,parceiros:{ml:true,shopee:false,amazon:false},recebidos:0,retirados:0,ganho:0});
 function PDR(){ if(!S.pdr) S.pdr=pdrNovo(); return S.pdr; }
@@ -2962,7 +2991,7 @@ atualizarCaixasPdr();
 // ================= Venda da Adega (valuation, propostas e recomeço com bônus) =================
 var NIVEL_VENDA=100;
 const COMPRADORES=[
-  {nome:'Rede Bairro Bom',fator:0.95,cond:'Paga à vista',vant:'A nova adega começa com um capital inicial maior.',capital:3000,brinde:''},
+  {nome:'Rede Bairro Bom',fator:0.95,cond:'Paga à vista',vant:'A nova adega começa com um capital inicial maior.',capital:1500,brinde:''},
   {nome:'Grupo Gelado',fator:1.10,cond:'Paga mais, em parcelas',vant:'Dá o maior bônus permanente, mas a nova adega começa sem capital.',capital:0,brinde:''},
   {nome:'Investidor Anjo',fator:1.00,cond:'Vira seu sócio investidor',vant:'A nova adega já começa com um operador de caixa contratado.',capital:15000,brinde:'operador'}
 ];
@@ -3870,7 +3899,7 @@ const veiculo=()=>VEICULOS[S.kombi?'kombi':'carro'];
 const custoMedio=()=>{ const ab=IDS.filter(i=>S.est[i].aberta); return ab.length?ab.reduce((t,i)=>t+custoUnit(i),0)/ab.length:1; };
 const custoBase=()=>{ const ab=IDS.filter(i=>S.est[i].aberta); return ab.length?Math.min(...ab.map(custoUnit)):1; };
 const gasolinaViagem=()=>Math.round(veiculo().gas*4);   // ida e volta ao atacarejo, em reais
-const precoKombi=()=>Math.round(25000*multPrest());
+const precoKombi=()=>Math.round(6000*multPrest());
 const maxCaixas=id=>Math.floor(faltando(id)/CAIXA_UN);
 const atacQtd=id=>(S.atac&&S.atac.itens&&S.atac.itens[id])||0;
 const eduOcupado=()=>G.estado!=='livre'&&G.g===eduDono;
@@ -4153,14 +4182,14 @@ function atualizarContas(dt){
 }
 // ---------- Para onde vão os seus R$ 10 ----------
 const DEZ_REAIS=[
-  {ic:'📦',nome:'Produto',info:'o que a adega pagou ao fornecedor',v:6.50,cor:'#8FB8DE'},
-  {ic:'🧑‍💼',nome:'Funcionários',info:'salário de quem atende você',v:0.80,cor:'#F2A65A'},
-  {ic:'🧾',nome:'Impostos',info:'vão para o governo',v:0.60,cor:'#E8433A'},
-  {ic:'🏠',nome:'Aluguel',info:'o ponto da loja',v:0.60,cor:'#9B5DE5'},
-  {ic:'⚡',nome:'Luz',info:'geladeiras ligadas dia e noite',v:0.40,cor:'#FFC93C'},
-  {ic:'💳',nome:'Maquininha',info:'taxa do cartão',v:0.15,cor:'#6EC6EA'},
-  {ic:'🍾',nome:'Perdas',info:'quebra e vencimento',v:0.15,cor:'#B5651D'},
-  {ic:'💛',nome:'Sobra para a adega',info:'é daqui que saem reformas e geladeira nova',v:0.80,cor:'#3CB371',lucro:true}
+  {ic:'📦',nome:'Produto',info:'o que a adega pagou ao fornecedor',v:8.00,cor:'#8FB8DE'},
+  {ic:'🧑‍💼',nome:'Funcionários',info:'salário de quem atende você',v:0.55,cor:'#F2A65A'},
+  {ic:'🧾',nome:'Impostos',info:'vão para o governo',v:0.40,cor:'#E8433A'},
+  {ic:'🏠',nome:'Aluguel',info:'o ponto da loja',v:0.30,cor:'#9B5DE5'},
+  {ic:'⚡',nome:'Luz',info:'geladeiras ligadas dia e noite',v:0.25,cor:'#FFC93C'},
+  {ic:'💳',nome:'Maquininha',info:'taxa do cartão',v:0.13,cor:'#6EC6EA'},
+  {ic:'🍾',nome:'Perdas',info:'quebra e vencimento',v:0.07,cor:'#B5651D'},
+  {ic:'💛',nome:'Sobra para a adega',info:'é daqui que saem reformas e geladeira nova',v:0.30,cor:'#3CB371',lucro:true}
 ];
 const reaisTxt=v=>'R$ '+v.toFixed(2).replace('.',',');
 function abrirDezReais(){
@@ -4350,14 +4379,26 @@ const LICOES={
     libera:()=>!!((S.compras&&S.compras.viagens>0)||(S.pedidos||0)>=6)},
   contas:{ic:'🧾',tit:'As contas do mês',
     falas:['Além de comprar os produtos, todo mês a adega paga <b>luz</b> das geladeiras, <b>aluguel</b>, <b>impostos</b> e a <b>taxa da maquininha</b>.',
-           'De cada R$ 10 que você paga aqui, uns <b>R$ 6,50</b> vão para o fornecedor do produto, e quase todo o resto vai para essas contas e para quem trabalha.',
+           'De cada R$ 10 que você paga aqui, uns <b>R$ 8,00</b> vão para o fornecedor do produto (a margem da adega é de uns 20%), e quase todo o resto vai para essas contas e para quem trabalha.',
            'No fim, sobra para a adega <b>menos de R$ 1</b>. É desse pouquinho que saem reformas, a geladeira nova e o sustento do dono.'],
     perg:'De cada R$ 10 vendidos, quanto sobra para a adega, mais ou menos?',
     ops:[{t:'Menos de R$ 1',ok:true},{t:'Uns R$ 5'},{t:'Os R$ 10 inteiros'}],
     certo:'Isso! A maior parte do que você paga vai para o produto, as contas e os impostos. Por isso cada venda conta, e pagar na hora faz toda a diferença. 💛',
     errado:'Quase! Lembre: o produto, os funcionários, a luz, o aluguel, os impostos e a maquininha saem antes de sobrar alguma coisa.',
     nota:'Valores de exemplo, parecidos com os de verdade.',
-    libera:()=>!!(S.contas&&S.contas.meses>0)}
+    libera:()=>!!(S.contas&&S.contas.meses>0)},
+  isca:{ic:'🎣',tit:'O produto isca',
+    falas:['O refri é o produto que todo mundo procura e compara o preço. Por isso ele fica <b>baratinho</b>: a adega ganha só uns <b>10%</b> nele.',
+           'Ele é a <b>isca</b>: traz o cliente até a loja. O lucro vem do que ele leva junto, como o <b>gelo</b> (30%) e o <b>salgadinho</b> (25%).',
+           'Por isso existem os <b>combos</b>: o cliente leva tudo junto com um descontinho, e a adega vende mais do que dá lucro.'],
+    perg:'Se o refri dá pouco lucro, por que a adega vende ele baratinho?',
+    ops:[{t:'Para atrair o cliente, que acaba levando também o gelo, o carvão e o salgadinho.',ok:true},
+         {t:'Porque o fornecedor dá o refri de graça.'},
+         {t:'Porque refri barato não precisa de geladeira.'}],
+    certo:'Isso! O refri traz o cliente e os outros produtos pagam as contas. Agora você pode montar combos no balcão. 💛',
+    errado:'Quase! Pense no que o cliente leva junto quando vem buscar o refri. Tente de novo.',
+    nota:'Margens de exemplo, parecidas com as de uma adega de bairro. Na média, a adega ganha uns 20%.',
+    libera:()=>setoresAbertos()>=3}
 };
 const licaoFeita=k=>!!(S&&S.licoes&&S.licoes[k]);
 const licaoDisponivel=k=>!!(S&&LICOES[k]&&!licaoFeita(k)&&LICOES[k].libera());
@@ -4463,6 +4504,50 @@ function abrirCatalogo(setor){
 $('#catBusca').addEventListener('input',renderCatalogo);
 $('#btnCatFechar').addEventListener('click',()=>{ $('#telaCatalogo').hidden=true; });
 $('#btnFregFechar').addEventListener('click',()=>{ $('#telaFregueses').hidden=true; });
+// ================= Combos (o cliente leva tudo junto com um descontinho) =================
+const COMBOS={
+  churrasco:{ic:'🔥',nome:'Kit Churrasco',itens:{carvao:1,gelo:1,refri:2}},
+  festa:{ic:'🎉',nome:'Kit Festa',itens:{refri:2,gelo:1,salgadinho:3}},
+  almoco:{ic:'🍝',nome:'Kit Almoço',itens:{mercearia:3,refri:1}},
+  treino:{ic:'💪',nome:'Kit Treino',itens:{agua:3,salgadinho:1}}
+};
+const DESC_COMBO=0.05, MAX_COMBOS=2, CHANCE_COMBO=0.3;
+function Cb(){ if(!S.combos) S.combos={ativos:[],vendidos:{}}; return S.combos; }
+const combosLiberados=()=>!!(S&&setoresAbertos()>=3&&licaoFeita('isca'));
+const comboPossivel=k=>Object.keys(COMBOS[k].itens).every(id=>S.est[id].aberta);
+function contaCombo(k){ let preco=0,lucro=0; for(const id in COMBOS[k].itens){ const v=valorEst(id)*COMBOS[k].itens[id]; preco+=v; lucro+=v*MARGEM[id]; }
+  const pc=preco*(1-DESC_COMBO); return {preco,pc,lucro:lucro-preco*DESC_COMBO}; }
+function clienteCombo(){ const C=Cb(), at=C.ativos.filter(comboPossivel); if(!at.length||Math.random()>=CHANCE_COMBO) return null; return pega(at); }
+function abrirCombos(){
+  fecharPainel(); const C=Cb(), el=$('#combosConteudo');
+  if(!combosLiberados()){ el.innerHTML=`<p class="txt">Os combos liberam quando a adega tiver <b>3 setores abertos</b> e você fizer a lição do Edu sobre o <b>produto isca</b>.</p>`+(licaoDisponivel('isca')?`<button class="btn" id="bCbLicao" type="button">🎣 Fazer a lição do Edu</button>`:''); $('#telaCombos').hidden=false; const b=$('#bCbLicao'); if(b) b.onclick=()=>{ $('#telaCombos').hidden=true; abrirLicao('isca'); }; return; }
+  const isca=valorEst('refri')*MARGEM.refri;
+  let h=`<p class="txt" style="font-size:.9rem">Escolha até <b>${MAX_COMBOS} combos</b>. O cliente leva tudo junto com <b>${Math.round(DESC_COMBO*100)}% de desconto</b>. Quem compra só um refri deixa uns <b>${fmt(isca)}</b> de lucro.</p>`;
+  Object.keys(COMBOS).forEach(k=>{ const c=COMBOS[k], R=contaCombo(k), pode=comboPossivel(k), on=C.ativos.includes(k);
+    h+=`<div class="combo${on?' on':''}${pode?'':' off'}"><div class="combo-cab"><span class="combo-ic">${c.ic}</span><span class="bol-tx"><b>${c.nome}</b><small>${Object.keys(c.itens).map(id=>c.itens[id]+'× '+EST[id].ic).join(' + ')}</small></span>
+      <span class="combo-preco"><s>${fmt(R.preco)}</s><b>${fmt(R.pc)}</b></span></div>
+      <div class="combo-pe"><span>Lucro da adega: <b>${fmt(R.lucro)}</b>${C.vendidos[k]?` · vendidos: ${C.vendidos[k]}`:''}</span>
+      ${pode?`<button type="button" class="btn ${on?'':'azul '}peq" data-cb="${k}">${on?'✔ No balcão':'Pôr no balcão'}</button>`:`<small>abra ${Object.keys(c.itens).filter(id=>!S.est[id].aberta).map(id=>EST[id].ic).join(' ')}</small>`}</div></div>`; });
+  h+=`<p class="bol-nota">Combo bom junta o produto isca com os que dão lucro. Desconto grande demais come o lucro: faça a conta!</p>`;
+  el.innerHTML=h; $('#telaCombos').hidden=false; SOM.abrir();
+  el.querySelectorAll('[data-cb]').forEach(b=>b.onclick=()=>{ const k=b.dataset.cb, i=C.ativos.indexOf(k);
+    if(i>=0) C.ativos.splice(i,1); else { if(C.ativos.length>=MAX_COMBOS) C.ativos.shift(); C.ativos.push(k); }
+    SOM.abrir(); salvar(); abrirCombos(); });
+}
+$('#btnCombosFechar').addEventListener('click',()=>{ $('#telaCombos').hidden=true; });
+// quadro de margem (como o da parede da adega)
+function abrirMargem(){
+  fecharPainel();
+  let h=`<p class="txt" style="font-size:.9rem">Margem é o pedaço do preço que fica com a adega depois de pagar o fornecedor. Na média, uns <b>20%</b>.</p><div class="margem-quadro">`;
+  IDS.forEach(id=>{ const m=Math.round(MARGEM[id]*100), ab=S.est[id].aberta;
+    h+=`<div class="margem-col${ab?'':' off'}"><span class="margem-v">${m}%</span><i style="height:${m*3}px;background:${m<=12?'#E8433A':m>=25?'#3CB371':'#F2B21B'}"></i><span class="margem-ic">${EST[id].ic}</span></div>`; });
+  h+=`</div><p class="txt" style="font-size:.88rem">🔴 <b>Isca</b>: preço baixinho para trazer o cliente. 🟢 <b>Lucro</b>: o que paga as contas. Num refri de ${fmt(valorEst('refri'))}, a adega fica com uns ${fmt(valorEst('refri')*MARGEM.refri)}.</p>`;
+  if(licaoDisponivel('isca')||licaoFeita('isca')) h+=`<button class="btn azul peq" id="bMargemLicao" type="button">🎣 ${licaoFeita('isca')?'Rever':'Fazer'} a lição do produto isca</button>`;
+  $('#margemConteudo').innerHTML=h; $('#telaMargem').hidden=false; SOM.abrir();
+  const b=$('#bMargemLicao'); if(b) b.onclick=()=>{ $('#telaMargem').hidden=true; abrirLicao('isca'); };
+}
+$('#btnMargemFechar').addEventListener('click',()=>{ $('#telaMargem').hidden=true; });
+
 $('#fregAbas').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ abaFreg=b.dataset.a; SOM.abrir(); renderFregueses(); }));
 function catalogoNoPainel(k){
   const l=produtosDoSetor(k); if(!l.length) return '';
@@ -4844,6 +4929,11 @@ const ETAPAS_MAPA=[
   {id:'loja',ic:'🛒',nome:'Loja completa',chip:'6 setores',zona:0,
    desc:'Abra água e suco, salgadinhos, gelo, carvão e a mercearia. Cada setor vende produtos mais caros.',
    req:'Abra os 6 setores da loja.',prog:()=>[setoresAbertos(),IDS.length]},
+  {id:'isca',ic:'🎣',nome:'Produto isca e combos',chip:'Lição',zona:0,
+   desc:'O refri baratinho traz o cliente; o gelo, o carvão e o salgadinho dão o lucro. Depois da lição, monte combos no balcão.',
+   req:'Abra 3 setores e faça a lição do Edu.',prog:()=>[Math.min(setoresAbertos(),3)+(licaoFeita('isca')?1:0),4],
+   feito:()=>licaoFeita('isca'),acao:{txt:'🎁 Montar combos',fn:()=>abrirCombos()},
+   acaoAntes:()=>licaoDisponivel('isca')?{txt:'🎣 Fazer a lição do Edu',fn:()=>abrirLicao('isca')}:null},
   {id:'contas',ic:'🧾',nome:'As contas do mês',chip:'Lição',zona:0,
    desc:'A cada 20 minutos de jogo chega o mês da adega: luz, aluguel, impostos, maquininha e perdas saem do caixa. Veja também para onde vão os seus R$ 10.',
    req:'Complete 5 tarefas e espere chegarem os primeiros boletos. Depois, faça a lição do Edu.',prog:()=>[Math.min(S.tarefa,5)+(S.contas&&S.contas.meses>0?1:0)+(licaoFeita('contas')?1:0),7],
@@ -5272,6 +5362,7 @@ function renderPainel(){
       h+=`<div class="cab"><div class="ic">${d.ic}</div><div><h3>${d.nome}</h3><p>Nível ${e.nivel}</p></div></div>
       <div class="stats">
         <div class="stat"><span>Preço médio (Adega real)</span><b>${fmt(valorEst(k))}</b></div>
+        <div class="stat"><span>Margem do setor</span><b>${Math.round(MARGEM[k]*100)}% <span class="prox">${papelSetor(k)}</span></b></div>
         <div class="stat"><span>Chance de levar 1 a mais</span><b>${Math.round(chanceExtra(k)*100)}% <span class="prox">→ ${Math.round(chanceExtra(k,e.nivel+1)*100)}%</span></b></div>
         <div class="stat"><span>Tempo para pegar</span><b>${tempoEst(k).toFixed(1).replace('.',',')} s</b></div>
         <div class="stat"><span>Estoque</span><b>${e.estoque} / ${cap(k)}${e.pedido>0?` <span class="prox">🚚 +${e.pedido} a caminho</span>`:''}${atacQtd(k)?` <span class="prox">🚗 +${atacQtd(k)} do atacarejo</span>`:''}</b></div>
@@ -5281,14 +5372,14 @@ function renderPainel(){
       `<div class="duas">${btnCusto(custoEst(k),'Melhorar','bAcao')}<button class="btn amarelo" id="bMax">Máximo<small id="bMaxTxt"></small></button></div>`;
     }
   } else if(k==='caixa'){
-    const manual=S.caixas-S.operadores; setTimeout(()=>{ const b=$('#bFreg'); if(b) b.onclick=()=>abrirFregueses('mes'); },0);
+    const manual=S.caixas-S.operadores; setTimeout(()=>{ const b=$('#bFreg'); if(b) b.onclick=()=>abrirFregueses('mes'); const c=$('#bCombos'); if(c) c.onclick=abrirCombos; const m=$('#bMargem'); if(m) m.onclick=abrirMargem; },0);
     h+=`<div class="cab"><div class="ic">🧾</div><div><h3>Caixa</h3><p>${S.caixas} ${S.caixas>1?'caixas abertos':'caixa aberto'}, ${S.operadores?'1 automático':'nenhum automático'}${S.gerente?' e gerente':''}</p></div></div>
     <p style="margin:10px 2px 0;color:var(--sub);font-size:.86rem;font-weight:700;line-height:1.35">${S.operadores?'O operador cobra sozinho no 1º caixa e o dinheiro vai para a pilha. '+(S.caixas>1?'O 2º caixa é sempre cobrado por você, tocando no balão. ':''):'Você cobra tocando no balão. Quanto mais rápido, maior a gorjeta. '}Só um caixa pode ter operador, e tudo funciona apenas com o jogo aberto.</p>
     <div class="stats"><div class="stat"><span>Tempo do operador</span><b>${tempoPagar().toFixed(1).replace('.',',')} s${S.caixaV<MAX_CAIXA_V?` <span class="prox">→ ${tempoPagar(S.caixaV+1).toFixed(1).replace('.',',')} s</span>`:''}</b></div></div>`+
     (S.operadores<Math.min(S.caixas,MAX_OPERADORES)?btnCusto(CUSTO_OPERADOR[S.operadores]*multPrest(),'Contratar operador','bOper'):'')+
     (S.caixas<MAX_CAIXAS?btnCusto(CUSTO_CAIXA[S.caixas]*multPrest(),`Abrir ${S.caixas+1}º caixa`,'bCaixa'):'')+
     (S.operadores>0?(S.caixaV<MAX_CAIXA_V?btnCusto(custoCaixaV(),'Operador mais rápido','bAcao'):'<button class="btn" disabled>Velocidade máxima</button>'):'')+
-    `<button class="btn azul peq" id="bFreg" type="button" style="margin-top:8px">🏅 Melhores fregueses (mês e ano)</button>`+
+    `<button class="btn azul peq" id="bFreg" type="button" style="margin-top:8px">🏅 Melhores fregueses (mês e ano)</button><div class="duas" style="margin-top:8px"><button class="btn peq" id="bCombos" type="button">🎁 Combos</button><button class="btn peq" id="bMargem" type="button">📊 Margem</button></div>`+
     (!S.gerente?btnCusto(CUSTO_GERENTE*multPrest(),'Contratar gerente','bGerente')+`<p style="margin:8px 2px 0;color:var(--sub);font-size:.85rem;font-weight:700">O gerente recolhe a pilha de dinheiro sozinho e recebe o caminhão do fornecedor, repondo os produtos nos setores.</p>`:'');
   } else if(k==='mesas'){
     const M=S.mesas;
@@ -5333,7 +5424,7 @@ function quantosCompra(k){ let d=S.din,n=S.est[k].nivel,q=0; while(q<500){ const
 function acao(k,silencioso){
   if(IDS.includes(k)){
     const e=S.est[k];
-    if(!e.aberta){ const c=EST[k].abrir*multPrest(); if(S.din<c) return; S.din-=c; e.aberta=true; e.estoque=cap(k); e.pedido=0; atualizarEstacoes(); atualizarProdutos(k); festa(objEst[k].g.position); }
+    if(!e.aberta){ const c=EST[k].abrir*multPrest(); if(S.din<c) return; S.din-=c; e.aberta=true; e.estoque=cap(k); e.pedido=0; atualizarEstacoes(); atualizarProdutos(k); festa(objEst[k].g.position); if(setoresAbertos()>=3) setTimeout(()=>oferecerLicao('isca'),1500); }
     else { const c=custoEst(k); if(S.din<c) return; S.din-=c; e.nivel++; atualizarProdutos(k); missaoEvento('melhorar',1); if(MARCOS.includes(e.nivel)){ SOM.marco(); festa(objEst[k].g.position); pop(objEst[k].g.position.clone().setY(3),'Mais rápido!','grande'); } }
   } else if(k==='caixa'){ const c=custoCaixaV(); if(S.din<c) return; S.din-=c; S.caixaV++; }
   else if(k==='letreiro'){ const c=custoLetreiro(); if(S.din<c) return; S.din-=c; S.letreiro++; }
@@ -5525,7 +5616,7 @@ if(location.hash==='#mapa'){ // voltou do Motoca pelo mapa
     telaVitrine:'#btnVitrineFechar',telaCatalogo:'#btnCatFechar',telaAtac:'#btnAtacFechar',telaFregueses:'#btnFregFechar',telaBoletos:'#btnBoletosOk',
     telaDez:'#btnDezFechar',telaLicao:'#btnLicaoFechar',telaCorretora:'#btnCorretoraFechar',telaGuiaCorr:'#guiaCorrFechar',telaMissoes:'#btnMissoesFechar',
     telaVenda:'#btnVendaFechar',telaPdr:'#btnPdrFechar',telaPapo:'#btnPapoFechar',telaPedido:'#btnFecharPedido',telaFimEntrega:'#btnVoltarAdega',
-    telaRanking:'#btnFecharRanking',telaCupom:'#cpFechar',telaSairConfirma:'#btnSairNao',telaRecuperar:'#btnRecVoltar',telaMeta:'#btnMetaOk',
+    telaRanking:'#btnFecharRanking',telaCombos:'#btnCombosFechar',telaMargem:'#btnMargemFechar',telaCupom:'#cpFechar',telaSairConfirma:'#btnSairNao',telaRecuperar:'#btnRecVoltar',telaMeta:'#btnMetaOk',
     telaT2:'#btnT2Ok',telaPrestigio:'#btnFicar',telaOffline:'#btnOffline'};
   const pilha=[]; let ignorar=0, ultimoAviso=0;
   const aberto=id=>{ if(id==='painel') return $('#painel').classList.contains('aberto'); const t=document.getElementById(id); return !!(t&&!t.hidden); };
