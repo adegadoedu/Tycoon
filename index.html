@@ -1004,7 +1004,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 24/11/2026 · 21h · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 24/11/2026 · 22h · 🎄</p>
   </div>
 </section>
 
@@ -1311,7 +1311,7 @@ const ESF=new THREE.SphereGeometry(1,20,14);
 // ---------- Rua e calçada ----------
 malha(new THREE.PlaneGeometry(200,200),new THREE.MeshLambertMaterial({color:0x8FD18A}),scene,0,-0.02,0,false).rotation.x=-Math.PI/2;
 // Rua Felice Del Paggio: começa na BR-116 (x=-28.5) e sobe para a direita. A Adega fica do lado do posto.
-const RUA_INI=-30, RUA_FIM=18.5, BR_X=-32.2, MILTON_X=-10;
+const RUA_INI=-30, RUA_FIM=18.5, BR_X=-32.2, MILTON_X=9.3;
 const calcada=malha(new THREE.BoxGeometry(RUA_FIM+28.5,0.1,2.6),toon(0xD8D2C4),scene,(RUA_FIM-28.5)/2,0.0,6.5,false); calcada.receiveShadow=true;
 const rua=malha(new THREE.BoxGeometry(RUA_FIM+28.5,0.05,4),toon(0x4A4E55),scene,(RUA_FIM-28.5)/2,-0.01,9.8,false);
 for(let x=-26.5;x<=17;x+=2.2) if(Math.abs(x-MILTON_X)>2.4) malha(new THREE.BoxGeometry(1.0,0.06,0.16),toon(0xF2F2F2),scene,x,0.0,9.8,false);
@@ -6670,7 +6670,7 @@ function pizzaria(o){
 // ---------- a rua de verdade (Rua Felice Del Paggio, Taboão da Serra) ----------
 // Lado da Adega: Posto 1001 (esquina com a BR-116), casas, a Adega e uma casa num terreno grande.
 // Outro lado (perto da câmera): Casa de Salgados (esquina com a BR-116), Sacolão, Casa de Ração,
-// Rua Milton Martins Moura e a Pizzaria Santo Forno na esquina, de frente para a Adega.
+// casas, a Pizzaria Santo Forno e a Rua Milton Martins Moura (a pizzaria pega a esquina das duas ruas).
 // As lojas do outro lado ficam de costas para a câmera: por isso cada uma tem um letreiro no telhado virado para cá.
 function letreiroTelhado(g,o,tex,larg,alt){ // g está girado 180°: o fundo da loja (z local negativo) é o lado da câmera
   const w=larg||o.w*0.86, h=alt||0.72, y=o.h+0.25+h/2, z=-o.d/2+0.35;
@@ -6689,19 +6689,25 @@ function lojaOutroLado(o){
 lojaOutroLado({x:-25.2,z:16.3,w:4.8,d:4.2,h:2.6,cor:0xFFE2B0,toldo:0xD98A1E,nome:'🥟 Casa de Salgados',fundo:'#D98A1E',letra:'#FFFFFF',abre:7,fecha:22});
 lojaOutroLado({x:-20.0,z:16.3,w:4.8,d:4.2,h:2.5,cor:0xE3F4D2,toldo:0x4F9A2E,nome:'🥬 Sacolão',fundo:'#4F9A2E',letra:'#FFFFFF',abre:7,fecha:20});
 lojaOutroLado({x:-15.3,z:16.3,w:4.2,d:4.2,h:2.5,cor:0xE4ECF7,toldo:0x3A6FB0,nome:'🐶 Casa de Ração',fundo:'#3A6FB0',letra:'#FFFFFF',abre:8,fecha:19});
-// Pizzaria Santo Forno: esquina da Milton Martins Moura, de frente para a Adega
-(function(){ const o={x:-4.2,z:16.6,w:5,d:4,h:3.3,nome:'🍕 Pizzaria Santo Forno',abre:18,fecha:24};
+// Pizzaria Santo Forno: esquina da Felice Del Paggio com a Milton Martins Moura, de frente para a Adega
+(function(){ const o={x:3.6,z:16.6,w:5,d:4,h:3.3,nome:'🍕 Pizzaria Santo Forno',abre:18,fecha:24};
   const g=pizzaria(o); g.rotation.y=Math.PI; const v=VIZINHOS[VIZINHOS.length-1];
   fundosLoja(g,o,v.vitrine);
-  letreiroTelhado(g,o,texLetreiroSanto(),4.2,1.05);
+  // esquina: a lateral dá para a Rua Milton Martins Moura e fica virada para a câmera, então o letreiro vai nela também
+  const lx=-o.w/2, VERM=toon(0xD32A30);
+  bloco(0.12,0.82,o.d+0.1,VERM,g,lx-0.06,o.h-0.42,0);
+  bloco(0.08,0.32,o.d,VERM,g,lx-0.04,0.16,0);
+  [-o.d/2+0.1,o.d/2-0.1].forEach(z=>bloco(0.08,2.35,0.16,toon(0x2F7D3B),g,lx-0.04,1.17,z));
+  const ls=malha(new THREE.PlaneGeometry(o.d*0.7,0.6),new THREE.MeshBasicMaterial({map:texLetreiroSanto()}),g,lx-0.13,o.h-0.42,0.2,false); ls.rotation.y=-Math.PI/2;
+  const lw=malha(new THREE.PlaneGeometry(1.5,0.32),new THREE.MeshBasicMaterial({map:texPlacaWhats()}),g,lx-0.05,1.95,0.3,false); lw.rotation.y=-Math.PI/2;
+  const geoL=new THREE.SphereGeometry(0.045,8,6);
+  for(let i=0;i<22;i++){ const z=-o.d/2+0.15+i*(o.d-0.3)/21, onda=Math.abs(Math.sin(i*0.9))*0.28; malha(geoL,LUZINHAS,g,lx-0.22,2.85-onda,z,false); }
   const pw=malha(new THREE.PlaneGeometry(2.2,0.47),new THREE.MeshBasicMaterial({map:texPlacaWhats()}),g,-0.9,o.h-0.55,-o.d/2-0.03,false); pw.rotation.y=Math.PI;
-  const geoLuz=new THREE.SphereGeometry(0.045,8,6);
-  for(let i=0;i<26;i++){ const x=-2.1+i*4.2/25, onda=Math.abs(Math.sin(i*0.9))*0.18; malha(geoLuz,LUZINHAS,g,x,o.h+0.2-onda+0.0,-o.d/2+0.2,false); }
 })();
 // casas do lado da câmera, depois da pizzaria
-[[0.9,0xE6C8F2],[5.3,0xC7E8B5],[9.7,0xF4B8A8],[14.1,0xA8D8F4]].forEach(([x,c])=>{ const o={x,z:16.2,w:3.6,d:3.2,h:2.2,cor:c,janelas:2}; const g=vizinho(o); g.rotation.y=Math.PI; fundosLoja(g,o,VIZINHOS[VIZINHOS.length-1].vitrine); });
+[[-10.8,0xE6C8F2],[-6.6,0xC7E8B5],[-2.4,0xF4B8A8],[14.1,0xA8D8F4]].forEach(([x,c])=>{ const o={x,z:16.2,w:3.6,d:3.2,h:2.2,cor:c,janelas:2}; const g=vizinho(o); g.rotation.y=Math.PI; fundosLoja(g,o,VIZINHOS[VIZINHOS.length-1].vitrine); });
 // casas atrás das lojas, na Milton Martins Moura
-[[-14.6,22.4,0xF6E7A1],[-5.4,23,0xDDEFE6],[-5.4,28.4,0xF4B8A8],[-14.6,27.8,0xC7E8B5]].forEach(([x,z,c])=>{ const g=vizinho({x,z,w:3.4,d:3,h:2.1,cor:c,janelas:2}); g.rotation.y=x<MILTON_X?Math.PI/2:-Math.PI/2; });
+[[MILTON_X-4.6,22.4,0xF6E7A1],[MILTON_X+4.6,23,0xDDEFE6],[MILTON_X+4.6,28.4,0xF4B8A8],[MILTON_X-4.6,27.8,0xC7E8B5]].forEach(([x,z,c])=>{ const g=vizinho({x,z,w:3.4,d:3,h:2.1,cor:c,janelas:2}); g.rotation.y=x<MILTON_X?Math.PI/2:-Math.PI/2; });
 // lado da Adega: duas casas entre o posto e a Adega
 [[-14.2,0xA8D8F4],[-9.9,0xF4B8A8]].forEach(([x,c])=>vizinho({x,z:2.2,w:3.6,d:3,h:2.2,cor:c,janelas:2}));
 // ---------- Posto 1001, esquina com a BR-116 ----------
@@ -6774,7 +6780,7 @@ lojaOutroLado({x:-15.3,z:16.3,w:4.2,d:4.2,h:2.5,cor:0xE4ECF7,toldo:0x3A6FB0,nome
 function arvore(x,z,e){ const g=new THREE.Group(); g.position.set(x,0,z); g.scale.setScalar(e||1); scene.add(g);
   malha(new THREE.CylinderGeometry(0.12,0.16,1.2,8),toon(0x7A4F2A),g,0,0.6,0);
   contorno(malha(ESF,toon(0x4FAE5A),g,0,1.6,0),0.03).scale.set(0.75,0.7,0.75); }
-[[-16.4,7.6],[15.6,7.6],[-12.5,12.6],[3.1,12.9],[11.9,12.9],[-12.2,-4.4]].forEach(p=>arvore(p[0],p[1],0.9+Math.random()*0.3));
+[[-16.4,7.6],[15.6,7.6],[-12.6,12.9],[-0.4,12.9],[13.6,12.9],[-12.2,-4.4]].forEach(p=>arvore(p[0],p[1],0.9+Math.random()*0.3));
 // postes com luz que acende à noite
 const LUZ_POSTE=new THREE.MeshBasicMaterial({color:0xB9BEC4}), BRILHO=[], POSTES_X=[-25.5,-19,-11.5,-6.8,8.6,13];
 const texBrilho=texCanvas(128,128,(c)=>{ const g=c.createRadialGradient(64,64,4,64,64,62); g.addColorStop(0,'rgba(255,236,170,.75)'); g.addColorStop(1,'rgba(255,236,170,0)'); c.fillStyle=g; c.fillRect(0,0,128,128); });
