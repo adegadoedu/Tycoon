@@ -3409,9 +3409,53 @@ function confeteDecor(){
   const cores=[0xE8433A,0xFFC93C,0x3CB371,0x2F8FD8,0x9B5DE5,0xFF7A1A]; const g=new THREE.PlaneGeometry(0.07,0.07);
   for(let i=0;i<160;i++){ const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:cores[i%6],side:THREE.DoubleSide})); m.rotation.x=-Math.PI/2; m.rotation.z=Math.random()*3; m.position.set(rnd(-4.5,4.5),0.012,rnd(-4.5,4.6)); decorEvento.add(m); }
 }
+// ---------- Árvore de Natal de caixas, como a da Adega de verdade (sem marcas e sem bebida alcoólica) ----------
+// Aparece até 01/01/2027. Pelo Balcão dá para forçar ligada ('on') ou tirar ('off'); 'auto' segue a data.
+const ARVORE_ATE=Date.UTC(2027,0,2,3,0,0);   // fim do dia 01/01/2027 em Brasília
+let arvoreModo='auto';
+const arvoreCaixas=(function(){
+  const g=new THREE.Group(); g.position.set(-3.7,0,5.6); g.rotation.y=Math.PI/4; g.visible=false; scene.add(g);
+  const CW=0.36, CH=0.27, CD=0.3, cores=[0xD7263D,0xF2D46B,0x2A1F1F,0xE8E8E8,0x2E5FD0,0x2E9A5A,0x4A2E22,0xF2C230];
+  const ROWS=[5,4,3,3,2,1]; let k=0;
+  ROWS.forEach((n,r)=>{ const y=0.08+CH/2+r*CH;
+    for(let i=0;i<n;i++){ const x=(i-(n-1)/2)*CW, cor=[0x4A2E22,0x2E5FD0,0x2E9A5A,0x2A1F1F, 0xF2C230,0x2A1F1F,0xE8E8E8, 0xE8E8E8,0x2E5FD0,0x2E5FD0, 0xF2D46B,0x2A1F1F, 0xD7263D,0x2E9A5A,0xD7263D,0x2E5FD0,0x4A2E22,0xF2C230][k++%18];
+      const cx=bloco(CW-0.02,CH-0.02,CD,toon(cor),g,x,y,0,0.02,0.012);
+      malha(new THREE.BoxGeometry(CW*0.5,0.05,0.01),toon(0x111111),g,x,y+CH*0.28,CD/2+0.006,false);   // alça da caixa
+      [-1,1].forEach(l=>{ const b=malha(ESF,toon(0xE8202A),g,x+l*0.035,y,CD/2+0.02,false); b.scale.set(0.04,0.028,0.015); });   // laço vermelho
+      malha(ESF,toon(0xB01018),g,x,y,CD/2+0.025,false).scale.setScalar(0.018); }
+    // festão verde na beirada de cada andar
+    const w=n*CW+0.06; const fes=malha(new THREE.BoxGeometry(w,0.05,0.05),toon(0x1F7A3A),g,0,y-CH/2,CD/2+0.03,false);
+    for(let i=0;i<Math.round(w/0.1);i++){ const b=malha(ESF,toon(0x2E9A4A),g,-w/2+0.05+i*0.1,y-CH/2+((i%2)?0.02:-0.01),CD/2+0.04,false); b.scale.setScalar(0.035); }
+  });
+  // estrela dourada
+  const sh=new THREE.Shape(); for(let i=0;i<10;i++){ const a=Math.PI/2+i*Math.PI/5, r=i%2?0.07:0.16; i?sh.lineTo(Math.cos(a)*r,Math.sin(a)*r):sh.moveTo(Math.cos(a)*r,Math.sin(a)*r); }
+  const est=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:0.04,bevelEnabled:false}),toon(0xFFC930,{emissive:0x6A4A00})); est.position.set(0,0.08+6*CH+0.16,-0.02); g.add(est);
+  // pisca-pisca amarelinho
+  const luzes=[], matL=new THREE.MeshBasicMaterial({color:0xFFD27A});
+  for(let i=0;i<34;i++){ const r=Math.floor(i/6.2), y=0.12+(r+0.5)*CH+((i%3)-1)*0.05, n=ROWS[Math.min(5,r)]*CW/2+0.03, x=(i%2?1:-1)*n*(0.55+((i*7)%5)/10);
+    const l=malha(ESF,matL,g,x,y,CD/2+0.05,false); l.scale.setScalar(0.022); luzes.push(l); }
+  // tecido dourado e presentes (fardos de refri e água)
+  const pano=malha(new THREE.CircleGeometry(1,28),toon(0xD9B26A),g,0,0.02,0.25,false); pano.rotation.x=-Math.PI/2; pano.scale.set(1.15,0.55,1);
+  [[-0.62,0.42,0xF2F2F2,0xD7263D],[0.62,0.44,0x2E9A5A,0xE8202A],[0.25,0.5,0xD7263D,0xFFFFFF],[-0.25,0.55,0x2F8FD8,0xE8202A]].forEach(([x,z,c,fita])=>{
+    const p=bloco(0.24,0.2,0.18,toon(c),g,x,0.12,z,0.02,0.01);
+    malha(new THREE.BoxGeometry(0.25,0.205,0.03),toon(fita),g,x,0.12,z,false); malha(new THREE.BoxGeometry(0.03,0.205,0.185),toon(fita),g,x,0.12,z,false);
+    const lc=malha(ESF,toon(fita),g,x,0.24,z,false); lc.scale.set(0.06,0.035,0.04); });
+  g.userData.luzes=luzes; return g;
+})();
+function arvoreLigada(){ return arvoreModo==='on'||(arvoreModo==='auto'&&Date.now()<ARVORE_ATE); }
+let tArvore=0;
+function atualizarArvore(dt){
+  arvoreCaixas.visible=arvoreLigada(); if(!arvoreCaixas.visible) return;
+  tArvore+=dt; arvoreCaixas.userData.luzes.forEach((l,i)=>{ l.visible=Math.sin(tArvore*3+i*1.7)>-0.3; });
+}
+async function carregarDecoracao(){
+  if(!rankingAtivo()) return;
+  try{ const d=await rpc('decoracao_publica',{}); if(d&&d.arvore_natal){ arvoreModo=d.arvore_natal; decorId='__'; } }catch(e){}
+}
+setTimeout(carregarDecoracao,3000); setInterval(carregarDecoracao,10*60*1000);
 function atualizarDecor(){
-  const ev=eventoAtual(), id=ev?ev.id:''; if(id===decorId) return; decorId=id; limparDecor(); if(!ev) return;
-  ev.dec.forEach(d=>{ if(d==='faixa') faixaDecor(ev); if(d==='bandeirinhas') bandeirinhasDecor(); if(d==='baloes') baloesDecor(ev); if(d==='arvore') arvoreDecor(); if(d==='luzes') luzesDecor(); if(d==='confete') confeteDecor(); });
+  const ev=eventoAtual(), id=(ev?ev.id:'')+(arvoreLigada()?'+a':''); if(id===decorId) return; decorId=id; limparDecor(); if(!ev) return;
+  ev.dec.forEach(d=>{ if(d==='arvore'&&arvoreLigada()) return; if(d==='faixa') faixaDecor(ev); if(d==='bandeirinhas') bandeirinhasDecor(); if(d==='baloes') baloesDecor(ev); if(d==='arvore') arvoreDecor(); if(d==='luzes') luzesDecor(); if(d==='confete') confeteDecor(); });
 }
 // ---------- Aviso e missão especial ----------
 function avisarEvento(){
@@ -6303,7 +6347,7 @@ function laco(){
   requestAnimationFrame(laco);
   const dt=Math.min(relogio.getDelta(),0.05);
   if(ENT.ativo){ atualizarEntrega(dt); renderer.render(cenaEnt,camEnt); return; }
-  if(tempoPronto){ atualizarCeu(dt); tRel+=dt; if(tRel>0.5){ tRel=0; atualizarRelogio(); if(ruaPronta) atualizarVizinhos(); } if(ruaPronta) atualizarTransito(dt); if(grafPronto){ atualizarRealismo(dt); atualizarGuardaChuvas(dt); } }
+  if(tempoPronto){ atualizarCeu(dt); tRel+=dt; if(tRel>0.5){ tRel=0; atualizarRelogio(); if(ruaPronta) atualizarVizinhos(); } if(ruaPronta) atualizarTransito(dt); atualizarArvore(dt); if(grafPronto){ atualizarRealismo(dt); atualizarGuardaChuvas(dt); } }
   if(document.body.classList.contains('jogando')){
     S.tempoJogo=(S.tempoJogo||0)+dt;
     proxCliente-=dt;

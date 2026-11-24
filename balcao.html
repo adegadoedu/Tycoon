@@ -142,6 +142,16 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
     <div id="catBalcao"><p class="vazio">Digite a senha e toque em Carregar.</p></div>
   </section>
 
+  <section class="cartao" id="boxDecor">
+    <div class="cab-res"><h2>🎄 Árvore de Natal no jogo</h2><button type="button" id="btnDecorCarregar">Carregar</button></div>
+    <p class="pequeno">A árvore de caixas aparece na frente da Adega, no jogo, para todos os jogadores.</p>
+    <label class="pequeno" style="display:block"><input type="radio" name="arvore" value="auto"> Automático: some sozinha depois de 01/01/2027</label>
+    <label class="pequeno" style="display:block"><input type="radio" name="arvore" value="on"> Sempre ligada</label>
+    <label class="pequeno" style="display:block"><input type="radio" name="arvore" value="off"> Tirar a árvore agora</label>
+    <div class="linha"><button id="btnDecorSalvar" type="button" class="prim" disabled>Salvar</button></div>
+    <div id="resDecor" role="status" aria-live="polite"></div>
+  </section>
+
   <section class="cartao" id="boxJuros">
     <div class="cab-res"><h2>🏦 Juros da corretora</h2><button type="button" id="btnJurosCarregar">Carregar</button></div>
     <p class="pequeno">Os rendimentos da Renda Fixa do jogo usam estes números. Quando o Copom mudar a Selic, atualize aqui. Use os valores do site do Banco Central.</p>
@@ -443,6 +453,21 @@ const semAc=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase
 const lerPreco=t=>Number(String(t).replace(/R\$\s*/i,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.'));
 function selSetor(valor){ const s=el('select'); Object.keys(SETORES_CAT).forEach(k=>{ const o=el('option','',SETORES_CAT[k]); o.value=k; if(k===valor) o.selected=true; s.appendChild(o); }); return s; }
 let catLista=[];
+// ---------- Árvore de Natal ----------
+const TXT_ARV={auto:'Automático (até 01/01/2027)',on:'Sempre ligada',off:'Desligada'};
+function marcarArvore(v){ document.querySelectorAll('input[name=arvore]').forEach(r=>r.checked=r.value===v); $('#btnDecorSalvar').disabled=false; $('#resDecor').innerHTML='<p class="pequeno">Agora: <b>'+TXT_ARV[v]+'</b></p>'; }
+$('#btnDecorCarregar').addEventListener('click',async()=>{
+  $('#resDecor').textContent='Carregando…';
+  try{ const d=await rpc('decoracao_publica',{}); marcarArvore(d.arvore_natal||'auto'); }
+  catch(e){ $('#resDecor').textContent=/decoracao_publica/.test(e.message)?'Rode o arquivo supabase-decoracao.sql no Supabase primeiro.':'Não foi possível carregar agora.'; }
+});
+$('#btnDecorSalvar').addEventListener('click',async()=>{
+  const r=document.querySelector('input[name=arvore]:checked'); if(!r) return; const senha=$('#senha').value;
+  if(!senha){ $('#resDecor').textContent='Digite a senha do balcão.'; return; }
+  $('#btnDecorSalvar').disabled=true;
+  try{ const d=await rpc('decoracao_definir',{p_senha:senha,p_arvore:r.value}); marcarArvore(d.arvore_natal); $('#resDecor').insertAdjacentHTML('afterbegin','<p class="pequeno" style="color:#2E7D32;font-weight:800">✔ Salvo. Os jogadores veem a mudança em até 10 minutos.</p>'); }
+  catch(e){ $('#resDecor').textContent=/senha_invalida/.test(e.message)?'Senha incorreta.':'Não foi possível salvar: '+e.message; $('#btnDecorSalvar').disabled=false; }
+});
 // ---------- Juros da corretora ----------
 const pctTxt=v=>(Math.round(v*10000)/100).toFixed(2).replace('.',',');
 const lerPct=t=>{ t=String(t||'').trim().replace('%','').replace(/\s/g,''); if(t.indexOf(',')>=0) t=t.replace(/\./g,'').replace(',','.'); const v=parseFloat(t); return isFinite(v)?v/100:NaN; };
