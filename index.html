@@ -1004,7 +1004,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 24/11/2026 · 19h · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 24/11/2026 · 21h · 🎄</p>
   </div>
 </section>
 
@@ -1310,10 +1310,21 @@ const ESF=new THREE.SphereGeometry(1,20,14);
 
 // ---------- Rua e calçada ----------
 malha(new THREE.PlaneGeometry(200,200),new THREE.MeshLambertMaterial({color:0x8FD18A}),scene,0,-0.02,0,false).rotation.x=-Math.PI/2;
-const calcada=malha(new THREE.BoxGeometry(30,0.1,2.6),toon(0xD8D2C4),scene,0,0.0,6.5,false); calcada.receiveShadow=true;
-const rua=malha(new THREE.BoxGeometry(30,0.05,4),toon(0x4A4E55),scene,0,-0.01,9.8,false);
-for(let i=-6;i<=6;i++) malha(new THREE.BoxGeometry(1.0,0.06,0.16),toon(0xF2F2F2),scene,i*2.2,0.0,9.8,false);
-malha(new THREE.BoxGeometry(2.6,0.1,30),toon(0xD8D2C4),scene,6.5,0.0,0,false);
+// Rua Felice Del Paggio: começa na BR-116 (x=-28.5) e sobe para a direita. A Adega fica do lado do posto.
+const RUA_INI=-30, RUA_FIM=18.5, BR_X=-32.2, MILTON_X=-10;
+const calcada=malha(new THREE.BoxGeometry(RUA_FIM+28.5,0.1,2.6),toon(0xD8D2C4),scene,(RUA_FIM-28.5)/2,0.0,6.5,false); calcada.receiveShadow=true;
+const rua=malha(new THREE.BoxGeometry(RUA_FIM+28.5,0.05,4),toon(0x4A4E55),scene,(RUA_FIM-28.5)/2,-0.01,9.8,false);
+for(let x=-26.5;x<=17;x+=2.2) if(Math.abs(x-MILTON_X)>2.4) malha(new THREE.BoxGeometry(1.0,0.06,0.16),toon(0xF2F2F2),scene,x,0.0,9.8,false);
+// calçada do outro lado (lojas e Santo Forno), cortada pela Rua Milton Martins Moura
+[[-28.5,MILTON_X-1.5],[MILTON_X+1.5,RUA_FIM]].forEach(([a,b])=>malha(new THREE.BoxGeometry(b-a,0.1,2.2),toon(0xD8D2C4),scene,(a+b)/2,0.0,12.9,false).receiveShadow=true);
+// Rua Milton Martins Moura (sai da Felice Del Paggio, do lado da Santo Forno)
+malha(new THREE.BoxGeometry(3,0.05,30),rua.material,scene,MILTON_X,-0.01,26.8,false);
+[MILTON_X-2.3,MILTON_X+2.3].forEach(x=>malha(new THREE.BoxGeometry(1.6,0.1,28),toon(0xD8D2C4),scene,x,0.0,28,false));
+// BR-116 (Régis Bittencourt): duas pistas em cada sentido, faixa amarela no meio
+malha(new THREE.BoxGeometry(7.4,0.05,140),rua.material,scene,BR_X,-0.012,10,false);
+[-0.1,0.1].forEach(d=>malha(new THREE.BoxGeometry(0.08,0.06,140),toon(0xF2C31B),scene,BR_X+d,0.0,10,false));
+for(let z=-58;z<=78;z+=3.2){ [BR_X-1.85,BR_X+1.85].forEach(x=>malha(new THREE.BoxGeometry(0.12,0.06,1.4),toon(0xF2F2F2),scene,x,0.0,z,false)); }
+[[-60,7.8],[11.8,80]].forEach(([a,b])=>malha(new THREE.BoxGeometry(1.2,0.1,b-a),toon(0xD8D2C4),scene,-28.0,0.0,(a+b)/2,false));
 
 // ---------- Loja ----------
 const texPiso=texCanvas(256,256,(g)=>{
@@ -2187,7 +2198,7 @@ function atualizarGerente(dt){
 }
 function atualizarFornecedor(dt){
   const F=FORN;
-  if(F.estado==='ocioso'){ if(F.fila.length&&!onibusNaRua()&&!vanNaRua()&&(!ruaPronta||ruaParaVeiculo())){ F.estado='chegando'; caminhao.visible=true; caminhao.position.set(-16,0,Z_RUA); } }
+  if(F.estado==='ocioso'){ if(F.fila.length&&!onibusNaRua()&&!vanNaRua()&&(!ruaPronta||ruaParaVeiculo())){ F.estado='chegando'; caminhao.visible=true; caminhao.position.set(RUA_INI,0,Z_RUA); } }
   else if(F.estado==='chegando'||F.estado==='saindo'){
     caminhao.position.x+=7*dt; rodas.forEach(r=>r.rotation.y-=dt*12);
     if(F.estado==='chegando'&&caminhao.position.x>=PARADA_X){ caminhao.position.x=PARADA_X; F.estado='parado'; }
@@ -3077,7 +3088,7 @@ function atualizarPdr(dt){
     if(pdrPodeLiberar()){ p.liberado=true; salvar(); atualizarCaixasPdr(); pop(estantePdr.position.clone().setY(2.5),'📦 Ponto de Retirada liberado!','grande'); SOM.marco(); setTimeout(abrirPdr,600); }
     return;
   }
-  if(VAN.estado==='ocioso'){ VAN.t-=dt; if(VAN.t<=0&&!onibusNaRua()&&FORN.estado==='ocioso'&&!FORN.fila.length&&(!ruaPronta||ruaParaVeiculo())){ const at=Object.keys(PARCEIROS).filter(k=>p.parceiros[k]); VAN.parceiro=pega(at); pintarVan(VAN.parceiro); VAN.estado='chegando'; vanPdr.visible=true; vanPdr.position.set(-16,0,Z_VAN); } }
+  if(VAN.estado==='ocioso'){ VAN.t-=dt; if(VAN.t<=0&&!onibusNaRua()&&FORN.estado==='ocioso'&&!FORN.fila.length&&(!ruaPronta||ruaParaVeiculo())){ const at=Object.keys(PARCEIROS).filter(k=>p.parceiros[k]); VAN.parceiro=pega(at); pintarVan(VAN.parceiro); VAN.estado='chegando'; vanPdr.visible=true; vanPdr.position.set(RUA_INI,0,Z_VAN); } }
   else if(VAN.estado==='chegando'||VAN.estado==='saindo'){
     vanPdr.position.x+=7*dt; rodasVan.forEach(r=>r.rotation.y-=dt*12);
     if(VAN.estado==='chegando'&&vanPdr.position.x>=PARADA_VAN){ vanPdr.position.x=PARADA_VAN; VAN.estado='parado'; VAN.n=2+Math.floor(Math.random()*4)+(VAN.parceiro==='amazon'?1:0); }
@@ -4018,7 +4029,7 @@ function atualizarOnibus(dt){
     }
     o.g.position.x+=o.dir*o.vel*dt; o.rodas.forEach(r=>r.rotation.y-=dt*o.vel*2.6);
     if(o.dir<0&&!o.parou&&o.g.position.x<=PARADA_ONIBUS_X){ o.g.position.x=PARADA_ONIBUS_X; o.parou=true; o.estado='parado'; o.t=3; o.tDesc=0.6; o.desc=1+Math.floor(Math.random()*3); o.desceram=0; }
-    if(Math.abs(o.g.position.x)>19.5){ o.ativo=false; o.g.visible=false; } });
+    if(o.g.position.x>RUA_FIM+2||o.g.position.x<RUA_INI-1){ o.ativo=false; o.g.visible=false; } });
   tOnibus-=dt;
   if(tOnibus>0) return;
   tOnibus=rnd(12,24);
@@ -4028,7 +4039,7 @@ function atualizarOnibus(dt){
   if(!livres.length||!parados.length) return;
   const f=pega(livres), F=FAIXAS_ONIBUS[f], o=pega(parados);
   o.ativo=true; o.faixa=f; o.dir=F.dir; o.vel=rnd(5.5,7); o.parou=false; o.estado='andando';
-  o.g.position.set(-F.dir*19,0,F.z); o.g.rotation.y=F.dir>0?0:Math.PI; o.g.visible=true;
+  o.g.position.set(F.dir>0?RUA_INI:RUA_FIM+1.5,0,F.z); o.g.rotation.y=F.dir>0?0:Math.PI; o.g.visible=true;
 }
 
 // ================= Música de fundo (lo-fi de boteco / bossa, composta no próprio jogo) =================
@@ -4563,10 +4574,10 @@ function atualizarAtacarejo(dt){ // devolve true enquanto o Edu está fora da ro
     else { atacFase='fora'; g.visible=false; carroEdu.visible=false; }
   }
   if(atacFase==='indoCarro'){ if(mover(E,dt)){ g.visible=false; atacFase='partindo'; } }
-  else if(atacFase==='partindo'){ if((carroEdu.position.x<CARRO_PARADO.x-0.05||!ruaPronta||ruaParaVeiculo())&&andarCarro(dt,-18,-1)){ carroEdu.visible=false; atacFase='fora'; } }
+  else if(atacFase==='partindo'){ if((carroEdu.position.x<CARRO_PARADO.x-0.05||!ruaPronta||ruaParaVeiculo())&&andarCarro(dt,RUA_INI,-1)){ carroEdu.visible=false; atacFase='fora'; } }
   else if(atacFase==='fora'){
     if(!S.gerente&&FORN.estado==='parado'&&!avisoForn){ avisoForn=true; toastMissao('🚚 O fornecedor chegou, mas o Edu está no atacarejo. Ninguém para receber!'); }
-    if(t>=A.volta&&(!ruaPronta||ruaParaVeiculo())){ carroEdu.visible=true; carroEdu.position.set(-18,0,CARRO_PARADO.z); atacFase='chegando'; }
+    if(t>=A.volta&&(!ruaPronta||ruaParaVeiculo())){ carroEdu.visible=true; carroEdu.position.set(RUA_INI,0,CARRO_PARADO.z); atacFase='chegando'; }
   }
   else if(atacFase==='chegando'){
     if(andarCarro(dt,CARRO_PARADO.x,1)){ carroNaVaga(); A.chegou=true; g.visible=true; g.position.copy(CARRO_PT); pop(CARRO_PT.clone().setY(2.2),'🚗 Voltei com as caixas!',''); toastMissao(`${veiculo().ic} O Edu voltou! Agora ele leva as caixas para cada setor.`); salvar(); if(!proximaCaixa()) concluirAtacarejo(); }
@@ -6195,8 +6206,8 @@ function ajustar(){
   posCam();
 }
 // Limites da câmera medidos na direção da tela (direita/esquerda e cima/baixo), cobrindo a rua inteira:
-// da Santo Forno até a Farmácia, e da loja até as casas do outro lado.
-const MUNDO={x0:-13.5,x1:15,z0:-5.5,z1:17};
+// da BR-116 até o terreno ao lado da Adega, e da loja até as lojas do outro lado.
+const MUNDO={x0:-33,x1:16,z0:-5.5,z1:19};
 const DIR_D=new THREE.Vector3(1,0,-1).normalize(), DIR_F=new THREE.Vector3(-1,0,-1).normalize();
 const LIM_UV=(()=>{ const us=[],vs=[]; [[MUNDO.x0,MUNDO.z0],[MUNDO.x0,MUNDO.z1],[MUNDO.x1,MUNDO.z0],[MUNDO.x1,MUNDO.z1]].forEach(([x,z])=>{ us.push(x*DIR_D.x+z*DIR_D.z); vs.push(x*DIR_F.x+z*DIR_F.z); });
   return {u0:Math.min(...us),u1:Math.max(...us),v0:Math.min(...vs),v1:Math.max(...vs)}; })();
@@ -6348,7 +6359,7 @@ function laco(){
   requestAnimationFrame(laco);
   const dt=Math.min(relogio.getDelta(),0.05);
   if(ENT.ativo){ atualizarEntrega(dt); renderer.render(cenaEnt,camEnt); return; }
-  if(tempoPronto){ atualizarCeu(dt); tRel+=dt; if(tRel>0.5){ tRel=0; atualizarRelogio(); if(ruaPronta) atualizarVizinhos(); } if(ruaPronta) atualizarTransito(dt); atualizarArvore(dt); if(grafPronto){ atualizarRealismo(dt); atualizarGuardaChuvas(dt); } }
+  if(tempoPronto){ atualizarCeu(dt); tRel+=dt; if(tRel>0.5){ tRel=0; atualizarRelogio(); if(ruaPronta) atualizarVizinhos(); } if(ruaPronta){ atualizarTransito(dt); atualizarBR(dt); } atualizarArvore(dt); if(grafPronto){ atualizarRealismo(dt); atualizarGuardaChuvas(dt); } }
   if(document.body.classList.contains('jogando')){
     S.tempoJogo=(S.tempoJogo||0)+dt;
     proxCliente-=dt;
@@ -6567,8 +6578,8 @@ const _c1=new THREE.Color(), _c2=new THREE.Color(), CEU_CHUVA=new THREE.Color(0x
 const CHUVA_TOPO=4.2, LOJA_R=5.7;
 function gotaFora(x,z){ const dentro=(a,b)=>Math.abs(a)<LOJA_R&&Math.abs(b)<LOJA_R, k=CHUVA_TOPO*0.875;
   for(let f=0;f<=1.001;f+=0.25){ if(dentro(x-k*f,z-k*f)) return false; } return true; }
-const chuva=(function(){ const n=900, g=new THREE.BufferGeometry(), p=new Float32Array(n*6);
-  for(let i=0;i<n;i++){ let x,z,tent=0; do{ x=rnd(-14,16); z=rnd(-14,16); tent++; }while(!gotaFora(x,z)&&tent<50); const y=rnd(0,CHUVA_TOPO); p.set([x,y,z,x-0.03,y-0.38,z+0.03],i*6); }
+const chuva=(function(){ const n=1500, g=new THREE.BufferGeometry(), p=new Float32Array(n*6);
+  for(let i=0;i<n;i++){ let x,z,tent=0; do{ x=rnd(-36,17); z=rnd(-14,20); tent++; }while(!gotaFora(x,z)&&tent<50); const y=rnd(0,CHUVA_TOPO); p.set([x,y,z,x-0.03,y-0.38,z+0.03],i*6); }
   g.setAttribute('position',new THREE.BufferAttribute(p,3));
   const l=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0xE4F0FB,transparent:true,opacity:0.8})); l.visible=false; l.frustumCulled=false; scene.add(l); return l; })();
 function atualizarCeu(dt){
@@ -6656,18 +6667,118 @@ function pizzaria(o){
   hit('santo',g,o.w+0.4,o.h,o.d+0.6,0,o.h/2,0.3);   // tocar na pizzaria abre o cartão dela
   VIZINHOS.push({o,vitrine,porta:null,luzes:true}); return g;
 }
-pizzaria({x:-10.2,z:2.4,w:5,d:4,h:3.3,nome:'🍕 Pizzaria Santo Forno',abre:18,fecha:24});
-vizinho({x:11.4,z:1.6,w:4.4,d:3.4,h:2.9,cor:0xDDEFE6,toldo:0x2E9B57,nome:'💊 Farmácia do Bairro',fundo:'#2E9B57',letra:'#FFFFFF',abre:7,fecha:23});
-[[-9,16.2,0xF4B8A8],[-4.6,16.4,0xA8D8F4],[0.2,16.2,0xF6E7A1],[4.8,16.4,0xC7E8B5],[9.4,16.2,0xE6C8F2]].forEach(([x,z,c])=>vizinho({x,z,w:3.4,d:2.6,h:2.1,cor:c,janelas:2}));
+// ---------- a rua de verdade (Rua Felice Del Paggio, Taboão da Serra) ----------
+// Lado da Adega: Posto 1001 (esquina com a BR-116), casas, a Adega e uma casa num terreno grande.
+// Outro lado (perto da câmera): Casa de Salgados (esquina com a BR-116), Sacolão, Casa de Ração,
+// Rua Milton Martins Moura e a Pizzaria Santo Forno na esquina, de frente para a Adega.
+// As lojas do outro lado ficam de costas para a câmera: por isso cada uma tem um letreiro no telhado virado para cá.
+function letreiroTelhado(g,o,tex,larg,alt){ // g está girado 180°: o fundo da loja (z local negativo) é o lado da câmera
+  const w=larg||o.w*0.86, h=alt||0.72, y=o.h+0.25+h/2, z=-o.d/2+0.35;
+  [-w/2+0.15,w/2-0.15].forEach(x=>bloco(0.08,h+0.3,0.08,toon(0x5B6066),g,x,o.h+(h+0.3)/2,z+0.08));
+  bloco(w+0.12,h+0.12,0.08,toon(0x2A1A12),g,0,y,z);
+  const m=malha(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex}),g,0,y,z-0.05,false); m.rotation.y=Math.PI; return m; }
+function fundosLoja(g,o,vitrine){ // janelas e porta dos fundos, que é o que a câmera vê
+  const z=-o.d/2-0.01;
+  [-o.w*0.28,o.w*0.12].forEach(x=>{ const j=malha(new THREE.PlaneGeometry(0.75,0.6),vitrine,g,x,o.h*0.62,z,false); j.rotation.y=Math.PI; });
+  bloco(0.8,1.8,0.04,toon(0x8A6A4A),g,o.w*0.33,0.9,z-0.01); }
+function lojaOutroLado(o){
+  const g=vizinho(o); g.rotation.y=Math.PI; const v=VIZINHOS[VIZINHOS.length-1];
+  fundosLoja(g,o,v.vitrine); letreiroTelhado(g,o,placaTex(o.nome,o.fundo||'#FFF6E0',o.letra||'#2A1A12'));
+  return g; }
+// lado da câmera: lojas
+lojaOutroLado({x:-25.2,z:16.3,w:4.8,d:4.2,h:2.6,cor:0xFFE2B0,toldo:0xD98A1E,nome:'🥟 Casa de Salgados',fundo:'#D98A1E',letra:'#FFFFFF',abre:7,fecha:22});
+lojaOutroLado({x:-20.0,z:16.3,w:4.8,d:4.2,h:2.5,cor:0xE3F4D2,toldo:0x4F9A2E,nome:'🥬 Sacolão',fundo:'#4F9A2E',letra:'#FFFFFF',abre:7,fecha:20});
+lojaOutroLado({x:-15.3,z:16.3,w:4.2,d:4.2,h:2.5,cor:0xE4ECF7,toldo:0x3A6FB0,nome:'🐶 Casa de Ração',fundo:'#3A6FB0',letra:'#FFFFFF',abre:8,fecha:19});
+// Pizzaria Santo Forno: esquina da Milton Martins Moura, de frente para a Adega
+(function(){ const o={x:-4.2,z:16.6,w:5,d:4,h:3.3,nome:'🍕 Pizzaria Santo Forno',abre:18,fecha:24};
+  const g=pizzaria(o); g.rotation.y=Math.PI; const v=VIZINHOS[VIZINHOS.length-1];
+  fundosLoja(g,o,v.vitrine);
+  letreiroTelhado(g,o,texLetreiroSanto(),4.2,1.05);
+  const pw=malha(new THREE.PlaneGeometry(2.2,0.47),new THREE.MeshBasicMaterial({map:texPlacaWhats()}),g,-0.9,o.h-0.55,-o.d/2-0.03,false); pw.rotation.y=Math.PI;
+  const geoLuz=new THREE.SphereGeometry(0.045,8,6);
+  for(let i=0;i<26;i++){ const x=-2.1+i*4.2/25, onda=Math.abs(Math.sin(i*0.9))*0.18; malha(geoLuz,LUZINHAS,g,x,o.h+0.2-onda+0.0,-o.d/2+0.2,false); }
+})();
+// casas do lado da câmera, depois da pizzaria
+[[0.9,0xE6C8F2],[5.3,0xC7E8B5],[9.7,0xF4B8A8],[14.1,0xA8D8F4]].forEach(([x,c])=>{ const o={x,z:16.2,w:3.6,d:3.2,h:2.2,cor:c,janelas:2}; const g=vizinho(o); g.rotation.y=Math.PI; fundosLoja(g,o,VIZINHOS[VIZINHOS.length-1].vitrine); });
+// casas atrás das lojas, na Milton Martins Moura
+[[-14.6,22.4,0xF6E7A1],[-5.4,23,0xDDEFE6],[-5.4,28.4,0xF4B8A8],[-14.6,27.8,0xC7E8B5]].forEach(([x,z,c])=>{ const g=vizinho({x,z,w:3.4,d:3,h:2.1,cor:c,janelas:2}); g.rotation.y=x<MILTON_X?Math.PI/2:-Math.PI/2; });
+// lado da Adega: duas casas entre o posto e a Adega
+[[-14.2,0xA8D8F4],[-9.9,0xF4B8A8]].forEach(([x,c])=>vizinho({x,z:2.2,w:3.6,d:3,h:2.2,cor:c,janelas:2}));
+// ---------- Posto 1001, esquina com a BR-116 ----------
+(function(){ const g=new THREE.Group(); g.position.set(-22.6,0,0.6); scene.add(g);
+  malha(new THREE.BoxGeometry(10.6,0.06,9.6),toon(0xBFC3C7),g,0,0.0,0,false).receiveShadow=true;   // pátio de concreto
+  const VERM=toon(0xC2362B), BRANCO=toon(0xF5F5F1);
+  // cobertura sobre as bombas
+  [[-3,-0.4],[3,-0.4],[-3,3.2],[3,3.2]].forEach(([x,z])=>bloco(0.3,3.3,0.3,BRANCO,g,x,1.65,z));
+  bloco(8.2,0.32,5.2,BRANCO,g,0,3.45,1.4,0.04,0.02);
+  bloco(8.3,0.42,5.3,VERM,g,0,3.1,1.4,0.03);
+  const tPosto=placaTex('POSTO 1001','#C2362B','#FFFFFF');
+  malha(new THREE.PlaneGeometry(4.4,0.38),new THREE.MeshBasicMaterial({map:tPosto}),g,0,3.1,4.07,false);
+  const lt=malha(new THREE.PlaneGeometry(3.4,0.36),new THREE.MeshBasicMaterial({map:tPosto}),g,4.17,3.1,1.4,false); lt.rotation.y=Math.PI/2;
+  // ilhas com bombas
+  [-1.6,1.6].forEach(x=>{ bloco(0.9,0.2,3.0,toon(0x9A9EA3),g,x,0.1,1.4);
+    [0.5,2.3].forEach(z=>{ bloco(0.5,1.25,0.32,BRANCO,g,x,0.82,z,0.05,0.015); bloco(0.52,0.28,0.34,VERM,g,x,1.32,z); malha(new THREE.PlaneGeometry(0.3,0.22),new THREE.MeshBasicMaterial({color:0x2A3A44}),g,x+0.26,0.95,z,false).rotation.y=Math.PI/2; }); });
+  // loja de conveniência no fundo
+  bloco(6.4,2.6,2.8,toon(0xF2EFE8),g,0,1.3,-3.2,0.04,0.025); bloco(6.6,0.18,3.0,VERM,g,0,2.68,-3.2);
+  const vit=new THREE.MeshBasicMaterial({color:0x9FC7D8}); malha(new THREE.PlaneGeometry(3.8,1.4),vit,g,-0.8,1.0,-1.79,false);
+  bloco(0.9,1.9,0.04,toon(0x6E8FA0),g,2.1,0.95,-1.78);
+  malha(new THREE.PlaneGeometry(4.6,0.42),new THREE.MeshBasicMaterial({map:placaTex('Conveniência 24h','#FFFFFF','#C2362B')}),g,0,2.25,-1.78,false);
+  // totem na calçada
+  bloco(0.22,3.6,0.22,toon(0x5B6066),g,4.6,1.8,4.1); bloco(1.3,1.8,0.25,VERM,g,4.6,3.5,4.1,0.04,0.02);
+  const tt=texCanvas(128,180,(c)=>{ c.fillStyle='#C2362B'; c.fillRect(0,0,128,180); c.fillStyle='#fff'; c.font='900 46px Nunito, sans-serif'; c.textAlign='center'; c.fillText('1001',64,62); c.fillRect(14,82,100,4);
+    c.font='bold 18px Nunito, sans-serif'; c.fillText('GASOLINA',64,116); c.fillText('ETANOL',64,140); c.fillText('DIESEL',64,164); });
+  malha(new THREE.PlaneGeometry(1.15,1.6),new THREE.MeshBasicMaterial({map:tt}),g,4.6,3.5,4.235,false);
+  VIZINHOS.push({o:{x:-22.6,abre:0,fecha:24},vitrine:vit,porta:null});
+})();
+// ---------- casa num terreno grande, ao lado da Adega ----------
+(function(){ const g=new THREE.Group(); g.position.set(11.9,0,0); scene.add(g);
+  malha(new THREE.BoxGeometry(10.6,0.04,10.2),toon(0x7FC46F),g,0,0.0,0,false).receiveShadow=true;   // gramado
+  const MURO=toon(0xE9E2D2), TOPO=toon(0xB8AE9A);
+  // muro da frente com portão de garagem e portãozinho
+  [[-4.2,2.0],[0.6,1.6],[4.1,2.2]].forEach(([x,w])=>{ bloco(w,1.6,0.25,MURO,g,x,0.8,5.0); bloco(w+0.06,0.1,0.32,TOPO,g,x,1.62,5.0); });
+  const tp=texCanvas(128,64,(c)=>{ c.fillStyle='#55606A'; c.fillRect(0,0,128,64); c.fillStyle='#7C8791'; for(let x=4;x<128;x+=10) c.fillRect(x,0,4,64); });
+  malha(new THREE.PlaneGeometry(2.0,1.5),new THREE.MeshLambertMaterial({map:tp}),g,-2.2,0.76,5.0,false);
+  malha(new THREE.PlaneGeometry(0.95,1.5),new THREE.MeshLambertMaterial({map:tp}),g,2.25,0.76,5.0,false);
+  bloco(0.25,1.6,10.2,MURO,g,5.2,0.8,0); bloco(10.6,1.6,0.25,MURO,g,0,0.8,-5.0);
+  // casa com telhado de duas águas
+  const casa=new THREE.Group(); casa.position.set(0.8,0,-1.4); g.add(casa);
+  bloco(5.4,2.5,4.2,toon(0xF6E7A1),casa,0,1.25,0,0.04,0.025);
+  const tel=new THREE.Shape(); tel.moveTo(-3.0,0); tel.lineTo(0,1.5); tel.lineTo(3.0,0); tel.lineTo(-3.0,0);
+  const gt=new THREE.ExtrudeGeometry(tel,{depth:4.6,bevelEnabled:false}); gt.translate(0,0,-2.3);
+  contorno(malha(gt,toon(0xB4553A),casa,0,2.5,0),0.02);
+  const vj=new THREE.MeshBasicMaterial({color:0x6E8FA0});
+  [-1.6,1.6].forEach(x=>{ malha(new THREE.PlaneGeometry(0.9,0.8),vj,casa,x,1.5,2.11,false); bloco(1.0,0.08,0.08,toon(0xFFFFFF),casa,x,1.05,2.13); });
+  bloco(0.95,1.95,0.05,toon(0x8A5A3A),casa,0,0.98,2.12);
+  bloco(1.6,0.12,1.2,toon(0xBFC3C7),g,0.8,0.06,1.6);                 // calçadinha da porta
+  bloco(2.0,0.04,1.8,toon(0xBFC3C7),g,-2.2,0.03,3.9);   // entrada da garagem
+  VIZINHOS.push({o:{x:11.9,janelas:1},vitrine:vj,porta:null});
+  [[-3.8,-3.4,1.1],[3.6,-3.6,1.2],[3.8,2.6,0.9],[-4.0,2.2,0.85]].forEach(([x,z,e])=>{ const t=new THREE.Group(); t.position.set(x,0,z); t.scale.setScalar(e); g.add(t);
+    malha(new THREE.CylinderGeometry(0.12,0.16,1.2,8),toon(0x7A4F2A),t,0,0.6,0); contorno(malha(new THREE.SphereGeometry(0.75,12,10),toon(0x4FAE5A),t,0,1.6,0),0.03).scale.set(1,0.93,1); });
+})();
+// ---------- placa verde da BR-116 ----------
+(function(){ const g=new THREE.Group(); g.position.set(-27.6,0,14.6); scene.add(g);
+  [-0.9,0.9].forEach(x=>bloco(0.12,3.0,0.12,toon(0x8A9096),g,x,1.5,0));
+  const tx=texCanvas(256,128,(c)=>{ c.fillStyle='#1E7A3E'; c.fillRect(0,0,256,128); c.strokeStyle='#fff'; c.lineWidth=6; c.strokeRect(6,6,244,116);
+    c.fillStyle='#fff'; c.textAlign='center'; c.font='900 44px Nunito, sans-serif'; c.fillText('BR-116',128,56); c.font='bold 34px Nunito, sans-serif'; c.fillText('km 274',128,102); });
+  malha(new THREE.PlaneGeometry(2.4,1.2),new THREE.MeshBasicMaterial({map:tx}),g,0,3.0,0.07,false);
+  bloco(2.5,1.3,0.08,toon(0x8A9096),g,0,3.0,0);
+  // placa da rua na esquina
+  bloco(0.08,2.4,0.08,toon(0x5B6066),scene,-27.6,1.2,5.5);
+  const pr=texCanvas(256,64,(c)=>{ c.fillStyle='#1F5FA8'; c.fillRect(0,0,256,64); c.fillStyle='#fff'; c.font='bold 24px Nunito, sans-serif'; c.textAlign='center'; c.fillText('R. Felice Del Paggio',128,42); });
+  malha(new THREE.PlaneGeometry(1.6,0.4),new THREE.MeshBasicMaterial({map:pr}),scene,-27.6,2.3,5.56,false);
+  bloco(0.08,2.4,0.08,toon(0x5B6066),scene,MILTON_X-1.7,1.2,14.0);
+  const pm=texCanvas(256,64,(c)=>{ c.fillStyle='#1F5FA8'; c.fillRect(0,0,256,64); c.fillStyle='#fff'; c.font='bold 20px Nunito, sans-serif'; c.textAlign='center'; c.fillText('R. Milton Martins Moura',128,40); });
+  const mm=malha(new THREE.PlaneGeometry(1.6,0.4),new THREE.MeshBasicMaterial({map:pm}),scene,MILTON_X-1.64,2.3,14.0,false); mm.rotation.y=Math.PI/2;
+})();
 // árvores
 function arvore(x,z,e){ const g=new THREE.Group(); g.position.set(x,0,z); g.scale.setScalar(e||1); scene.add(g);
   malha(new THREE.CylinderGeometry(0.12,0.16,1.2,8),toon(0x7A4F2A),g,0,0.6,0);
   contorno(malha(ESF,toon(0x4FAE5A),g,0,1.6,0),0.03).scale.set(0.75,0.7,0.75); }
-[[-14,7.6],[14,7.6],[-6.6,13.2],[2.6,13.2],[11.8,13.2],[-14.5,-2],[14.5,-1]].forEach(p=>arvore(p[0],p[1],0.9+Math.random()*0.3));
+[[-16.4,7.6],[15.6,7.6],[-12.5,12.6],[3.1,12.9],[11.9,12.9],[-12.2,-4.4]].forEach(p=>arvore(p[0],p[1],0.9+Math.random()*0.3));
 // postes com luz que acende à noite
-const LUZ_POSTE=new THREE.MeshBasicMaterial({color:0xB9BEC4}), BRILHO=[];
+const LUZ_POSTE=new THREE.MeshBasicMaterial({color:0xB9BEC4}), BRILHO=[], POSTES_X=[-25.5,-19,-11.5,-6.8,8.6,13];
 const texBrilho=texCanvas(128,128,(c)=>{ const g=c.createRadialGradient(64,64,4,64,64,62); g.addColorStop(0,'rgba(255,236,170,.75)'); g.addColorStop(1,'rgba(255,236,170,0)'); c.fillStyle=g; c.fillRect(0,0,128,128); });
-[-11.5,-6.8,8.6,13].forEach(x=>{
+POSTES_X.forEach(x=>{
   const g=new THREE.Group(); g.position.set(x,0,7.9); scene.add(g);
   bloco(0.1,3.2,0.1,toon(0x5B6066),g,0,1.6,0); bloco(0.1,0.1,0.8,toon(0x5B6066),g,0,3.2,0.35);
   malha(new THREE.BoxGeometry(0.3,0.1,0.3),LUZ_POSTE,g,0,3.12,0.7,false);
@@ -6711,22 +6822,38 @@ function atualizarTransito(dt){
   // carros andando
   for(let i=TRANSITO.length-1;i>=0;i--){ const c=TRANSITO[i];
     c.g.position.x+=c.dir*c.vel*dt; c.rodas.forEach(r=>r.rotation.y-=dt*c.vel*3*c.dir);
-    if(Math.abs(c.g.position.x)>17.5){ scene.remove(c.g); TRANSITO.splice(i,1); } }
+    if(c.g.position.x>RUA_FIM+1||c.g.position.x<RUA_INI-1){ scene.remove(c.g); TRANSITO.splice(i,1); } }
   FAROL.color.setHex(ehNoite(h)?0xFFF6C8:0xD9DDE0);
   tTransito-=dt;
   if(tTransito<=0){ tTransito=rnd(2.5,5)/Math.max(0.3,mov);
-    if(!ruaOcupada()&&TRANSITO.length<5){ const F=pega(FAIXAS_RUA);
-      if(!TRANSITO.some(c=>c.dir===F.dir&&Math.abs(c.g.position.x+F.dir*16.5)<4.5)){
-        const v=veiculoRua(); v.dir=F.dir; v.vel=F.dir>0?7.5:6.8; v.g.position.set(-F.dir*16.5,0,F.z); v.g.rotation.y=F.dir>0?0:Math.PI; scene.add(v.g); TRANSITO.push(v); } } }
+    if(!ruaOcupada()&&TRANSITO.length<7){ const F=pega(FAIXAS_RUA), x0=F.dir>0?RUA_INI:RUA_FIM;
+      if(!TRANSITO.some(c=>c.dir===F.dir&&Math.abs(c.g.position.x-x0)<4.5)){
+        const v=veiculoRua(); v.dir=F.dir; v.vel=F.dir>0?7.5:6.8; v.g.position.set(x0,0,F.z); v.g.rotation.y=F.dir>0?0:Math.PI; scene.add(v.g); TRANSITO.push(v); } } }
   // pedestres na calçada (desviam do ponto de ônibus)
   for(let i=PEDESTRES.length-1;i>=0;i--){ const p=PEDESTRES[i]; if(mover(p,dt)){ scene.remove(p.g); PEDESTRES.splice(i,1); } }
   tPed-=dt;
   if(tPed<=0){ tPed=rnd(4,8)/Math.max(0.3,mov);
-    if(PEDESTRES.length<6){ const d=Math.random()<0.5?1:-1, z=7.55+rnd(-0.08,0.08), g=pessoa(); g.position.set(-d*16,0,z); scene.add(g);
-      let pts=[new THREE.Vector3(PONTO_X-1.4,0,z),new THREE.Vector3(PONTO_X-1.1,0,6.75),new THREE.Vector3(PONTO_X+1.2,0,6.75),new THREE.Vector3(PONTO_X+1.5,0,z),new THREE.Vector3(16,0,z)];
-      if(d<0) pts=[new THREE.Vector3(PONTO_X+1.5,0,z),new THREE.Vector3(PONTO_X+1.2,0,6.75),new THREE.Vector3(PONTO_X-1.1,0,6.75),new THREE.Vector3(PONTO_X-1.4,0,z),new THREE.Vector3(-16,0,z)];
+    if(PEDESTRES.length<6){ const d=Math.random()<0.5?1:-1, z=7.55+rnd(-0.08,0.08), g=pessoa(); g.position.set(d>0?-28:RUA_FIM,0,z); scene.add(g);
+      let pts=[new THREE.Vector3(PONTO_X-1.4,0,z),new THREE.Vector3(PONTO_X-1.1,0,6.75),new THREE.Vector3(PONTO_X+1.2,0,6.75),new THREE.Vector3(PONTO_X+1.5,0,z),new THREE.Vector3(RUA_FIM,0,z)];
+      if(d<0) pts=[new THREE.Vector3(PONTO_X+1.5,0,z),new THREE.Vector3(PONTO_X+1.2,0,6.75),new THREE.Vector3(PONTO_X-1.1,0,6.75),new THREE.Vector3(PONTO_X-1.4,0,z),new THREE.Vector3(-28,0,z)];
       PEDESTRES.push({g,caminho:pts,vel:rnd(1.3,1.8),passo:rnd(0,6)}); } }
 }
+const TRANSITO_BR=[]; let tBR=1;
+function caminhaoBR(){ const g=new THREE.Group(), rodas=[], cor=pega([0xE8433A,0x2F6FD8,0xF2F2F2,0xF2C31B,0x3CB371]);
+  contorno(malha(geoArred(1.2,1.3,1.2,0.12),toon(cor),g,1.9,0.95,0),0.03);
+  bloco(0.05,0.5,0.95,toon(0x9FD3EA),g,2.51,1.25,0);
+  contorno(malha(geoArred(3.4,1.8,1.3,0.06),toon(0xEDEDED),g,-0.5,1.3,0),0.03);
+  [-1.6,-0.6,1.9].forEach(x=>[0.6,-0.6].forEach(z=>{ const r=malha(new THREE.CylinderGeometry(0.28,0.28,0.18,12),toon(0x22252A),g,x,0.28,z); r.rotation.x=Math.PI/2; rodas.push(r); }));
+  return {g,rodas}; }
+function atualizarBR(dt){
+  for(let i=TRANSITO_BR.length-1;i>=0;i--){ const c=TRANSITO_BR[i]; c.g.position.z+=c.dir*c.vel*dt; c.rodas.forEach(r=>r.rotation.y-=dt*c.vel*3);
+    if(Math.abs(c.g.position.z-10)>58){ scene.remove(c.g); TRANSITO_BR.splice(i,1); } }
+  tBR-=dt; if(tBR>0) return; tBR=rnd(0.8,2.2)/Math.max(0.4,FLUXO_HORA[Math.floor(horaAgora())]);
+  if(TRANSITO_BR.length>=10) return;
+  const dir=Math.random()<0.5?1:-1, faixa=Math.random()<0.5?0.95:2.75, x=BR_X+(dir>0?-faixa:faixa), z0=10-dir*56;   // mão de direção: quem desce fica à esquerda da faixa amarela
+  if(TRANSITO_BR.some(c=>c.dir===dir&&Math.abs(c.g.position.x-x)<0.5&&Math.abs(c.g.position.z-z0)<6)) return;
+  const v=Math.random()<0.3?caminhaoBR():veiculoRua(); v.dir=dir; v.vel=v.moto===undefined?rnd(7,9):rnd(9,12);
+  v.g.position.set(x,0,z0); v.g.rotation.y=dir>0?-Math.PI/2:Math.PI/2; scene.add(v.g); TRANSITO_BR.push(v); }
 ruaPronta=true;
 
 
@@ -6780,9 +6907,9 @@ VIZINHOS.forEach(v=>{ if(v.luzes) for(let i=0;i<5;i++) glow(GLOW_POSTE,scene,v.o
 // asfalto molhado: reflexo das luzes na rua quando chove ou à noite com chuva
 const texReflexo=texCanvas(32,256,(c)=>{ const g=c.createLinearGradient(0,0,0,256); g.addColorStop(0,'rgba(255,230,170,0)'); g.addColorStop(0.5,'rgba(255,230,170,.55)'); g.addColorStop(1,'rgba(255,230,170,0)'); c.fillStyle=g; c.fillRect(0,0,32,256); });
 const matReflexo=new THREE.MeshBasicMaterial({map:texReflexo,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0});
-const REFLEXOS=[-11.5,-6.8,8.6,13].map(x=>{ const m=malha(new THREE.PlaneGeometry(0.5,3.4),matReflexo,scene,x,0.04,9.9,false); m.rotation.x=-Math.PI/2; return m; });
+const REFLEXOS=POSTES_X.map(x=>{ const m=malha(new THREE.PlaneGeometry(0.5,3.4),matReflexo,scene,x,0.04,9.9,false); m.rotation.x=-Math.PI/2; return m; });
 const matPoca=new THREE.MeshBasicMaterial({color:0x9DB4C8,transparent:true,opacity:0,depthWrite:false});
-[[-9,9.2,1.6],[-2.5,10.6,1.1],[5.5,9.4,1.3],[11,10.8,1.0],[0.8,6.8,0.8]].forEach(([x,z,e])=>{ const m=malha(new THREE.CircleGeometry(0.5,20),matPoca,scene,x,0.035,z,false); m.rotation.x=-Math.PI/2; m.scale.set(e*1.6,e,1); });
+[[-9,9.2,1.6],[-2.5,10.6,1.1],[5.5,9.4,1.3],[11,10.8,1.0],[0.8,6.8,0.8],[-21,10.4,1.4],[-31,4,1.6],[-33,18,1.2]].forEach(([x,z,e])=>{ const m=malha(new THREE.CircleGeometry(0.5,20),matPoca,scene,x,0.035,z,false); m.rotation.x=-Math.PI/2; m.scale.set(e*1.6,e,1); });
 const corRuaSeca=rua.material.color.clone(), corRuaMolhada=new THREE.Color(0x2E343C);
 // sombra das nuvens passando
 const texNuvem=texCanvas(128,128,(c)=>{ const g=c.createRadialGradient(64,64,4,64,64,62); g.addColorStop(0,'rgba(20,30,40,.32)'); g.addColorStop(1,'rgba(20,30,40,0)'); c.fillStyle=g; c.fillRect(0,0,128,128); });
