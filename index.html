@@ -1004,7 +1004,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 24/11/2026 · 00h · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 24/11/2026 · 19h · 🎄</p>
   </div>
 </section>
 
@@ -6443,16 +6443,16 @@ const PREV_KEY='adegaEdu.previsao';
 let PREV=null; try{ PREV=JSON.parse(localStorage.getItem(PREV_KEY)||'null'); }catch(e){ PREV=null; }
 const CHUVA_COD=c=>(c>=51&&c<=67)||(c>=80&&c<=82)||c>=95;
 function categoriaReal(x){ if(CHUVA_COD(x.cod)&&x.mm>=1) return 'chuva'; if(x.max>=31) return 'calor'; if(x.max<=17) return 'frio'; if(x.cod>=2||CHUVA_COD(x.cod)) return 'nublado'; return 'sol'; }
-function lerPrevisao(j){ const dias={}, horas={}; const D=j.daily, H=j.hourly;
+function lerPrevisao(j){ const dias={}, horas={}, chuvaH={}; const D=j.daily, H=j.hourly;
   D.time.forEach((iso,i)=>{ const x={cod:D.weather_code[i],max:D.temperature_2m_max[i],min:D.temperature_2m_min[i],mm:D.precipitation_sum?D.precipitation_sum[i]||0:0}; if(x.max==null||x.cod==null) return; x.k=categoriaReal(x); dias[numDia(iso)]=x; });
-  if(H) H.time.forEach((iso,i)=>{ const n=numDia(iso.slice(0,10)), h=+iso.slice(11,13); (horas[n]=horas[n]||[])[h]=H.temperature_2m[i]; });
-  return {em:Date.now(),dias,horas}; }
+  if(H) H.time.forEach((iso,i)=>{ const n=numDia(iso.slice(0,10)), h=+iso.slice(11,13); (horas[n]=horas[n]||[])[h]=H.temperature_2m[i]; if(H.precipitation) (chuvaH[n]=chuvaH[n]||[])[h]=(H.precipitation[i]||0)>=0.2?1:0; });
+  return {em:Date.now(),dias,horas,chuvaH}; }
 let prevBuscando=false;
 async function carregarPrevisao(forcar){
-  if(prevBuscando) return; if(!forcar&&PREV&&Date.now()-PREV.em<3600e3&&PREV.dias[diaAgora()]) return;
+  if(prevBuscando) return; if(!forcar&&PREV&&PREV.chuvaH&&Date.now()-PREV.em<3600e3&&PREV.dias[diaAgora()]) return;
   prevBuscando=true;
   try{ const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),9000);
-    const u=`https://api.open-meteo.com/v1/forecast?latitude=${LOCAL_ADEGA.lat}&longitude=${LOCAL_ADEGA.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&hourly=temperature_2m&timezone=America%2FSao_Paulo&forecast_days=4`;
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${LOCAL_ADEGA.lat}&longitude=${LOCAL_ADEGA.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&hourly=temperature_2m,precipitation&timezone=America%2FSao_Paulo&forecast_days=4`;
     const r=await fetch(u,{signal:ctl.signal}); clearTimeout(to); if(!r.ok) throw new Error('http '+r.status);
     PREV=lerPrevisao(await r.json()); try{ localStorage.setItem(PREV_KEY,JSON.stringify(PREV)); }catch(e){}
     relCache='';
@@ -6461,6 +6461,12 @@ async function carregarPrevisao(forcar){
 const prevDia=d=>PREV&&PREV.dias&&PREV.dias[d]||null;
 function sementeG(n){ let x=(n*2654435761+7)>>>0; x^=x<<13; x^=x>>>17; x^=x<<5; return (x>>>0)/4294967296; }   // igual para todos
 function semente(n){ let x=(n*2654435761+((S&&S.perfil&&S.perfil.id)?S.perfil.id.charCodeAt(0)*97:7))>>>0; x^=x<<13; x^=x>>>17; x^=x<<5; return (x>>>0)/4294967296; }
+// Chove só nas horas em que a previsão real marca chuva (não o dia inteiro).
+// Sem a previsão por hora: num dia de chuva, chove só numa janela de 2 a 5 horas à tarde.
+function choveAgora(){ const d=diaAgora(), h=Math.floor(horaAgora())%24, c=PREV&&PREV.chuvaH&&PREV.chuvaH[d];
+  if(c&&c.length) return !!c[h];
+  if(climaDia(d)!=='chuva') return false;
+  const ini=13+Math.floor(sementeG(d+5)*5), dur=2+Math.floor(sementeG(d+9)*4); return h>=ini&&h<ini+dur; }
 function climaDia(d){ const p=prevDia(d); if(p) return p.k; let r=sementeG(d+11)*100; for(const [k,q] of sorteClima(d)){ r-=q; if(r<0) return k; } return 'sol'; }
 // sem internet: sorteio de acordo com a estação do ano (verão quente e chuvoso, inverno frio)
 function sorteClima(d){ const m=new Date(d*864e5).getUTCMonth()+1;
@@ -6512,7 +6518,7 @@ const hhmm=h=>String(Math.floor(h)).padStart(2,'0')+':'+String(Math.floor((h%1)*
 const ehNoite=h=>h>=19||h<6;
 let relCache='';
 function atualizarRelogio(){
-  const h=horaAgora(), d=diaAgora(), c=CLIMAS[climaDia(d)], txt=`${ehNoite(h)?'🌙':'🕗'} ${DIAS_SEM[diaSemana(d)]} ${dataCurta(d)} ${hhmm(h)} · ${c.ic} ${tempHora(d,h)}°`;
+  const h=horaAgora(), d=diaAgora(), c=CLIMAS[climaDia(d)], txt=`${ehNoite(h)?'🌙':'🕗'} ${DIAS_SEM[diaSemana(d)]} ${dataCurta(d)} ${hhmm(h)} · ${choveAgora()?'🌧️':climaDia(d)==='chuva'?'☁️':c.ic} ${tempHora(d,h)}°`;
   if(txt!==relCache){ relCache=txt; const b=$('#relogio'); b.textContent=txt; b.classList.toggle('noite',ehNoite(h)); }
   // avisos: bom dia com o tempo de hoje, e a previsão de amanhã no fim da tarde
   S.tempoAvisos=S.tempoAvisos||{};
@@ -6569,7 +6575,7 @@ function atualizarCeu(dt){
   const h=horaAgora(); let i=0; while(i<LUZ_CEU.length-2&&h>=LUZ_CEU[i+1][0]) i++;
   const a=LUZ_CEU[i], b=LUZ_CEU[i+1], k=Math.min(1,Math.max(0,(h-a[0])/(b[0]-a[0])));
   _c1.setHex(a[1]); _c2.setHex(b[1]); _c1.lerp(_c2,k);
-  const chove=climaDia(diaAgora())==='chuva', nub=chove||climaDia(diaAgora())==='nublado';
+  const chove=choveAgora(), nub=chove||['chuva','nublado'].includes(climaDia(diaAgora()));
   if(nub) _c1.lerp(CEU_CHUVA,chove?0.45:0.25);
   scene.background.copy(_c1);
   _c3.setHex(a[4]); _c4.setHex(b[4]); _c3.lerp(_c4,k);
@@ -6750,7 +6756,7 @@ const naRua=p=>Math.abs(p.x)>5.25||p.z>5.05||p.z<-5.25;
 let tGuarda=0;
 function atualizarGuardaChuvas(dt){
   tGuarda+=dt; if(tGuarda<0.25) return; tGuarda=0;
-  const chove=climaDia(diaAgora())==='chuva';
+  const chove=choveAgora();
   const lista=clientes.map(c=>c.g).concat(PEDESTRES.map(p=>p.g));
   lista.forEach(g=>{ const abre=chove&&naRua(g.position);
     if(abre){ const u=guardaChuva(g); if(!u.visible){ u.visible=true; u.scale.setScalar(0.3); } if(u.scale.x<1) u.scale.setScalar(Math.min(1,u.scale.x+0.35)); if(g.userData.fechado) g.userData.fechado.visible=false; }
@@ -6795,7 +6801,7 @@ function aplicarGrafico(){
 }
 $('#btnGrafico').addEventListener('click',()=>{ S.grafico=graficoAlto()?'baixo':'alto'; fpsRuim=0; salvar(); aplicarGrafico(); SOM.abrir(); toastMissao(graficoAlto()?'🎨 Gráfico alto: sombras, neblina, brilho do neon e chuva no asfalto.':'🎨 Gráfico baixo: mais leve para o celular.'); });
 function atualizarRealismo(dt){
-  const alto=graficoAlto(), h=horaAgora(), noite=ehNoite(h), d=diaAgora(), k=climaDia(d), chove=k==='chuva';
+  const alto=graficoAlto(), h=horaAgora(), noite=ehNoite(h), d=diaAgora(), k=climaDia(d), chove=choveAgora();
   // o sol anda no céu: nasce a leste às 6h, alto ao meio-dia, se põe a oeste às 18h (as sombras acompanham)
   const ang=((h-6)/12)*Math.PI, dia=h>=6&&h<=18;
   if(alto&&dia){ sol.position.set(Math.cos(ang)*-12,Math.max(3,Math.sin(ang)*16)+2,6+Math.sin(ang)*-2); }
