@@ -1004,7 +1004,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 24/11/2026 · 22h · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 24/11/2026 · 23h · 🎄</p>
   </div>
 </section>
 
@@ -6623,7 +6623,7 @@ function vizinho(o){
   VIZINHOS.push({o,vitrine,porta}); return g;
 }
 // Pizzaria Santo Forno, vizinha de esquina da Adega do Edu: parede creme, colunas verdes, barra vermelha embaixo,
-// letreiro com o logo oficial deles (branco no vermelho) na moldura vermelha e o varal de luzinhas. Só o nome; sem logo, telefone ou QR code.
+// moldura vermelha com as placas e a cortina de luzinhas, igual à foto da fachada real.
 const LUZINHAS=new THREE.MeshBasicMaterial({color:0xF3DFA0});
 // Parceria com a Pizzaria Santo Forno (logo oficial, WhatsApp e QR Code autorizados por eles)
 const SANTO={tel:'(11) 93462-2894',wa:'https://wa.me/5511934622894?text='+encodeURIComponent('Olá! Vim pelo jogo da Adega do Edu 🍕'),
@@ -6638,33 +6638,60 @@ const texLetreiroSanto=()=>texComImagem(1024,256,(c,w,h,[lg])=>{ c.fillStyle='#D
 const texPlacaWhats=()=>texComImagem(640,136,(c,w,h,[qr])=>{ c.fillStyle='#1F5A3A'; c.fillRect(0,0,w,h);
   c.fillStyle='#FFF'; c.fillRect(14,12,112,112); if(qr.complete&&qr.naturalWidth){ c.imageSmoothingEnabled=false; c.drawImage(qr,16,14,108,108); }
   c.fillStyle='#FFF'; c.font='bold 30px Nunito, sans-serif'; c.fillText('WhatsApp',148,56); c.font='900 42px Nunito, sans-serif'; c.fillText(SANTO.tel,148,104); },[SANTO.qr]);
+// Logo da Santo Forno recolorido: o branco do logo vira a cor pedida, sobre o fundo que a placa usa (igual às placas da fachada real)
+function logoRecolorido(img,cor){ const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight; const x=c.getContext('2d'); x.drawImage(img,0,0);
+  const d=x.getImageData(0,0,c.width,c.height), p=d.data, k=new THREE.Color(cor), R=k.r*255, G=k.g*255, B=k.b*255;
+  for(let i=0;i<p.length;i+=4){ const m=Math.min(p[i],p[i+1],p[i+2]), a=Math.max(0,Math.min(1,(m-120)/110)); p[i]=R; p[i+1]=G; p[i+2]=B; p[i+3]=a*255; }
+  x.putImageData(d,0,0); return c; }
+const texSantoAzul=()=>texComImagem(1024,300,(c,w,h,[lg])=>{ c.fillStyle='#1B2733'; c.fillRect(0,0,w,h);
+  if(lg.complete&&lg.naturalWidth){ const r=logoRecolorido(lg,'#FFFFFF'), e=Math.min((w-60)/r.width,(h-40)/r.height); c.drawImage(r,(w-r.width*e)/2,(h-r.height*e)/2,r.width*e,r.height*e); } },[SANTO.letreiro]);
+const texSantoBege=()=>texComImagem(640,150,(c,w,h,[lg])=>{ c.fillStyle='#EDE3CF'; c.fillRect(0,0,w,h);
+  if(lg.complete&&lg.naturalWidth){ const r=logoRecolorido(lg,'#5A3A2A'), e=Math.min((w-40)/r.width,(h-24)/r.height); c.drawImage(r,(w-r.width*e)/2,(h-r.height*e)/2,r.width*e,r.height*e); } },[SANTO.letreiro]);
+const texSantoDelivery=()=>texComImagem(512,300,(c,w,h,[qr])=>{ c.fillStyle='#1B2733'; c.fillRect(0,0,w,h);
+  c.fillStyle='#FFF'; c.fillRect(22,40,220,220); if(qr.complete&&qr.naturalWidth){ c.imageSmoothingEnabled=false; c.drawImage(qr,28,46,208,208); }
+  c.fillStyle='#FFF'; c.font='900 50px Nunito, sans-serif'; c.fillText('DELIVERY',258,135,240); c.fillText('DE PIZZAS',258,200,240); },[SANTO.qr]);
+const texSemiArtesanal=()=>texCanvas(720,300,(c)=>{ c.fillStyle='#FAFAF7'; c.fillRect(0,0,720,300);
+  c.fillStyle='#151515'; c.font='900 86px Nunito, sans-serif'; c.fillText('SEMI',40,130); c.fillText('ARTESANAL',40,235);
+  // fatia de pizza no canto
+  c.save(); c.translate(610,150); c.rotate(-0.5); c.fillStyle='#E2A33A'; c.beginPath(); c.moveTo(-70,-90); c.lineTo(70,-90); c.lineTo(0,110); c.closePath(); c.fill();
+  c.fillStyle='#F5C542'; c.beginPath(); c.moveTo(-58,-72); c.lineTo(58,-72); c.lineTo(0,92); c.closePath(); c.fill();
+  c.fillStyle='#C9252C'; [[-20,-40],[22,-30],[0,10],[-8,45]].forEach(([x,y])=>{ c.beginPath(); c.arc(x,y,13,0,7); c.fill(); }); c.restore(); });
+// Uma fachada igual à da foto da Santo Forno: parede creme, três colunas verdes, barra vermelha embaixo, janela com persiana,
+// porta branca, moldura vermelha no alto (logo no azul-escuro, QR "Delivery de pizzas" e "Semi artesanal"),
+// plaquinhas embaixo (WhatsApp, logo no bege e "Peça pelo Whats!") e a cortina de luzinhas. Monta numa face de largura W.
+function fachadaSanto(pai,W,H,vitrine){ const f=new THREE.Group(); pai.add(f);
+  const VERDE=toon(0x2F7D3B), VERMELHO=toon(0xD32A30), X=t=>-W/2+t*W;   // t de 0 (esquerda) a 1 (direita), olhando de fora
+  bloco(W,0.34,0.06,VERMELHO,f,0,0.17,0.03);                                            // barra vermelha embaixo
+  [0.03,0.47,0.97].forEach(t=>bloco(0.16,2.45,0.1,VERDE,f,X(t),1.22,0.06));               // colunas verdes
+  // janela com persiana e porta branca
+  malha(new THREE.PlaneGeometry(W*0.27,1.05),vitrine,f,X(0.25),1.45,0.04,false);
+  for(let i=0;i<8;i++) bloco(W*0.26,0.035,0.02,toon(0xE4E1DA),f,X(0.25),0.98+i*0.135,0.06);
+  bloco(W*0.29,0.06,0.06,toon(0xD8D2C4),f,X(0.25),0.9,0.06);
+  bloco(W*0.2,1.95,0.04,toon(0xF2F0EA),f,X(0.62),0.98+0.0,0.05);
+  bloco(0.04,0.04,0.06,toon(0x8E8A84),f,X(0.54),0.98,0.08);
+  // marquise fina de metal
+  bloco(W+0.1,0.06,0.42,toon(0x9AA0A6),f,0,2.5,0.24);
+  // plaquinhas embaixo da moldura
+  [[0.21,0.38,texPlacaWhats()],[0.58,0.34,texSantoBege()],[0.86,0.24,placaTex('Peça pelo Whats!','#C9252C','#FFFFFF')]].forEach(([t,l,tx])=>
+    malha(new THREE.PlaneGeometry(W*l,0.36),new THREE.MeshBasicMaterial({map:tx}),f,X(t),2.33,0.47,false));
+  // moldura vermelha com as três placas do alto
+  bloco(W+0.14,0.95,0.14,VERMELHO,f,0,H-0.42,0.09);
+  malha(new THREE.PlaneGeometry(W*0.38,0.66),new THREE.MeshBasicMaterial({map:texSantoAzul()}),f,X(0.24),H-0.42,0.17,false);
+  malha(new THREE.PlaneGeometry(W*0.22,0.66),new THREE.MeshBasicMaterial({map:texSantoDelivery()}),f,X(0.55),H-0.42,0.17,false);
+  malha(new THREE.PlaneGeometry(W*0.3,0.66),new THREE.MeshBasicMaterial({map:texSemiArtesanal()}),f,X(0.83),H-0.42,0.17,false);
+  // cortina de luzinhas penduradas na marquise
+  const geoLuz=new THREE.SphereGeometry(0.045,8,6);
+  for(let i=0;i<40;i++){ const t=0.06+i*0.88/39, x=X(t), fios=1+((i*7)%3);
+    for(let k=0;k<fios;k++) malha(geoLuz,LUZINHAS,f,x+((k%2)?0.05:-0.03),2.42-k*0.16-Math.abs(Math.sin(i*1.3))*0.12,0.42,false); }
+  return f; }
 function pizzaria(o){
   const g=new THREE.Group(); g.position.set(o.x,0,o.z); scene.add(g);
-  const fz=o.d/2, VERDE=toon(0x2F7D3B), VERMELHO=toon(0xD32A30);
   bloco(o.w,o.h,o.d,toon(0xEFE2B6),g,0,o.h/2,0,0.04,0.025);
   bloco(o.w+0.2,0.18,o.d+0.2,toon(0x8E8A84),g,0,o.h+0.09,0,0.03,0.02);
-  bloco(o.w,0.32,0.06,VERMELHO,g,0,0.16,fz+0.02);                                   // barra vermelha embaixo
-  [-o.w/2+0.1,0.15,o.w/2-0.1].forEach(x=>bloco(0.16,2.35,0.08,VERDE,g,x,1.17,fz+0.04)); // colunas verdes
-  // janela com persiana (acende quando está aberta) e porta branca
   const vitrine=new THREE.MeshBasicMaterial({color:0x3A4248});
-  malha(new THREE.PlaneGeometry(1.45,1.15),vitrine,g,-1.15,1.45,fz+0.03,false);
-  for(let i=0;i<7;i++) bloco(1.4,0.035,0.02,toon(0xD9D6CE),g,-1.15,0.95+i*0.16,fz+0.045);
-  bloco(0.9,1.85,0.04,toon(0xF2F0EA),g,0.85,0.93,fz+0.03);
-  bloco(0.05,0.05,0.06,toon(0x8E8A84),g,0.5,0.95,fz+0.07);
-  // plaquinhas embaixo do letreiro
-  [[0.05,1.4,'#F4EEDD'],[1.55,1.5,'#C9252C']].forEach(([x,w,c])=>malha(new THREE.PlaneGeometry(w,0.32),new THREE.MeshBasicMaterial({color:new THREE.Color(c)}),g,x,2.27,fz+0.05,false));
-  malha(new THREE.PlaneGeometry(1.5,0.32),new THREE.MeshBasicMaterial({map:texPlacaWhats()}),g,-1.55,2.27,fz+0.05,false);
-  malha(new THREE.PlaneGeometry(1.4,0.28),new THREE.MeshBasicMaterial({map:placaTex('Peça pelo Whats!','#C9252C','#FFFFFF')}),g,1.55,2.27,fz+0.06,false);
-  malha(new THREE.PlaneGeometry(1.4,0.3),new THREE.MeshBasicMaterial({map:placaTex('Delivery de pizzas','#F4EEDD','#2A1A12')}),g,0.05,2.27,fz+0.06,false);
-  // moldura vermelha com o letreiro escuro e o painel branco
-  bloco(o.w+0.1,0.82,0.12,VERMELHO,g,0,o.h-0.42,fz+0.06);
-  malha(new THREE.PlaneGeometry(o.w*0.56,0.6),new THREE.MeshBasicMaterial({map:texLetreiroSanto()}),g,-o.w*0.18,o.h-0.42,fz+0.13,false);
-  malha(new THREE.PlaneGeometry(o.w*0.34,0.6),new THREE.MeshBasicMaterial({map:placaTex('Semi artesanal','#FFFFFF','#1A1A1A')}),g,o.w*0.3,o.h-0.42,fz+0.13,false);
-  // varal de luzinhas em ondas, por baixo da moldura
-  const geoLuz=new THREE.SphereGeometry(0.045,8,6);
-  for(let i=0;i<34;i++){ const x=-o.w/2+0.15+i*(o.w-0.3)/33, onda=Math.abs(Math.sin(i*0.9))*0.28;
-    malha(geoLuz,LUZINHAS,g,x,2.85-onda,fz+0.22,false); }
-  hit('santo',g,o.w+0.4,o.h,o.d+0.6,0,o.h/2,0.3);   // tocar na pizzaria abre o cartão dela
+  const frente=fachadaSanto(g,o.w,o.h,vitrine); frente.position.z=o.d/2;                       // frente (Felice Del Paggio)
+  if(o.lateral){ const lat=fachadaSanto(g,o.d,o.h,vitrine); lat.position.x=-o.w/2; lat.rotation.y=-Math.PI/2; }   // lateral (Milton Martins Moura)
+  hit('santo',g,o.w+0.6,o.h,o.d+0.6,0,o.h/2,0);   // tocar na pizzaria abre o cartão dela
   VIZINHOS.push({o,vitrine,porta:null,luzes:true}); return g;
 }
 // ---------- a rua de verdade (Rua Felice Del Paggio, Taboão da Serra) ----------
@@ -6690,19 +6717,8 @@ lojaOutroLado({x:-25.2,z:16.3,w:4.8,d:4.2,h:2.6,cor:0xFFE2B0,toldo:0xD98A1E,nome
 lojaOutroLado({x:-20.0,z:16.3,w:4.8,d:4.2,h:2.5,cor:0xE3F4D2,toldo:0x4F9A2E,nome:'🥬 Sacolão',fundo:'#4F9A2E',letra:'#FFFFFF',abre:7,fecha:20});
 lojaOutroLado({x:-15.3,z:16.3,w:4.2,d:4.2,h:2.5,cor:0xE4ECF7,toldo:0x3A6FB0,nome:'🐶 Casa de Ração',fundo:'#3A6FB0',letra:'#FFFFFF',abre:8,fecha:19});
 // Pizzaria Santo Forno: esquina da Felice Del Paggio com a Milton Martins Moura, de frente para a Adega
-(function(){ const o={x:3.6,z:16.6,w:5,d:4,h:3.3,nome:'🍕 Pizzaria Santo Forno',abre:18,fecha:24};
-  const g=pizzaria(o); g.rotation.y=Math.PI; const v=VIZINHOS[VIZINHOS.length-1];
-  fundosLoja(g,o,v.vitrine);
-  // esquina: a lateral dá para a Rua Milton Martins Moura e fica virada para a câmera, então o letreiro vai nela também
-  const lx=-o.w/2, VERM=toon(0xD32A30);
-  bloco(0.12,0.82,o.d+0.1,VERM,g,lx-0.06,o.h-0.42,0);
-  bloco(0.08,0.32,o.d,VERM,g,lx-0.04,0.16,0);
-  [-o.d/2+0.1,o.d/2-0.1].forEach(z=>bloco(0.08,2.35,0.16,toon(0x2F7D3B),g,lx-0.04,1.17,z));
-  const ls=malha(new THREE.PlaneGeometry(o.d*0.7,0.6),new THREE.MeshBasicMaterial({map:texLetreiroSanto()}),g,lx-0.13,o.h-0.42,0.2,false); ls.rotation.y=-Math.PI/2;
-  const lw=malha(new THREE.PlaneGeometry(1.5,0.32),new THREE.MeshBasicMaterial({map:texPlacaWhats()}),g,lx-0.05,1.95,0.3,false); lw.rotation.y=-Math.PI/2;
-  const geoL=new THREE.SphereGeometry(0.045,8,6);
-  for(let i=0;i<22;i++){ const z=-o.d/2+0.15+i*(o.d-0.3)/21, onda=Math.abs(Math.sin(i*0.9))*0.28; malha(geoL,LUZINHAS,g,lx-0.22,2.85-onda,z,false); }
-  const pw=malha(new THREE.PlaneGeometry(2.2,0.47),new THREE.MeshBasicMaterial({map:texPlacaWhats()}),g,-0.9,o.h-0.55,-o.d/2-0.03,false); pw.rotation.y=Math.PI;
+(function(){ const o={x:3.6,z:16.6,w:4.4,d:5,h:3.3,lateral:true,nome:'🍕 Pizzaria Santo Forno',abre:18,fecha:24};
+  const g=pizzaria(o); g.rotation.y=Math.PI; fundosLoja(g,o,VIZINHOS[VIZINHOS.length-1].vitrine);
 })();
 // casas do lado da câmera, depois da pizzaria
 [[-10.8,0xE6C8F2],[-6.6,0xC7E8B5],[-2.4,0xF4B8A8],[14.1,0xA8D8F4]].forEach(([x,c])=>{ const o={x,z:16.2,w:3.6,d:3.2,h:2.2,cor:c,janelas:2}; const g=vizinho(o); g.rotation.y=Math.PI; fundosLoja(g,o,VIZINHOS[VIZINHOS.length-1].vitrine); });
