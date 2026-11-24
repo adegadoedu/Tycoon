@@ -1004,6 +1004,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 23/11/2026 · 22h40 · 🎄</p>
   </div>
 </section>
 
@@ -3414,7 +3415,7 @@ function confeteDecor(){
 const ARVORE_ATE=Date.UTC(2027,0,2,3,0,0);   // fim do dia 01/01/2027 em Brasília
 let arvoreModo='auto';
 const arvoreCaixas=(function(){
-  const g=new THREE.Group(); g.position.set(-3.7,0,5.6); g.rotation.y=Math.PI/4; g.visible=false; scene.add(g);
+  const g=new THREE.Group(); g.position.set(4.45,0,4.45); g.rotation.y=Math.PI/4; g.scale.setScalar(0.85); g.visible=false; scene.add(g);   // dentro da loja, no canto da frente: aparece na tela do celular sem arrastar
   const CW=0.36, CH=0.27, CD=0.3, cores=[0xD7263D,0xF2D46B,0x2A1F1F,0xE8E8E8,0x2E5FD0,0x2E9A5A,0x4A2E22,0xF2C230];
   const ROWS=[5,4,3,3,2,1]; let k=0;
   ROWS.forEach((n,r)=>{ const y=0.08+CH/2+r*CH;
