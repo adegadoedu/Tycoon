@@ -1004,7 +1004,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 25/11/2026 · 00h30 · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 25/11/2026 · 01h15 · 🎄</p>
   </div>
 </section>
 
@@ -5212,6 +5212,8 @@ let CATALOGO_DATA='21/11/2026';
 const CAT_SETOR={refri:'Refrigerantes',agua:'Águas e sucos',salgadinho:'Doces e salgadinhos',gelo:'Gelo',carvao:'Carvão',mercearia:'Mercearia'};
 const CATALOGO=[
  ['Coca-Cola 2 L',12,'refri'],['Guaraná 2 L',11,'refri'],
+ ['Água Mineral 500 ml sem Gás',2,'agua'],['Água Mineral 500 ml com Gás',3,'agua'],['Água Mineral 1,5 L sem Gás',4,'agua'],
+ ['Del Valle 1 L Uva',11,'agua'],['Del Valle 1 L Laranja',11,'agua'],['Del Valle 1 L Maracujá',11,'agua'],['Del Valle 1 L Caju',11,'agua'],['Del Valle 1 L Goiaba',11,'agua'],['Del Valle 1 L Abacaxi e Tangerina',11,'agua'],
  ['Trento',3.5,'salgadinho'],['Trento Máximo',2.5,'salgadinho'],['Bala Fini',2,'salgadinho'],['Fini Amoras',2,'salgadinho'],['Fini Tubes Morango',2,'salgadinho'],
  ['Fini Tubes Morango Azedo',2,'salgadinho'],['Fini Tubes Tutti Frutti',2,'salgadinho'],['Caixa de Bala Fini',24,'salgadinho'],['Halls',2.5,'salgadinho'],['Halls Blueberry',2.5,'salgadinho'],
  ['Trident',3,'salgadinho'],['Trident Menta',3,'salgadinho'],['Trident Tutti Frutti',3,'salgadinho'],['Mentos',2.5,'salgadinho'],['Pé de Moça',2,'salgadinho'],['Pé de Moleque',2,'salgadinho'],
@@ -5340,27 +5342,33 @@ const SABORES=[
 ];
 const PALETA=[[0xE8433A,0xB01E3A],[0x2E9B44,0x1F6E30],[0xF27A1A,0xC85A10],[0x2F8FD8,0x1B5FA0],[0x9B5DE5,0x6A2380],[0xF2C31B,0xC89A10]];
 const hexCss=h=>'#'+h.toString(16).padStart(6,'0');
+const CAIXA_SUCO=[[/abacaxi|tangerina/,'#A6CE2C','#F2C31B','#F28C1A'],[/caju/,'#3FA6DE','#E8622A','#F2A516'],[/goiaba/,'#46A9E0','#F07A7A','#F2D23B'],
+  [/maracuja/,'#F5B21E','#F7D23B','#3B2A1A'],[/laranja/,'#F48A1C','#F7A21B','#FFC15A'],[/uva/,'#7B2C8F','#8B1E3A','#B02040'],
+  [/pessego/,'#F7A07A','#F28C6A','#F7C21F'],[/manga/,'#F7B52A','#F28C1A','#7BC043'],[/morango/,'#E8433A','#B01E3A','#F7B6CF']];
+function coresCaixa(n){ const c=CAIXA_SUCO.find(x=>x[0].test(n)); return c?c.slice(1):['#F48A1C','#F7A21B','#FFC15A']; }
 function perfilProduto(p){
   const n=semAcento(p.n);
   let tipo;
   if(/\blata\b|\b(269|310|350|473) ?ml/.test(n)) tipo='lata';
   else if(/isoton|gatorade|powerade/.test(n)) tipo='esporte';
   else if(/energet|monster|red ?bull|\btnt\b/.test(n)) tipo='lata';
-  else if(/suco|nectar|del valle|caixinha/.test(n)&&!/garrafa|pet\b|lata/.test(n)) tipo='caixa';
+  else if(/suco|nectar|del val+e|caixinha/.test(n)&&!/garrafa|pet\b|lata/.test(n)) tipo='caixa';
   else if(/(\b1[,.]5|\b2|\b2[,.]5|\b3|\b5) ?l\b|litrao|galao/.test(n)) tipo='pet2l';
   else tipo='pet600';
   const s=SABORES.find(x=>x[0].test(n));
   let liq,rot;
   if(s){ liq=s[1]; rot=s[2]; } else { let h=0; for(const c of n) h=(h*31+c.charCodeAt(0))>>>0; const pp=PALETA[h%PALETA.length]; liq=pp[0]; rot=pp[1]; }
   if(/zero|diet|sem acucar/.test(n)) rot=0x1C1C1C;
-  const tampa=/agua|mineral/.test(n)?0x2F8FD8:tipo==='esporte'?0xFF7A1A:rot;
-  return {tipo,liq,rot,tampa};
+  const agua=/agua|mineral/.test(n)&&!/coco|tonica/.test(n), gas=agua&&/com gas|c\/ ?gas|gaseificada/.test(n)&&!/sem gas/.test(n);
+  if(agua){ liq=0xDDF0FA; rot=0xE9EEF4; }
+  const tampa=agua?(gas?0xD8382C:0xF4F4F4):tipo==='esporte'?0xFF7A1A:rot;
+  return {tipo,liq,rot,tampa,agua,gas};
 }
 function modelo3D(p){
   const f=perfilProduto(p);
   if(f.tipo==='lata') return EXPO.lata(f.liq===0xBFE3F7?f.rot:(/cola|coca/.test(semAcento(p.n))?f.rot:f.liq),f.rot);
   if(f.tipo==='esporte') return EXPO.esporte(f.liq,f.tampa);
-  if(f.tipo==='caixa') return EXPO.caixaSuco(hexCss(f.liq),hexCss(f.rot),hexCss(f.rot));
+  if(f.tipo==='caixa') return EXPO.caixaSuco(...coresCaixa(semAcento(p.n)));
   if(f.tipo==='pet2l') return EXPO.pet2l(f.liq,f.rot,f.tampa);
   return EXPO.pet600(f.liq,f.rot,f.tampa);
 }
@@ -5386,10 +5394,21 @@ function preencherExpositora(id){
 function svgProduto(p){
   const f=perfilProduto(p), L=hexCss(f.liq), R=hexCss(f.rot), T=hexCss(f.tampa), C='#2A1A12';
   if(f.tipo==='lata') return `<svg viewBox="0 0 40 70" width="34" height="60"><rect x="3" y="6" width="34" height="60" rx="6" fill="${/cola|coca/.test(semAcento(p.n))?R:L}" stroke="${C}" stroke-width="2.5"/><rect x="3" y="30" width="34" height="14" fill="${R}" opacity=".85"/><ellipse cx="20" cy="7" rx="15" ry="4" fill="#C9CDD1" stroke="${C}" stroke-width="2"/><rect x="8" y="12" width="4" height="48" rx="2" fill="#fff" opacity=".35"/></svg>`;
-  if(f.tipo==='caixa') return `<svg viewBox="0 0 50 100" width="44" height="88"><path d="M5 22 L25 10 L45 22 L45 96 L5 96 Z" fill="${L}" stroke="${C}" stroke-width="2.5"/><rect x="31" y="6" width="9" height="10" rx="2" fill="#55585C" stroke="${C}" stroke-width="2"/><path d="M11 32 h28 v24 l-14 5 l-14 -5z" fill="#3E3A33"/><rect x="15" y="40" width="20" height="4" fill="#fff"/><circle cx="25" cy="78" r="12" fill="${R}"/><circle cx="21" cy="80" r="6" fill="#fff" opacity=".35"/></svg>`;
+  if(f.tipo==='caixa'){ const [A,F1,F2]=coresCaixa(semAcento(p.n)), um=/\b1 ?l\b|1000 ?ml/.test(semAcento(p.n));
+    return `<svg viewBox="0 0 48 104" width="42" height="92"><rect x="17" y="2" width="12" height="9" rx="2" fill="#2A2A2A" stroke="${C}" stroke-width="2"/>
+      <path d="M5 14 L11 10 L43 10 L37 14 Z" fill="${A}" stroke="${C}" stroke-width="2"/><path d="M5 14 L11 10 L43 10 L37 14 Z" fill="#fff" opacity=".25"/>
+      <path d="M37 14 L43 10 L43 96 L37 100 Z" fill="${A}" stroke="${C}" stroke-width="2"/><path d="M37 14 L43 10 L43 96 L37 100 Z" fill="#000" opacity=".22"/>
+      <rect x="5" y="14" width="32" height="86" fill="${A}" stroke="${C}" stroke-width="2.5"/>
+      <path d="M10 31 L15.5 34 L21 31 L26.5 34 L32 31 L32 66 L10 66 Z" fill="#1E1E1E"/>
+      <rect x="13" y="42" width="16" height="3.4" rx="1.5" fill="#fff"/><rect x="15" y="48" width="12" height="2" rx="1" fill="#fff" opacity=".7"/>
+      <circle cx="21" cy="58" r="3.2" fill="none" stroke="#fff" stroke-width="1" opacity=".8"/>
+      <circle cx="14" cy="83" r="8" fill="${F1}" stroke="${C}" stroke-width="1.2"/><circle cx="27" cy="86" r="9" fill="${F2}" stroke="${C}" stroke-width="1.2"/>
+      <ellipse cx="20" cy="74" rx="5" ry="2.4" fill="#2E7D32" transform="rotate(-25 20 74)"/>
+      ${um?'<text x="33" y="97" text-anchor="end" font-family="Nunito,sans-serif" font-weight="900" font-size="6.5" fill="#fff">1L</text>':''}
+      <rect x="7" y="18" width="3" height="40" rx="1.5" fill="#fff" opacity=".22"/></svg>`; }
   if(f.tipo==='esporte') return `<svg viewBox="0 0 40 100" width="36" height="88"><rect x="13" y="2" width="14" height="12" rx="3" fill="${T}" stroke="${C}" stroke-width="2.5"/><path d="M8 18 Q20 10 32 18 L34 46 Q28 54 34 62 L33 96 L7 96 L6 62 Q12 54 6 46 Z" fill="${L}" stroke="${C}" stroke-width="2.5"/><rect x="7" y="64" width="26" height="18" fill="#fff" opacity=".9"/><rect x="10" y="22" width="4" height="22" rx="2" fill="#fff" opacity=".4"/></svg>`;
   const big=f.tipo==='pet2l', h=big?120:88, w=big?44:32;
-  return `<svg viewBox="0 0 40 ${big?120:96}" width="${w}" height="${h}"><rect x="14" y="2" width="12" height="9" rx="2" fill="${T}" stroke="${C}" stroke-width="2.5"/><path d="M15 11 L25 11 L25 16 Q36 22 36 34 L36 ${big?114:90} Q36 ${big?118:94} 32 ${big?118:94} L8 ${big?118:94} Q4 ${big?118:94} 4 ${big?114:90} L4 34 Q4 22 15 16 Z" fill="${L}" stroke="${C}" stroke-width="2.5"/><rect x="4" y="${big?50:44}" width="32" height="${big?26:20}" fill="${R}"/><rect x="10" y="${big?58:50}" width="20" height="${big?5:4}" rx="2" fill="#fff" opacity=".85"/><rect x="8" y="${big?24:22}" width="4" height="${big?22:18}" rx="2" fill="#fff" opacity=".45"/></svg>`;
+  return `<svg viewBox="0 0 40 ${big?120:96}" width="${w}" height="${h}"><rect x="14" y="2" width="12" height="9" rx="2" fill="${T}" stroke="${C}" stroke-width="2.5"/><path d="M15 11 L25 11 L25 16 Q36 22 36 34 L36 ${big?114:90} Q36 ${big?118:94} 32 ${big?118:94} L8 ${big?118:94} Q4 ${big?118:94} 4 ${big?114:90} L4 34 Q4 22 15 16 Z" fill="${L}" stroke="${C}" stroke-width="2.5"/><rect x="4" y="${big?50:44}" width="32" height="${big?26:20}" fill="${R}"/>${f.agua?`<rect x="4" y="${big?50:44}" width="32" height="${big?5:4}" fill="#2F6FD8"/><text x="20" y="${big?68:59}" text-anchor="middle" font-family="Nunito,sans-serif" font-weight="900" font-size="${big?6.5:5.6}" fill="#1D4FC4">${f.gas?'COM GÁS':'SEM GÁS'}</text>`:`<rect x="10" y="${big?58:50}" width="20" height="${big?5:4}" rx="2" fill="#fff" opacity=".85"/>`}<rect x="8" y="${big?24:22}" width="4" height="${big?22:18}" rx="2" fill="#fff" opacity=".45"/></svg>`;
 }
 // ---------- Embalagens da mercearia e dos doces (desenho na vista de frente) ----------
 const TIPOS_SECOS=[
