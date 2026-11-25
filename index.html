@@ -1004,7 +1004,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 25/11/2026 · 01h15 · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 25/11/2026 · 11h · 🎄</p>
   </div>
 </section>
 
@@ -6421,7 +6421,7 @@ function laco(){
   requestAnimationFrame(laco);
   const dt=Math.min(relogio.getDelta(),0.05);
   if(ENT.ativo){ atualizarEntrega(dt); renderer.render(cenaEnt,camEnt); return; }
-  if(tempoPronto){ atualizarCeu(dt); tRel+=dt; if(tRel>0.5){ tRel=0; atualizarRelogio(); if(ruaPronta) atualizarVizinhos(); } if(ruaPronta) atualizarTransito(dt); atualizarArvore(dt); if(grafPronto){ atualizarRealismo(dt); atualizarGuardaChuvas(dt); } }
+  if(tempoPronto){ atualizarCeu(dt); tRel+=dt; if(tRel>0.5){ tRel=0; atualizarRelogio(); if(ruaPronta) atualizarVizinhos(); } if(ruaPronta) atualizarTransito(dt); atualizarArvore(dt); if(typeof balancarArvores==='function') balancarArvores(dt); if(grafPronto){ atualizarRealismo(dt); atualizarGuardaChuvas(dt); } }
   if(document.body.classList.contains('jogando')){
     S.tempoJogo=(S.tempoJogo||0)+dt;
     proxCliente-=dt;
@@ -6889,8 +6889,7 @@ casaTelhado(-7.2,17.6,0xF4D9C4,Math.PI,4.2,3.6);
   bloco(1.6,0.12,1.2,toon(0xBFC3C7),g,0.8,0.06,1.6);                 // calçadinha da porta
   bloco(2.0,0.04,1.8,toon(0xBFC3C7),g,-2.2,0.03,3.9);   // entrada da garagem
   VIZINHOS.push({o:{x:11.9,janelas:1},vitrine:vj,porta:null});
-  [[-3.8,-3.4,1.1],[3.6,-3.6,1.2],[3.8,2.6,0.9],[-4.0,2.2,0.85]].forEach(([x,z,e])=>{ const t=new THREE.Group(); t.position.set(x,0,z); t.scale.setScalar(e); g.add(t);
-    malha(new THREE.CylinderGeometry(0.12,0.16,1.2,8),toon(0x7A4F2A),t,0,0.6,0); contorno(malha(new THREE.SphereGeometry(0.75,12,10),toon(0x4FAE5A),t,0,1.6,0),0.03).scale.set(1,0.93,1); });
+  ARV_TERRENO=[[11.9-3.8,-3.4,1.1,'palmeira'],[11.9+3.6,-3.6,1.2,'copa'],[11.9+3.8,2.6,0.95,'jacaranda'],[11.9-4.0,2.2,0.9,'palmeira']];   // plantadas junto com as outras árvores
 })();
 // ---------- placa verde da BR-116 ----------
 (function(){ const g=new THREE.Group(); g.position.set(-27.6,0,14.6); scene.add(g);
@@ -6912,11 +6911,73 @@ casaTelhado(-7.2,17.6,0xF4D9C4,Math.PI,4.2,3.6);
   const t=texCanvas(128,128,(c)=>{ c.fillStyle='#F2C31B'; c.beginPath(); c.moveTo(64,4); c.lineTo(124,64); c.lineTo(64,124); c.lineTo(4,64); c.closePath(); c.fill(); c.strokeStyle='#1A1A1A'; c.lineWidth=6; c.stroke();
     c.fillStyle='#1A1A1A'; c.beginPath(); c.moveTo(30,88); c.lineTo(98,88); c.lineTo(98,44); c.closePath(); c.fill(); c.font='bold 18px Nunito, sans-serif'; c.textAlign='center'; c.fillText('SUBIDA',56,112); });
   malha(new THREE.PlaneGeometry(0.9,0.9),new THREE.MeshBasicMaterial({map:t,transparent:true}),scene,-24,2.3,7.95,false); })();
-// árvores
-function arvore(x,z,e){ const g=new THREE.Group(); g.position.set(x,0,z); g.scale.setScalar(e||1); scene.add(g);
-  malha(new THREE.CylinderGeometry(0.12,0.16,1.2,8),toon(0x7A4F2A),g,0,0.6,0);
-  contorno(malha(ESF,toon(0x4FAE5A),g,0,1.6,0),0.03).scale.set(0.75,0.7,0.75); }
+// ---------- árvores realistas ----------
+// Tronco que afina, com galhos; copa feita de vários cachos de folhas com tons de verde misturados
+// (mais escuros embaixo, mais claros onde bate sol); três espécies comuns nas ruas de São Paulo:
+// copa larga (como a sibipiruna), jacarandá (floresce lilás de setembro a novembro) e palmeira.
+// Todas balançam com o vento, e mais forte quando chove.
+var ARV_TERRENO=ARV_TERRENO||[];
+const ARVORES=[];
+const matFolha=new THREE.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:0.92,metalness:0});
+const matTronco=new THREE.MeshStandardMaterial({color:0x5E4128,roughness:1,flatShading:true});
+const matPalma=new THREE.MeshStandardMaterial({color:0x8C7C66,roughness:1,flatShading:true});
+const matFronde=new THREE.MeshStandardMaterial({color:0x4C8A2E,roughness:0.9,flatShading:true,side:THREE.DoubleSide});
+function rndSem(seed){ let x=(Math.floor(seed*1e6)^0x9E3779B9)>>>0||7; return ()=>{ x^=x<<13; x>>>=0; x^=x>>>17; x^=x<<5; x>>>=0; return x/4294967296; }; }
+const ruido3=(x,y,z)=>{ const h=Math.sin(x*12.9898+y*78.233+z*37.719)*43758.5453; return h-Math.floor(h); };
+function cachoFolhas(r,cores,R){
+  const geo=new THREE.IcosahedronGeometry(r,1), p=geo.attributes.position, cor=[], v=new THREE.Vector3(), c=new THREE.Color(), sem=R()*100;
+  for(let i=0;i<p.count;i++){ v.fromBufferAttribute(p,i);
+    const n=ruido3(Math.round(v.x*60)+sem,Math.round(v.y*60),Math.round(v.z*60));   // mesmo vértice = mesmo deslocamento (sem rachaduras)
+    v.multiplyScalar(0.7+n*0.6); v.y*=0.85; p.setXYZ(i,v.x,v.y,v.z); }
+  for(let f=0;f<p.count;f+=3){   // cada folhinha (face) com seu tom; mais escura embaixo, mais clara em cima
+    const yc=(p.getY(f)+p.getY(f+1)+p.getY(f+2))/3;
+    c.set(cores[Math.floor(R()*cores.length)]); c.multiplyScalar((0.55+0.5*Math.min(1,Math.max(0,(yc/r+1)/2)))*(0.9+R()*0.2));
+    for(let k=0;k<3;k++) cor.push(c.r,c.g,c.b); }
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(cor,3)); geo.computeVertexNormals(); return geo; }
+function galho(pai,x0,y0,z0,x1,y1,z1,r0,r1){ const a=new THREE.Vector3(x0,y0,z0), b=new THREE.Vector3(x1,y1,z1), d=b.clone().sub(a), L=d.length();
+  const m=malha(new THREE.CylinderGeometry(r1,r0,L,7),matTronco,pai,(x0+x1)/2,(y0+y1)/2,(z0+z1)/2);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize()); return m; }
+function arvore(x,z,e,tipo){
+  const R=rndSem(ruido3(x,0,z)+0.123), mes=new Date().getMonth()+1;
+  tipo=tipo||(R()<0.3?'jacaranda':'copa');
+  const g=new THREE.Group(); g.position.set(x,0,z); g.scale.setScalar(e||1); g.rotation.y=R()*Math.PI*2; scene.add(g);
+  const balanco=new THREE.Group(); g.add(balanco);
+  if(tipo==='palmeira'){
+    const h=2.6+R()*0.6; let px=0, pz=0;
+    for(let i=0;i<6;i++){ const y0=i*h/6, y1=(i+1)*h/6, nx=px+(R()-0.5)*0.05, nz=pz+(R()-0.5)*0.05;
+      galho(balanco,px,y0,pz,nx,y1,nz,0.11-i*0.008,0.1-i*0.008).material=matPalma; px=nx; pz=nz; }
+    const topo=new THREE.Group(); topo.position.set(px,h,pz); balanco.add(topo);
+    malha(new THREE.SphereGeometry(0.13,8,6),matPalma,topo,0,0,0);
+    const nF=9;
+    for(let f=0;f<nF;f++){ const fr=new THREE.Group(); fr.rotation.y=f/nF*Math.PI*2+R()*0.3; topo.add(fr);
+      let cx=0, cy=0, ang=0.35+R()*0.3;
+      for(let s2=0;s2<5;s2++){ const L=0.32, w=0.26-s2*0.04; const seg=malha(new THREE.PlaneGeometry(L,w),matFronde,fr,cx+Math.cos(ang)*L/2,cy+Math.sin(ang)*L/2,0); seg.rotation.set(Math.PI/2,0,ang); seg.rotation.order='ZXY'; seg.rotation.z=ang;
+        cx+=Math.cos(ang)*L; cy+=Math.sin(ang)*L; ang-=0.32+R()*0.08; } }
+  } else {
+    const jac=tipo==='jacaranda', h=jac?1.5:1.25, florindo=jac&&mes>=9&&mes<=11;
+    galho(balanco,0,0,0,(R()-0.5)*0.12,h,(R()-0.5)*0.12,0.15,0.09);
+    malha(new THREE.CylinderGeometry(0.17,0.24,0.12,8),matTronco,balanco,0,0.06,0);   // raiz alargando no chão
+    const verdes=jac?['#3F7F33','#4C8F3A','#5A9C45']:['#2F6B26','#3E7D2E','#4F8F35','#5FA03E','#6AAE48'];
+    const cores=florindo?['#8E6FD0','#9B7BD8','#A98BE0','#7A5CC0','#B49AE6','#9B7BD8','#5A9C45']:verdes;
+    const nG=3+Math.floor(R()*2), copa=[];
+    for(let i=0;i<nG;i++){ const a=i/nG*Math.PI*2+R()*0.5, rr=0.35+R()*0.15, yy=h+0.25+R()*0.35;
+      galho(balanco,0,h*0.8,0,Math.cos(a)*rr,yy,Math.sin(a)*rr,0.07,0.035); copa.push([Math.cos(a)*rr*1.3,yy+0.15,Math.sin(a)*rr*1.3]); }
+    const cy=h+0.7, RX=jac?1.0:0.95, RY=jac?0.55:0.7, nC=jac?16:18;
+    for(let i=0;i<nC;i++){ const th=R()*Math.PI*2, ph=Math.acos(1-R()*1.6), d=0.55+R()*0.45, r=(jac?0.26:0.3)+R()*0.14;
+      const m=new THREE.Mesh(cachoFolhas(r,cores,R),matFolha);
+      m.position.set(Math.cos(th)*Math.sin(ph)*RX*d,cy+Math.cos(ph)*RY*d-(jac?0.05:0),Math.sin(th)*Math.sin(ph)*RX*d);
+      m.rotation.set(R()*3,R()*3,R()*3); m.castShadow=true; m.receiveShadow=true; balanco.add(m); }
+    const miolo=new THREE.Mesh(cachoFolhas(jac?0.62:0.7,verdes,R),matFolha); miolo.position.set(0,cy-0.05,0); miolo.scale.set(1.15,0.75,1.15); miolo.castShadow=true; balanco.add(miolo);
+    if(florindo){ const geoF=new THREE.CircleGeometry(0.06,5), matF=new THREE.MeshBasicMaterial({color:0xB79BE8,side:THREE.DoubleSide});   // flores caídas na calçada
+      for(let i=0;i<14;i++){ const f=new THREE.Mesh(geoF,matF); f.rotation.x=-Math.PI/2; const a=R()*Math.PI*2, d=0.25+R()*0.6; f.position.set(Math.cos(a)*d,0.06,Math.sin(a)*d); g.add(f); } }
+  }
+  ARVORES.push({g:balanco,fase:R()*6.28,forca:tipo==='palmeira'?1.6:1});
+  return g; }
+let tVento=0;
+function balancarArvores(dt){ tVento+=dt; const chuva=typeof choveAgora==='function'&&choveAgora(), v=chuva?2.2:1;
+  for(const a of ARVORES){ const t=tVento+a.fase; a.g.rotation.z=(Math.sin(t*1.25)*0.018+Math.sin(t*2.9)*0.006)*v*a.forca; a.g.rotation.x=Math.cos(t*1.05)*0.013*v*a.forca; } }
 [[-16.4,7.6],[15.6,7.6],[-12.6,12.9],[5.0,16.0],[17.4,12.9],[-12.2,-4.4]].forEach(p=>arvore(p[0],p[1],0.9+Math.random()*0.3));
+ARV_TERRENO.forEach(([x,z,e,t])=>arvore(x,z,e,t));
 // postes com luz que acende à noite
 const LUZ_POSTE=new THREE.MeshBasicMaterial({color:0xB9BEC4}), BRILHO=[], POSTES_X=[-25.5,-19,-11.5,-6.8,8.6,13];
 const texBrilho=texCanvas(128,128,(c)=>{ const g=c.createRadialGradient(64,64,4,64,64,62); g.addColorStop(0,'rgba(255,236,170,.75)'); g.addColorStop(1,'rgba(255,236,170,0)'); c.fillStyle=g; c.fillRect(0,0,128,128); });
