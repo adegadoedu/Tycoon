@@ -1004,7 +1004,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 24/11/2026 · 23h · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 24/11/2026 · 23h30 · 🎄</p>
   </div>
 </section>
 
@@ -1311,7 +1311,7 @@ const ESF=new THREE.SphereGeometry(1,20,14);
 // ---------- Rua e calçada ----------
 malha(new THREE.PlaneGeometry(200,200),new THREE.MeshLambertMaterial({color:0x8FD18A}),scene,0,-0.02,0,false).rotation.x=-Math.PI/2;
 // Rua Felice Del Paggio: começa na BR-116 (x=-28.5) e sobe para a direita. A Adega fica do lado do posto.
-const RUA_INI=-30, RUA_FIM=18.5, BR_X=-32.2, MILTON_X=9.3;
+const RUA_INI=-30, RUA_FIM=21.5, BR_X=-32.2, MILTON_X=9.3;
 const calcada=malha(new THREE.BoxGeometry(RUA_FIM+28.5,0.1,2.6),toon(0xD8D2C4),scene,(RUA_FIM-28.5)/2,0.0,6.5,false); calcada.receiveShadow=true;
 const rua=malha(new THREE.BoxGeometry(RUA_FIM+28.5,0.05,4),toon(0x4A4E55),scene,(RUA_FIM-28.5)/2,-0.01,9.8,false);
 for(let x=-26.5;x<=17;x+=2.2) if(Math.abs(x-MILTON_X)>2.4) malha(new THREE.BoxGeometry(1.0,0.06,0.16),toon(0xF2F2F2),scene,x,0.0,9.8,false);
@@ -2200,7 +2200,7 @@ function atualizarFornecedor(dt){
   const F=FORN;
   if(F.estado==='ocioso'){ if(F.fila.length&&!onibusNaRua()&&!vanNaRua()&&(!ruaPronta||ruaParaVeiculo())){ F.estado='chegando'; caminhao.visible=true; caminhao.position.set(RUA_INI,0,Z_RUA); } }
   else if(F.estado==='chegando'||F.estado==='saindo'){
-    caminhao.position.x+=7*dt; rodas.forEach(r=>r.rotation.y-=dt*12);
+    caminhao.position.x+=4.6*dt; rodas.forEach(r=>r.rotation.y-=dt*12);
     if(F.estado==='chegando'&&caminhao.position.x>=PARADA_X){ caminhao.position.x=PARADA_X; F.estado='parado'; }
     if(F.estado==='saindo'&&caminhao.position.x>18){ caminhao.visible=false; F.estado='ocioso'; }
   }
@@ -3090,7 +3090,7 @@ function atualizarPdr(dt){
   }
   if(VAN.estado==='ocioso'){ VAN.t-=dt; if(VAN.t<=0&&!onibusNaRua()&&FORN.estado==='ocioso'&&!FORN.fila.length&&(!ruaPronta||ruaParaVeiculo())){ const at=Object.keys(PARCEIROS).filter(k=>p.parceiros[k]); VAN.parceiro=pega(at); pintarVan(VAN.parceiro); VAN.estado='chegando'; vanPdr.visible=true; vanPdr.position.set(RUA_INI,0,Z_VAN); } }
   else if(VAN.estado==='chegando'||VAN.estado==='saindo'){
-    vanPdr.position.x+=7*dt; rodasVan.forEach(r=>r.rotation.y-=dt*12);
+    vanPdr.position.x+=4.8*dt; rodasVan.forEach(r=>r.rotation.y-=dt*12);
     if(VAN.estado==='chegando'&&vanPdr.position.x>=PARADA_VAN){ vanPdr.position.x=PARADA_VAN; VAN.estado='parado'; VAN.n=2+Math.floor(Math.random()*4)+(VAN.parceiro==='amazon'?1:0); }
     if(VAN.estado==='saindo'&&vanPdr.position.x>18){ vanPdr.visible=false; VAN.estado='ocioso'; const nAt=Object.keys(PARCEIROS).filter(k=>p.parceiros[k]).length; VAN.t=rnd(35,65)/(1+(nAt-1)*0.35); }
   }
@@ -4038,7 +4038,7 @@ function atualizarOnibus(dt){
   const parados=FROTA_ONIBUS.filter(o=>!o.ativo);
   if(!livres.length||!parados.length) return;
   const f=pega(livres), F=FAIXAS_ONIBUS[f], o=pega(parados);
-  o.ativo=true; o.faixa=f; o.dir=F.dir; o.vel=rnd(5.5,7); o.parou=false; o.estado='andando';
+  o.ativo=true; o.faixa=f; o.dir=F.dir; o.vel=F.dir>0?rnd(3.6,4.4):rnd(6,7.2); o.parou=false; o.estado='andando';
   o.g.position.set(F.dir>0?RUA_INI:RUA_FIM+1.5,0,F.z); o.g.rotation.y=F.dir>0?0:Math.PI; o.g.visible=true;
 }
 
@@ -4545,7 +4545,7 @@ function carroNaVaga(){ carroEdu.position.copy(CARRO_PARADO); carroEdu.rotation.
 carroNaVaga();
 // ---------- a viagem ----------
 let atacFase=null, avisoForn=false, atacAlvo=null;
-function andarCarro(dt,alvoX,dir){ carroEdu.position.x+=dir*6*dt; carroEdu.rotation.y=dir>0?0:Math.PI; rodasCarro.forEach(r=>r.rotation.y-=dt*12*dir); return dir>0?carroEdu.position.x>=alvoX:carroEdu.position.x<=alvoX; }
+function andarCarro(dt,alvoX,dir){ carroEdu.position.x+=dir*(dir>0?4.4:6.6)*dt; carroEdu.rotation.y=dir>0?0:Math.PI; rodasCarro.forEach(r=>r.rotation.y-=dt*12*dir); return dir>0?carroEdu.position.x>=alvoX:carroEdu.position.x<=alvoX; }
 function proximaCaixa(){
   const A=S.atac, E=EDU, g=E.g;
   const pend=Object.keys(A.itens).filter(id=>!A.entregues.includes(id));
@@ -6207,7 +6207,7 @@ function ajustar(){
 }
 // Limites da câmera medidos na direção da tela (direita/esquerda e cima/baixo), cobrindo a rua inteira:
 // da BR-116 até o terreno ao lado da Adega, e da loja até as lojas do outro lado.
-const MUNDO={x0:-33,x1:16,z0:-5.5,z1:19};
+const MUNDO={x0:-33,x1:19,z0:-5.5,z1:19};
 const DIR_D=new THREE.Vector3(1,0,-1).normalize(), DIR_F=new THREE.Vector3(-1,0,-1).normalize();
 const LIM_UV=(()=>{ const us=[],vs=[]; [[MUNDO.x0,MUNDO.z0],[MUNDO.x0,MUNDO.z1],[MUNDO.x1,MUNDO.z0],[MUNDO.x1,MUNDO.z1]].forEach(([x,z])=>{ us.push(x*DIR_D.x+z*DIR_D.z); vs.push(x*DIR_F.x+z*DIR_F.z); });
   return {u0:Math.min(...us),u1:Math.max(...us),v0:Math.min(...vs),v1:Math.max(...vs)}; })();
@@ -6359,7 +6359,7 @@ function laco(){
   requestAnimationFrame(laco);
   const dt=Math.min(relogio.getDelta(),0.05);
   if(ENT.ativo){ atualizarEntrega(dt); renderer.render(cenaEnt,camEnt); return; }
-  if(tempoPronto){ atualizarCeu(dt); tRel+=dt; if(tRel>0.5){ tRel=0; atualizarRelogio(); if(ruaPronta) atualizarVizinhos(); } if(ruaPronta){ atualizarTransito(dt); atualizarBR(dt); } atualizarArvore(dt); if(grafPronto){ atualizarRealismo(dt); atualizarGuardaChuvas(dt); } }
+  if(tempoPronto){ atualizarCeu(dt); tRel+=dt; if(tRel>0.5){ tRel=0; atualizarRelogio(); if(ruaPronta) atualizarVizinhos(); } if(ruaPronta){ atualizarTransito(dt); atualizarBR(dt); atualizarMilton(dt); } atualizarArvore(dt); if(grafPronto){ atualizarRealismo(dt); atualizarGuardaChuvas(dt); } }
   if(document.body.classList.contains('jogando')){
     S.tempoJogo=(S.tempoJogo||0)+dt;
     proxCliente-=dt;
@@ -6684,6 +6684,16 @@ function fachadaSanto(pai,W,H,vitrine){ const f=new THREE.Group(); pai.add(f);
   for(let i=0;i<40;i++){ const t=0.06+i*0.88/39, x=X(t), fios=1+((i*7)%3);
     for(let k=0;k<fios;k++) malha(geoLuz,LUZINHAS,f,x+((k%2)?0.05:-0.03),2.42-k*0.16-Math.abs(Math.sin(i*1.3))*0.12,0.42,false); }
   return f; }
+// Lateral pintada da Santo Forno (a face que a câmera do jogo enxerga): moldura vermelha com o logo, WhatsApp e luzinhas
+function ladoPintadoSanto(pai,W,H){ const f=new THREE.Group(); pai.add(f); const VERM=toon(0xD32A30), VERDE=toon(0x2F7D3B);
+  bloco(W,0.34,0.06,VERM,f,0,0.17,0.03);
+  [-W/2+0.08,W/2-0.08].forEach(x=>bloco(0.16,2.45,0.1,VERDE,f,x,1.22,0.06));
+  bloco(W*0.8,0.95,0.14,VERM,f,0,H-0.45,0.09);
+  malha(new THREE.PlaneGeometry(W*0.72,0.7),new THREE.MeshBasicMaterial({map:texSantoAzul()}),f,0,H-0.45,0.17,false);
+  malha(new THREE.PlaneGeometry(W*0.46,0.4),new THREE.MeshBasicMaterial({map:texPlacaWhats()}),f,0,1.75,0.05,false);
+  const geoLuz=new THREE.SphereGeometry(0.045,8,6);
+  for(let i=0;i<24;i++){ const x=-W*0.4+i*W*0.8/23, onda=Math.abs(Math.sin(i*0.9))*0.25; malha(geoLuz,LUZINHAS,f,x,H-1.0-onda,0.2,false); }
+  return f; }
 function pizzaria(o){
   const g=new THREE.Group(); g.position.set(o.x,0,o.z); scene.add(g);
   bloco(o.w,o.h,o.d,toon(0xEFE2B6),g,0,o.h/2,0,0.04,0.025);
@@ -6691,6 +6701,7 @@ function pizzaria(o){
   const vitrine=new THREE.MeshBasicMaterial({color:0x3A4248});
   const frente=fachadaSanto(g,o.w,o.h,vitrine); frente.position.z=o.d/2;                       // frente (Felice Del Paggio)
   if(o.lateral){ const lat=fachadaSanto(g,o.d,o.h,vitrine); lat.position.x=-o.w/2; lat.rotation.y=-Math.PI/2; }   // lateral (Milton Martins Moura)
+  if(o.pintado){ const p=ladoPintadoSanto(g,o.d,o.h); p.position.x=o.w/2; p.rotation.y=Math.PI/2; }
   hit('santo',g,o.w+0.6,o.h,o.d+0.6,0,o.h/2,0);   // tocar na pizzaria abre o cartão dela
   VIZINHOS.push({o,vitrine,porta:null,luzes:true}); return g;
 }
@@ -6716,12 +6727,54 @@ function lojaOutroLado(o){
 lojaOutroLado({x:-25.2,z:16.3,w:4.8,d:4.2,h:2.6,cor:0xFFE2B0,toldo:0xD98A1E,nome:'🥟 Casa de Salgados',fundo:'#D98A1E',letra:'#FFFFFF',abre:7,fecha:22});
 lojaOutroLado({x:-20.0,z:16.3,w:4.8,d:4.2,h:2.5,cor:0xE3F4D2,toldo:0x4F9A2E,nome:'🥬 Sacolão',fundo:'#4F9A2E',letra:'#FFFFFF',abre:7,fecha:20});
 lojaOutroLado({x:-15.3,z:16.3,w:4.2,d:4.2,h:2.5,cor:0xE4ECF7,toldo:0x3A6FB0,nome:'🐶 Casa de Ração',fundo:'#3A6FB0',letra:'#FFFFFF',abre:8,fecha:19});
-// Pizzaria Santo Forno: esquina da Felice Del Paggio com a Milton Martins Moura, de frente para a Adega
-(function(){ const o={x:3.6,z:16.6,w:4.4,d:5,h:3.3,lateral:true,nome:'🍕 Pizzaria Santo Forno',abre:18,fecha:24};
-  const g=pizzaria(o); g.rotation.y=Math.PI; fundosLoja(g,o,VIZINHOS[VIZINHOS.length-1].vitrine);
+// Pizzaria Santo Forno: logo depois da Milton Martins Moura, literalmente na esquina, com a fachada virada
+// para a descida da Felice Del Paggio. A câmera vê a lateral, que tem o logo pintado.
+(function(){ const o={x:14.6,z:16.6,w:5,d:4,h:3.3,pintado:true,nome:'🍕 Pizzaria Santo Forno',abre:18,fecha:24};
+  const g=pizzaria(o); g.rotation.y=-Math.PI/2;
 })();
-// casas do lado da câmera, depois da pizzaria
-[[-10.8,0xE6C8F2],[-6.6,0xC7E8B5],[-2.4,0xF4B8A8],[14.1,0xA8D8F4]].forEach(([x,c])=>{ const o={x,z:16.2,w:3.6,d:3.2,h:2.2,cor:c,janelas:2}; const g=vizinho(o); g.rotation.y=Math.PI; fundosLoja(g,o,VIZINHOS[VIZINHOS.length-1].vitrine); });
+function casaTelhado(x,z,cor,rot,w,d){ w=w||4.2; d=d||3.6; const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot||0; scene.add(g);
+  bloco(w,2.4,d,toon(cor),g,0,1.2,0,0.04,0.025);
+  const t=new THREE.Shape(); t.moveTo(-w/2-0.3,0); t.lineTo(0,1.3); t.lineTo(w/2+0.3,0); t.lineTo(-w/2-0.3,0);
+  const gt=new THREE.ExtrudeGeometry(t,{depth:d+0.4,bevelEnabled:false}); gt.translate(0,0,-(d+0.4)/2); contorno(malha(gt,toon(0xA0523A),g,0,2.4,0),0.02);
+  const vj=new THREE.MeshBasicMaterial({color:0x6E8FA0}); [-w*0.25,w*0.25].forEach(xx=>{ malha(new THREE.PlaneGeometry(0.9,0.8),vj,g,xx,1.4,d/2+0.01,false); malha(new THREE.PlaneGeometry(0.9,0.8),vj,g,xx,1.4,-d/2-0.01,false).rotation.y=Math.PI; });
+  VIZINHOS.push({o:{x,janelas:1},vitrine:vj,porta:null}); return g; }
+// casa rosa de portão branco, ao lado da Santo Forno
+(function(){ casaTelhado(19.4,17.2,0xF6D4D8,Math.PI,3.6,3.6);
+  bloco(3.8,1.6,0.2,toon(0xF6D4D8),scene,19.4,0.8,14.6);
+  const tp=texCanvas(128,64,(c)=>{ c.fillStyle='#F2F2F0'; c.fillRect(0,0,128,64); c.fillStyle='#C9CCD0'; for(let y=4;y<64;y+=8) c.fillRect(0,y,128,3); });
+  malha(new THREE.PlaneGeometry(2.0,1.5),new THREE.MeshLambertMaterial({map:tp}),scene,18.9,0.76,14.71,false); })();
+// Galpão em frente à Adega: dois andares de bloco creme, 4 janelas no alto, vagas com faixa amarela na frente e porta de aço
+(function(){ const W=9, D=7.5, H=5.2, g=new THREE.Group(); g.position.set(-0.1,0,14.0+2.2+D/2); scene.add(g);
+  const tb=texCanvas(256,256,(c)=>{ c.fillStyle='#D9CDA8'; c.fillRect(0,0,256,256); c.strokeStyle='rgba(120,105,70,.35)'; c.lineWidth=2;
+    for(let y=0;y<256;y+=16){ c.beginPath(); c.moveTo(0,y); c.lineTo(256,y); c.stroke(); for(let x=(y/16)%2?0:16;x<256;x+=32){ c.beginPath(); c.moveTo(x,y); c.lineTo(x,y+16); c.stroke(); } }
+    c.fillStyle='rgba(60,50,30,.10)'; for(let i=0;i<14;i++) c.fillRect(Math.random()*256,Math.random()*120,6,40+Math.random()*60); });
+  tb.wrapS=tb.wrapT=THREE.RepeatWrapping; tb.repeat.set(3,2);
+  const mt=new THREE.MeshLambertMaterial({map:tb}); bloco(W,H,D,mt,g,0,H/2,0);
+  bloco(W+0.2,0.25,D+0.2,toon(0xBFB596),g,0,H+0.12,0);
+  const jan=new THREE.MeshBasicMaterial({color:0x1E2226});
+  [-1,1].forEach(lado=>{ for(let i=0;i<4;i++){ const m=malha(new THREE.PlaneGeometry(1.2,0.7),jan,g,-W/2+1.2+i*2.2,H-0.75,lado*(D/2+0.01),false); if(lado<0) m.rotation.y=Math.PI; } });
+  const ta=texCanvas(128,128,(c)=>{ c.fillStyle='#8E9396'; c.fillRect(0,0,128,128); for(let y=0;y<128;y+=8){ c.fillStyle='#A9AEB1'; c.fillRect(0,y,128,4); } c.strokeStyle='#2A2A2A'; c.lineWidth=3; c.beginPath(); c.moveTo(20,70); c.lineTo(40,50); c.lineTo(60,80); c.lineTo(90,55); c.stroke(); });
+  const pa=malha(new THREE.PlaneGeometry(2.4,2.6),new THREE.MeshLambertMaterial({map:ta}),g,W/2-1.6,1.3,-D/2-0.01,false); pa.rotation.y=Math.PI;
+  const pl=malha(new THREE.PlaneGeometry(2.4,2.6),new THREE.MeshLambertMaterial({map:ta}),g,W/2+0.01,1.3,-D/2+1.8,false); pl.rotation.y=Math.PI/2;
+  // vagas na frente (entre a calçada e o galpão)
+  malha(new THREE.BoxGeometry(W,0.06,2.2),toon(0x3E434A),scene,-0.1,0.0,15.1,false).receiveShadow=true;
+  for(let i=0;i<=4;i++){ const v=malha(new THREE.BoxGeometry(0.1,0.07,2.0),toon(0xF2C31B),scene,-4.2+i*2.05,0.0,15.1,false); v.rotation.y=0.22; }
+  setTimeout(()=>{ const car=veiculoRua(); car.g.position.set(3.7,0,15.2); car.g.rotation.y=-Math.PI/2+0.2; car.g.scale.setScalar(0.92); scene.add(car.g); },0);   // carro parado numa vaga
+})();
+// portão de grade azul com a árvore, entre o galpão e a Milton Martins Moura
+(function(){ const g=new THREE.Group(); g.position.set(5.6,0,14.4); scene.add(g); const AZ=toon(0x2F5FA8);
+  bloco(1.3,0.08,0.08,AZ,g,0,2.1,0); bloco(1.3,0.08,0.08,AZ,g,0,0.15,0);
+  for(let i=0;i<9;i++) bloco(0.04,2.0,0.04,AZ,g,-0.6+i*0.15,1.1,0);
+  bloco(0.12,2.3,0.12,AZ,g,-0.68,1.15,0); bloco(0.12,2.3,0.12,AZ,g,0.68,1.15,0); })();
+// muro cinza-azulado com a casa de telhado atrás, descendo a rua
+bloco(4.9,2.3,0.25,toon(0x9FA8B5),scene,-7.15,1.15,14.3); bloco(4.95,0.1,0.32,toon(0x8A93A0),scene,-7.15,2.32,14.3);
+casaTelhado(-7.2,17.6,0xF4D9C4,Math.PI,4.2,3.6);
+// sobrado de três andares com portão de garagem e telhadinho
+(function(){ const g=new THREE.Group(); g.position.set(-11.4,0,16.2); g.rotation.y=Math.PI; scene.add(g); const W=3.3, D=3.6;
+  bloco(W,1.9,D,toon(0xE8E6E1),g,0,0.95,0); bloco(W,1.6,D,toon(0xB85C3C),g,0,2.7,0); bloco(W*0.8,1.3,D*0.8,toon(0x9AA3A0),g,0,4.15,0);
+  const vj=new THREE.MeshBasicMaterial({color:0x6E8FA0}); [[0,2.7,0.9],[0,4.15,0.7]].forEach(([x,y,w])=>{ malha(new THREE.PlaneGeometry(w,0.6),vj,g,x,y,-D/2-0.01,false).rotation.y=Math.PI; malha(new THREE.PlaneGeometry(w,0.6),vj,g,x,y,D/2+0.01,false); });
+  bloco(1.6,1.7,0.05,toon(0x55606A),g,-0.5,0.85,D/2+0.02); bloco(2.0,0.08,0.6,toon(0xB4553A),g,-0.5,1.95,D/2+0.3);
+  VIZINHOS.push({o:{x:-11.4,janelas:1},vitrine:vj,porta:null}); })();
 // casas atrás das lojas, na Milton Martins Moura
 [[MILTON_X-4.6,22.4,0xF6E7A1],[MILTON_X+4.6,23,0xDDEFE6],[MILTON_X+4.6,28.4,0xF4B8A8],[MILTON_X-4.6,27.8,0xC7E8B5]].forEach(([x,z,c])=>{ const g=vizinho({x,z,w:3.4,d:3,h:2.1,cor:c,janelas:2}); g.rotation.y=x<MILTON_X?Math.PI/2:-Math.PI/2; });
 // lado da Adega: duas casas entre o posto e a Adega
@@ -6792,11 +6845,16 @@ lojaOutroLado({x:-15.3,z:16.3,w:4.2,d:4.2,h:2.5,cor:0xE4ECF7,toldo:0x3A6FB0,nome
   const pm=texCanvas(256,64,(c)=>{ c.fillStyle='#1F5FA8'; c.fillRect(0,0,256,64); c.fillStyle='#fff'; c.font='bold 20px Nunito, sans-serif'; c.textAlign='center'; c.fillText('R. Milton Martins Moura',128,40); });
   const mm=malha(new THREE.PlaneGeometry(1.6,0.4),new THREE.MeshBasicMaterial({map:pm}),scene,MILTON_X-1.64,2.3,14.0,false); mm.rotation.y=Math.PI/2;
 })();
+// placa amarela de ladeira, na subida
+(function(){ bloco(0.08,2.2,0.08,toon(0x5B6066),scene,-24,1.1,7.9);
+  const t=texCanvas(128,128,(c)=>{ c.fillStyle='#F2C31B'; c.beginPath(); c.moveTo(64,4); c.lineTo(124,64); c.lineTo(64,124); c.lineTo(4,64); c.closePath(); c.fill(); c.strokeStyle='#1A1A1A'; c.lineWidth=6; c.stroke();
+    c.fillStyle='#1A1A1A'; c.beginPath(); c.moveTo(30,88); c.lineTo(98,88); c.lineTo(98,44); c.closePath(); c.fill(); c.font='bold 18px Nunito, sans-serif'; c.textAlign='center'; c.fillText('SUBIDA',56,112); });
+  malha(new THREE.PlaneGeometry(0.9,0.9),new THREE.MeshBasicMaterial({map:t,transparent:true}),scene,-24,2.3,7.95,false); })();
 // árvores
 function arvore(x,z,e){ const g=new THREE.Group(); g.position.set(x,0,z); g.scale.setScalar(e||1); scene.add(g);
   malha(new THREE.CylinderGeometry(0.12,0.16,1.2,8),toon(0x7A4F2A),g,0,0.6,0);
   contorno(malha(ESF,toon(0x4FAE5A),g,0,1.6,0),0.03).scale.set(0.75,0.7,0.75); }
-[[-16.4,7.6],[15.6,7.6],[-12.6,12.9],[-0.4,12.9],[13.6,12.9],[-12.2,-4.4]].forEach(p=>arvore(p[0],p[1],0.9+Math.random()*0.3));
+[[-16.4,7.6],[15.6,7.6],[-12.6,12.9],[5.0,16.0],[17.4,12.9],[-12.2,-4.4]].forEach(p=>arvore(p[0],p[1],0.9+Math.random()*0.3));
 // postes com luz que acende à noite
 const LUZ_POSTE=new THREE.MeshBasicMaterial({color:0xB9BEC4}), BRILHO=[], POSTES_X=[-25.5,-19,-11.5,-6.8,8.6,13];
 const texBrilho=texCanvas(128,128,(c)=>{ const g=c.createRadialGradient(64,64,4,64,64,62); g.addColorStop(0,'rgba(255,236,170,.75)'); g.addColorStop(1,'rgba(255,236,170,0)'); c.fillStyle=g; c.fillRect(0,0,128,128); });
@@ -6850,7 +6908,7 @@ function atualizarTransito(dt){
   if(tTransito<=0){ tTransito=rnd(2.5,5)/Math.max(0.3,mov);
     if(!ruaOcupada()&&TRANSITO.length<7){ const F=pega(FAIXAS_RUA), x0=F.dir>0?RUA_INI:RUA_FIM;
       if(!TRANSITO.some(c=>c.dir===F.dir&&Math.abs(c.g.position.x-x0)<4.5)){
-        const v=veiculoRua(); v.dir=F.dir; v.vel=F.dir>0?7.5:6.8; v.g.position.set(x0,0,F.z); v.g.rotation.y=F.dir>0?0:Math.PI; scene.add(v.g); TRANSITO.push(v); } } }
+        const v=veiculoRua(); v.dir=F.dir; v.vel=v.moto?(F.dir>0?5.2:8.4):(F.dir>0?4.6:7.6); v.g.position.set(x0,0,F.z); v.g.rotation.y=F.dir>0?0:Math.PI; scene.add(v.g); TRANSITO.push(v); } } }
   // pedestres na calçada (desviam do ponto de ônibus)
   for(let i=PEDESTRES.length-1;i>=0;i--){ const p=PEDESTRES[i]; if(mover(p,dt)){ scene.remove(p.g); PEDESTRES.splice(i,1); } }
   tPed-=dt;
@@ -6867,6 +6925,18 @@ function caminhaoBR(){ const g=new THREE.Group(), rodas=[], cor=pega([0xE8433A,0
   contorno(malha(geoArred(3.4,1.8,1.3,0.06),toon(0xEDEDED),g,-0.5,1.3,0),0.03);
   [-1.6,-0.6,1.9].forEach(x=>[0.6,-0.6].forEach(z=>{ const r=malha(new THREE.CylinderGeometry(0.28,0.28,0.18,12),toon(0x22252A),g,x,0.28,z); r.rotation.x=Math.PI/2; rodas.push(r); }));
   return {g,rodas}; }
+const TRANSITO_MM=[]; let tMM=3;
+function atualizarMilton(dt){
+  for(let i=TRANSITO_MM.length-1;i>=0;i--){ const c=TRANSITO_MM[i];
+    if(c.espera>0){ c.espera-=dt; continue; }
+    c.g.position.z+=c.dir*c.vel*dt; c.rodas.forEach(r=>r.rotation.y-=dt*c.vel*3);
+    if(c.g.position.z>40||c.g.position.z<11.4){ scene.remove(c.g); TRANSITO_MM.splice(i,1); } }
+  tMM-=dt; if(tMM>0) return; tMM=rnd(5,10)/Math.max(0.3,FLUXO_HORA[Math.floor(horaAgora())]);
+  if(TRANSITO_MM.length>=3) return;
+  const dir=Math.random()<0.5?1:-1, x=MILTON_X+(dir>0?-0.7:0.7), z0=dir>0?12.2:40;
+  if(TRANSITO_MM.some(c=>c.dir===dir&&Math.abs(c.g.position.z-z0)<5)) return;
+  const v=veiculoRua(); v.dir=dir; v.vel=v.moto?rnd(5,6.5):rnd(3.8,5); v.espera=0;
+  v.g.position.set(x,0,z0); v.g.rotation.y=dir>0?-Math.PI/2:Math.PI/2; scene.add(v.g); TRANSITO_MM.push(v); }
 function atualizarBR(dt){
   for(let i=TRANSITO_BR.length-1;i>=0;i--){ const c=TRANSITO_BR[i]; c.g.position.z+=c.dir*c.vel*dt; c.rodas.forEach(r=>r.rotation.y-=dt*c.vel*3);
     if(Math.abs(c.g.position.z-10)>58){ scene.remove(c.g); TRANSITO_BR.splice(i,1); } }
