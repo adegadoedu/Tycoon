@@ -749,6 +749,7 @@ body:not(.jogando) .alerta{display:none}
     <button class="btn amarelo peq" id="btnCartao" type="button">📤 Compartilhar meu cartão</button>
     <button class="btn azul peq" id="btnConta" type="button" style="margin-top:8px">🔐 Celular e senha</button>
     <button class="btn peq" id="btnGrafico" type="button" style="margin-top:8px">🎨 Gráfico: alto</button>
+    <button class="btn peq" id="btnCopiaVideo" type="button" style="margin-top:8px;display:none">📤 Cópia do progresso para vídeo</button>
     <button type="button" class="link-btn" id="btnPersFechar">Fechar</button>
   </div>
 </section>
@@ -1004,7 +1005,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 25/11/2026 · 11h · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 25/11/2026 · 19h · 🎄</p>
   </div>
 </section>
 
@@ -2628,7 +2629,7 @@ function abrirPersonagem(op){
   op=op||{}; aoFecharPers=op.depois||null;
   visEdit=normalizarVisual(S.perfil&&S.perfil.visual);
   $('#persTexto').textContent=op.primeiraVez?'Ele vai trabalhar no caixa da sua adega e aparecer no ranking. Dá para mudar depois no botão 👤.':'Ele trabalha no caixa da sua adega e aparece no ranking.';
-  $('#btnPersFechar').style.display=op.primeiraVez?'none':''; $('#btnCartao').style.display=op.primeiraVez?'none':''; $('#btnConta').style.display=op.primeiraVez?'none':'';
+  $('#btnPersFechar').style.display=op.primeiraVez?'none':''; $('#btnCopiaVideo').style.display=(!op.primeiraVez&&contaDaAdega())?'':'none'; $('#btnCartao').style.display=op.primeiraVez?'none':''; $('#btnConta').style.display=op.primeiraVez?'none':'';
   $('#persErro').textContent='';
   prepararCenaPrev(); renderOpcoesPers(); atualizarPrevia();
   $('#telaPersonagem').hidden=false; renderNivelBox(); if(!animPrev) loopPrev();
@@ -2636,6 +2637,16 @@ function abrirPersonagem(op){
 function fecharPersonagem(){ $('#telaPersonagem').hidden=true; const f=aoFecharPers; aoFecharPers=null; if(f) f(); }
 $('#btnPersonagem').addEventListener('click',()=>{ SOM.abrir(); abrirPersonagem(); });
 $('#btnPersFechar').addEventListener('click',fecharPersonagem);
+// Só a conta da própria Adega vê: baixa um arquivo com o progresso, para gravar os vídeos do canal com a loja de verdade
+// contas da casa que podem baixar a cópia do progresso para os vídeos do canal
+const CONTAS_VIDEO=['adega do edu','adegadoedu','edu oliveira'];
+function contaDaAdega(){ return !!(S.perfil&&CONTAS_VIDEO.includes(semAcento(String(S.perfil.apelido||'')).trim().toLowerCase().replace(/\s+/g,' '))); }
+$('#btnCopiaVideo').addEventListener('click',()=>{ salvar();
+  const c=JSON.parse(JSON.stringify(S)); if(c.perfil){ delete c.perfil.token; delete c.perfil.senha; delete c.perfil.celular; delete c.perfil.tel; }   // sem senha nem dados de acesso
+  const d=new Date(), nome=`adega-progresso-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.json`;
+  const b=new Blob([JSON.stringify({tipo:'adegaEdu.copiaVideo',em:d.toISOString(),estado:c})],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=nome; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000);
+  toastMissao('📤 Cópia salva ('+nome+'). Mande esse arquivo para gravar o vídeo.'); SOM.abrir(); });
 $('#btnPersAleatorio').addEventListener('click',()=>{
   const r=n=>Math.floor(Math.random()*n);
   visEdit={pele:r(5),cabelo:ESTILOS_CABELO[r(5)][0],corCabelo:r(8),roupa:ESTILOS_ROUPA[r(3)][0],corRoupa:r(11),corCalca:r(5),detalhe:DETALHES_V[r(3)][0],perna:PERNAS_V[r(2)][0]};
