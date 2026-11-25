@@ -1004,7 +1004,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 24/11/2026 · 23h30 · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 25/11/2026 · 00h · 🎄</p>
   </div>
 </section>
 
@@ -1311,7 +1311,7 @@ const ESF=new THREE.SphereGeometry(1,20,14);
 // ---------- Rua e calçada ----------
 malha(new THREE.PlaneGeometry(200,200),new THREE.MeshLambertMaterial({color:0x8FD18A}),scene,0,-0.02,0,false).rotation.x=-Math.PI/2;
 // Rua Felice Del Paggio: começa na BR-116 (x=-28.5) e sobe para a direita. A Adega fica do lado do posto.
-const RUA_INI=-30, RUA_FIM=21.5, BR_X=-32.2, MILTON_X=9.3;
+const RUA_INI=-30, RUA_FIM=34, BR_X=-32.2, MILTON_X=9.3;
 const calcada=malha(new THREE.BoxGeometry(RUA_FIM+28.5,0.1,2.6),toon(0xD8D2C4),scene,(RUA_FIM-28.5)/2,0.0,6.5,false); calcada.receiveShadow=true;
 const rua=malha(new THREE.BoxGeometry(RUA_FIM+28.5,0.05,4),toon(0x4A4E55),scene,(RUA_FIM-28.5)/2,-0.01,9.8,false);
 for(let x=-26.5;x<=17;x+=2.2) if(Math.abs(x-MILTON_X)>2.4) malha(new THREE.BoxGeometry(1.0,0.06,0.16),toon(0xF2F2F2),scene,x,0.0,9.8,false);
@@ -2198,11 +2198,11 @@ function atualizarGerente(dt){
 }
 function atualizarFornecedor(dt){
   const F=FORN;
-  if(F.estado==='ocioso'){ if(F.fila.length&&!onibusNaRua()&&!vanNaRua()&&(!ruaPronta||ruaParaVeiculo())){ F.estado='chegando'; caminhao.visible=true; caminhao.position.set(RUA_INI,0,Z_RUA); } }
+  if(F.estado==='ocioso'){ if(F.fila.length&&!onibusNaRua()&&!vanNaRua()&&(!ruaPronta||ruaParaVeiculo())){ F.estado='chegando'; caminhao.visible=true; F.rota=rotaEntradaEspecial(Z_RUA); caminhao.position.copy(F.rota.pts[0]); } }
   else if(F.estado==='chegando'||F.estado==='saindo'){
-    caminhao.position.x+=4.6*dt; rodas.forEach(r=>r.rotation.y-=dt*12);
+    if(F.rota){ if(andarRota(caminhao,F.rota,7,dt)){ F.rota=null; caminhao.rotation.y=0; } } else caminhao.position.x+=4.6*dt; rodas.forEach(r=>r.rotation.y-=dt*12);
     if(F.estado==='chegando'&&caminhao.position.x>=PARADA_X){ caminhao.position.x=PARADA_X; F.estado='parado'; }
-    if(F.estado==='saindo'&&caminhao.position.x>18){ caminhao.visible=false; F.estado='ocioso'; }
+    if(F.estado==='saindo'&&caminhao.position.x>RUA_FIM){ caminhao.visible=false; F.estado='ocioso'; }
   }
   else if(F.estado==='parado'){
     if(!F.fila.length&&G.estado==='livre'){ F.estado='saindo'; }
@@ -3088,11 +3088,11 @@ function atualizarPdr(dt){
     if(pdrPodeLiberar()){ p.liberado=true; salvar(); atualizarCaixasPdr(); pop(estantePdr.position.clone().setY(2.5),'📦 Ponto de Retirada liberado!','grande'); SOM.marco(); setTimeout(abrirPdr,600); }
     return;
   }
-  if(VAN.estado==='ocioso'){ VAN.t-=dt; if(VAN.t<=0&&!onibusNaRua()&&FORN.estado==='ocioso'&&!FORN.fila.length&&(!ruaPronta||ruaParaVeiculo())){ const at=Object.keys(PARCEIROS).filter(k=>p.parceiros[k]); VAN.parceiro=pega(at); pintarVan(VAN.parceiro); VAN.estado='chegando'; vanPdr.visible=true; vanPdr.position.set(RUA_INI,0,Z_VAN); } }
+  if(VAN.estado==='ocioso'){ VAN.t-=dt; if(VAN.t<=0&&!onibusNaRua()&&FORN.estado==='ocioso'&&!FORN.fila.length&&(!ruaPronta||ruaParaVeiculo())){ const at=Object.keys(PARCEIROS).filter(k=>p.parceiros[k]); VAN.parceiro=pega(at); pintarVan(VAN.parceiro); VAN.estado='chegando'; vanPdr.visible=true; VAN.rota=rotaEntradaEspecial(Z_VAN); vanPdr.position.copy(VAN.rota.pts[0]); } }
   else if(VAN.estado==='chegando'||VAN.estado==='saindo'){
-    vanPdr.position.x+=4.8*dt; rodasVan.forEach(r=>r.rotation.y-=dt*12);
+    if(VAN.rota){ if(andarRota(vanPdr,VAN.rota,7,dt)){ VAN.rota=null; vanPdr.rotation.y=0; } } else vanPdr.position.x+=4.8*dt; rodasVan.forEach(r=>r.rotation.y-=dt*12);
     if(VAN.estado==='chegando'&&vanPdr.position.x>=PARADA_VAN){ vanPdr.position.x=PARADA_VAN; VAN.estado='parado'; VAN.n=2+Math.floor(Math.random()*4)+(VAN.parceiro==='amazon'?1:0); }
-    if(VAN.estado==='saindo'&&vanPdr.position.x>18){ vanPdr.visible=false; VAN.estado='ocioso'; const nAt=Object.keys(PARCEIROS).filter(k=>p.parceiros[k]).length; VAN.t=rnd(35,65)/(1+(nAt-1)*0.35); }
+    if(VAN.estado==='saindo'&&vanPdr.position.x>RUA_FIM){ vanPdr.visible=false; VAN.estado='ocioso'; const nAt=Object.keys(PARCEIROS).filter(k=>p.parceiros[k]).length; VAN.t=rnd(35,65)/(1+(nAt-1)*0.35); }
   }
   else if(VAN.estado==='parado'&&G.estado==='livre'){
     if(capPdr()-p.estante<=0){ pop(vanPdr.position.clone().setY(3.0),'Estante cheia! '+VAN.n+' pacotes recusados','ruim'); VAN.estado='saindo'; }
@@ -4027,9 +4027,12 @@ function atualizarOnibus(dt){
       if(o.t<=0&&o.desc<=0){ o.estado='andando'; if(o.desceram) pop(new THREE.Vector3(PONTO_X,2.4,PONTO_Z),'🚌 +'+o.desceram+' cliente'+(o.desceram>1?'s':''),''); }
       return;
     }
-    o.g.position.x+=o.dir*o.vel*dt; o.rodas.forEach(r=>r.rotation.y-=dt*o.vel*2.6);
+    o.rodas.forEach(r=>r.rotation.y-=dt*o.vel*2.6);
+    if(o.rota){ if(andarRota(o.g,o.rota,o.dir>0?5.5:7,dt)){ o.rota=null; if(o.dir>0) o.g.rotation.y=0; else { o.ativo=false; o.g.visible=false; } } return; }
+    o.g.position.x+=o.dir*o.vel*dt;
+    if(o.dir<0&&o.g.position.x<=F_X0+0.4){ o.rota=rotaSaidaEspecial(o.g.position.z); return; }
     if(o.dir<0&&!o.parou&&o.g.position.x<=PARADA_ONIBUS_X){ o.g.position.x=PARADA_ONIBUS_X; o.parou=true; o.estado='parado'; o.t=3; o.tDesc=0.6; o.desc=1+Math.floor(Math.random()*3); o.desceram=0; }
-    if(o.g.position.x>RUA_FIM+2||o.g.position.x<RUA_INI-1){ o.ativo=false; o.g.visible=false; } });
+    if(o.g.position.x>RUA_FIM+2){ o.ativo=false; o.g.visible=false; } });
   tOnibus-=dt;
   if(tOnibus>0) return;
   tOnibus=rnd(12,24);
@@ -4039,7 +4042,7 @@ function atualizarOnibus(dt){
   if(!livres.length||!parados.length) return;
   const f=pega(livres), F=FAIXAS_ONIBUS[f], o=pega(parados);
   o.ativo=true; o.faixa=f; o.dir=F.dir; o.vel=F.dir>0?rnd(3.6,4.4):rnd(6,7.2); o.parou=false; o.estado='andando';
-  o.g.position.set(F.dir>0?RUA_INI:RUA_FIM+1.5,0,F.z); o.g.rotation.y=F.dir>0?0:Math.PI; o.g.visible=true;
+  o.rota=F.dir>0?rotaEntradaEspecial(F.z):null; if(o.rota) o.g.position.copy(o.rota.pts[0]); else o.g.position.set(RUA_FIM+1.5,0,F.z); o.g.rotation.y=F.dir>0?0:Math.PI; o.g.visible=true;
 }
 
 // ================= Música de fundo (lo-fi de boteco / bossa, composta no próprio jogo) =================
@@ -4544,7 +4547,7 @@ const caixaEdu=new THREE.Group(); caixaEdu.position.set(0,0.6,0.3); caixaEdu.vis
 function carroNaVaga(){ carroEdu.position.copy(CARRO_PARADO); carroEdu.rotation.y=0; carroEdu.visible=!!(S&&S.atac); } // o carro só fica na frente da adega durante a viagem
 carroNaVaga();
 // ---------- a viagem ----------
-let atacFase=null, avisoForn=false, atacAlvo=null;
+let atacFase=null, avisoForn=false, atacAlvo=null, rotaEdu=null;
 function andarCarro(dt,alvoX,dir){ carroEdu.position.x+=dir*(dir>0?4.4:6.6)*dt; carroEdu.rotation.y=dir>0?0:Math.PI; rodasCarro.forEach(r=>r.rotation.y-=dt*12*dir); return dir>0?carroEdu.position.x>=alvoX:carroEdu.position.x<=alvoX; }
 function proximaCaixa(){
   const A=S.atac, E=EDU, g=E.g;
@@ -4574,13 +4577,14 @@ function atualizarAtacarejo(dt){ // devolve true enquanto o Edu está fora da ro
     else { atacFase='fora'; g.visible=false; carroEdu.visible=false; }
   }
   if(atacFase==='indoCarro'){ if(mover(E,dt)){ g.visible=false; atacFase='partindo'; } }
-  else if(atacFase==='partindo'){ if((carroEdu.position.x<CARRO_PARADO.x-0.05||!ruaPronta||ruaParaVeiculo())&&andarCarro(dt,RUA_INI,-1)){ carroEdu.visible=false; atacFase='fora'; } }
+  else if(atacFase==='partindo'){ if((carroEdu.position.x<CARRO_PARADO.x-0.05||!ruaPronta||ruaParaVeiculo())&&andarCarro(dt,F_X0+0.4,-1)){ atacFase='saindoBR'; rotaEdu=rotaSaidaEspecial(carroEdu.position.z); } }
+  else if(atacFase==='saindoBR'){ if(andarRota(carroEdu,rotaEdu,7,dt)){ carroEdu.visible=false; atacFase='fora'; } }
   else if(atacFase==='fora'){
     if(!S.gerente&&FORN.estado==='parado'&&!avisoForn){ avisoForn=true; toastMissao('🚚 O fornecedor chegou, mas o Edu está no atacarejo. Ninguém para receber!'); }
-    if(t>=A.volta&&(!ruaPronta||ruaParaVeiculo())){ carroEdu.visible=true; carroEdu.position.set(RUA_INI,0,CARRO_PARADO.z); atacFase='chegando'; }
+    if(t>=A.volta&&(!ruaPronta||ruaParaVeiculo())){ carroEdu.visible=true; carroEdu.position.set(F_X1,0,CARRO_PARADO.z); atacFase='chegando'; }
   }
   else if(atacFase==='chegando'){
-    if(andarCarro(dt,CARRO_PARADO.x,1)){ carroNaVaga(); A.chegou=true; g.visible=true; g.position.copy(CARRO_PT); pop(CARRO_PT.clone().setY(2.2),'🚗 Voltei com as caixas!',''); toastMissao(`${veiculo().ic} O Edu voltou! Agora ele leva as caixas para cada setor.`); salvar(); if(!proximaCaixa()) concluirAtacarejo(); }
+    if(andarCarro(dt,CARRO_PARADO.x,-1)){ carroNaVaga(); A.chegou=true; g.visible=true; g.position.copy(CARRO_PT); pop(CARRO_PT.clone().setY(2.2),'🚗 Voltei com as caixas!',''); toastMissao(`${veiculo().ic} O Edu voltou! Agora ele leva as caixas para cada setor.`); salvar(); if(!proximaCaixa()) concluirAtacarejo(); }
   }
   else if(atacFase==='levando'){
     if(mover(E,dt)){
@@ -6359,7 +6363,7 @@ function laco(){
   requestAnimationFrame(laco);
   const dt=Math.min(relogio.getDelta(),0.05);
   if(ENT.ativo){ atualizarEntrega(dt); renderer.render(cenaEnt,camEnt); return; }
-  if(tempoPronto){ atualizarCeu(dt); tRel+=dt; if(tRel>0.5){ tRel=0; atualizarRelogio(); if(ruaPronta) atualizarVizinhos(); } if(ruaPronta){ atualizarTransito(dt); atualizarBR(dt); atualizarMilton(dt); } atualizarArvore(dt); if(grafPronto){ atualizarRealismo(dt); atualizarGuardaChuvas(dt); } }
+  if(tempoPronto){ atualizarCeu(dt); tRel+=dt; if(tRel>0.5){ tRel=0; atualizarRelogio(); if(ruaPronta) atualizarVizinhos(); } if(ruaPronta) atualizarTransito(dt); atualizarArvore(dt); if(grafPronto){ atualizarRealismo(dt); atualizarGuardaChuvas(dt); } }
   if(document.body.classList.contains('jogando')){
     S.tempoJogo=(S.tempoJogo||0)+dt;
     proxCliente-=dt;
@@ -6600,11 +6604,11 @@ let tRel=0; tempoPronto=true;
 
 // ================= Rua viva: vizinhos, postes, trânsito e pedestres =================
 // Os outros veículos (caminhão, van, ônibus e o carro do Edu) só entram quando a rua está livre do trânsito.
-const TRANSITO=[], PEDESTRES=[];
+const PEDESTRES=[];
 let pedidoRua=0;
-const transitoNaRua=()=>TRANSITO.length>0;
+const transitoNaRua=()=>TRANSITO.some(v=>v.felice);   // carro a caminho da Felice (mesmo ainda na BR) conta
 function ruaParaVeiculo(){ if(transitoNaRua()){ pedidoRua=performance.now(); return false; } return true; }
-const ruaOcupada=()=>caminhao.visible||onibusNaRua()||vanNaRua()||(carroEdu.visible&&(atacFase==='partindo'||atacFase==='chegando'))||performance.now()-pedidoRua<2500;
+const ruaOcupada=()=>caminhao.visible||onibusNaRua()||vanNaRua()||(carroEdu.visible&&(atacFase==='partindo'||atacFase==='chegando'||atacFase==='saindoBR'))||performance.now()-pedidoRua<2500;
 // ---------- vizinhos ----------
 const VIZINHOS=[];
 function placaTex(txt,fundo,cor){ return texCanvas(512,128,(c)=>{ c.fillStyle=fundo; c.fillRect(0,0,512,128); c.strokeStyle='#2A1A12'; c.lineWidth=10; c.strokeRect(5,5,502,118); c.fillStyle=cor; let fs=64; do{ c.font='bold '+fs+'px Nunito, sans-serif'; fs-=2; }while(c.measureText(txt).width>470&&fs>20); c.textAlign='center'; c.textBaseline='middle'; c.fillText(txt,256,68); }); }
@@ -6895,57 +6899,100 @@ function veiculoRua(){
   }
   return {g,rodas,moto};
 }
-const FAIXAS_RUA=[{z:10.8,dir:1},{z:8.75,dir:-1}];
-let tTransito=2, tPed=1;
+// ================= Trânsito com rotas de verdade =================
+// Mão de direção brasileira (cada um do seu lado direito). Na BR-116 a faixa amarela dupla não deixa cruzar:
+// quem entra ou sai da Felice Del Paggio usa a pista do lado de cá e faz a conversão à direita.
+// Na Felice, quem sobe vai devagar e quem desce vai mais rápido. Na Milton Martins Moura passam carros e motos;
+// na saída dela tem placa de PARE e o motorista espera a Felice ficar livre. Ônibus só na Felice Del Paggio.
+const FZ_SOBE=10.8, FZ_DESCE=8.75, F_X0=-27.0, F_X1=RUA_FIM-0.5;
+const BR_SUL=[BR_X+0.95,BR_X+2.75], BR_NORTE=[BR_X-0.95,BR_X-2.75], BR_Z0=-52, BR_Z1=72;
+const MM_ENTRA=MILTON_X-0.7, MM_SAI=MILTON_X+0.7, MM_Z1=42, MM_BOCA=12.7;
+const V3=(x,z,k,ced)=>{ const v=new THREE.Vector3(x,0,z); v.k=k==null?1:k; if(ced) v.ced=ced; return v; };
+function curva(a,c,b,n,k){ const pts=[]; for(let i=1;i<=n;i++){ const t=i/n, u=1-t; pts.push(V3(u*u*a.x+2*u*t*c.x+t*t*b.x,u*u*a.z+2*u*t*c.z+t*t*b.z,k==null?0.45:k)); } return pts; }
+const TRANSITO=[];
+// alguém nesta área andando nesta direção? (para dar a preferência)
+const vemAlguem=(x0,x1,z0,z1)=>TRANSITO.some(o=>{ const p=o.g.position; return p.x>=x0&&p.x<=x1&&p.z>=z0&&p.z<=z1; })||especiais().some(g=>g.position.x>=x0&&g.position.x<=x1&&g.position.z>=z0&&g.position.z<=z1);
+// trechos
+const R={
+  brSul:f=>[V3(f,BR_Z1,1.4),V3(f,BR_Z0,1.4)],
+  brNorte:f=>[V3(f,BR_Z0,1.4),V3(f,BR_Z1,1.4)],
+  brParaFelice:()=>{ const x=BR_SUL[1]; return [V3(x,BR_Z1,1.4),V3(x,FZ_SOBE+10,1.4),V3(x,FZ_SOBE+2.4,0.7)].concat(curva(V3(x,FZ_SOBE+2.4),V3(x,FZ_SOBE),V3(F_X0+0.4,FZ_SOBE),8)); },
+  feliceParaBR:()=>{ const x=BR_SUL[1]; return [V3(F_X0+6,FZ_DESCE,1.05),V3(F_X0+0.4,FZ_DESCE,0.5,()=>vemAlguem(x-0.6,x+0.6,FZ_DESCE-2,FZ_DESCE+12))].concat(curva(V3(F_X0+0.4,FZ_DESCE),V3(x,FZ_DESCE),V3(x,FZ_DESCE-2.4),8),[V3(x,BR_Z0,1.4)]); },
+  subir:(ate)=>[V3(ate,FZ_SOBE,0.68)],
+  descer:(ate)=>[V3(ate,FZ_DESCE,1.05)],
+  subirParaMilton:()=>[V3(MM_ENTRA-2.2,FZ_SOBE,0.68)].concat(curva(V3(MM_ENTRA-2.2,FZ_SOBE),V3(MM_ENTRA,FZ_SOBE),V3(MM_ENTRA,MM_BOCA),7),[V3(MM_ENTRA,MM_Z1,0.8)]),
+  descerParaMilton:()=>[V3(MM_SAI+2.4,FZ_DESCE,1.05,()=>vemAlguem(MM_ENTRA-9,MM_SAI+1,FZ_SOBE-0.6,FZ_SOBE+0.6))].concat(curva(V3(MM_SAI+2.4,FZ_DESCE),V3(MM_ENTRA,FZ_DESCE),V3(MM_ENTRA,MM_BOCA),9),[V3(MM_ENTRA,MM_Z1,0.8)]),
+  miltonSai:()=>[V3(MM_SAI,MM_Z1,0.8),V3(MM_SAI,MM_BOCA+0.3,0.5,()=>vemAlguem(MILTON_X-9,MILTON_X+9,FZ_DESCE-0.7,FZ_SOBE+0.7))],
+  miltonDireita:()=>curva(V3(MM_SAI,MM_BOCA+0.3),V3(MM_SAI,FZ_SOBE),V3(MM_SAI+2.2,FZ_SOBE),7),
+  miltonEsquerda:()=>curva(V3(MM_SAI,MM_BOCA+0.3),V3(MM_SAI,FZ_DESCE),V3(MM_SAI-2.6,FZ_DESCE),9),
+};
+function sortearRota(){ const r=Math.random(), livre=!ruaOcupada();
+  if(r<0.42||!livre){ const sul=Math.random()<0.5; return {pts:sul?R.brSul(pega(BR_SUL)):R.brNorte(pega(BR_NORTE)),felice:false,br:true}; }
+  if(r<0.62){ const p=R.brParaFelice(); return {pts:Math.random()<0.25?p.concat(R.subirParaMilton()):p.concat(R.subir(F_X1)),felice:true}; }
+  if(r<0.86){ const p=[V3(F_X1,FZ_DESCE,1.05)]; return {pts:Math.random()<0.2?p.concat(R.descerParaMilton()):p.concat(R.feliceParaBR()),felice:true}; }
+  const p=R.miltonSai(); return {pts:Math.random()<0.5?p.concat(R.miltonDireita(),R.subir(F_X1)):p.concat(R.miltonEsquerda(),R.feliceParaBR()),felice:true}; }
+// veículos da loja (caminhão, van, ônibus, carro do Edu) também são obstáculos
+function especiais(){ const l=[]; if(typeof caminhao!=='undefined'&&caminhao.visible) l.push(caminhao); if(typeof vanPdr!=='undefined'&&vanPdr.visible) l.push(vanPdr);
+  if(typeof carroEdu!=='undefined'&&carroEdu.visible&&['partindo','chegando','saindoBR'].includes(atacFase)) l.push(carroEdu); FROTA_ONIBUS.forEach(o=>{ if(o.ativo) l.push(o.g); }); return l; }
+const _hd=new THREE.Vector3(), _d=new THREE.Vector3();
+function livreAFrente(v,pos,hd){ // distância até o próximo veículo na mesma faixa, à frente
+  let m=99; const olha=(p,larg)=>{ _d.subVectors(p,pos); const al=_d.x*hd.x+_d.z*hd.z, lat=Math.abs(_d.x*hd.z-_d.z*hd.x); if(al>0.3&&al<7&&lat<larg) m=Math.min(m,al); };
+  TRANSITO.forEach(o=>{ if(o!==v) olha(o.g.position,o.caminhaoBR||v.caminhaoBR?1.15:0.95); }); especiais().forEach(g=>olha(g.position,1.45)); return m; }
+function andarRota(obj,r,vmax,dt){ // move um objeto pela lista de pontos; devolve true quando chega no fim
+  let resta=vmax*dt;
+  while(resta>0&&r.i<r.pts.length){ const alvo=r.pts[r.i]; _d.subVectors(alvo,obj.position); _d.y=0; const dd=_d.length();
+    if(dd>1e-4) obj.rotation.y=-Math.atan2(_d.z,_d.x);
+    if(dd<=resta){ obj.position.x=alvo.x; obj.position.z=alvo.z; resta-=dd; r.i++; } else { obj.position.addScaledVector(_d,resta/dd); resta=0; } }
+  return r.i>=r.pts.length; }
+function rotaEntradaEspecial(z){ const x=BR_SUL[1]; return {i:0,pts:[V3(x,z+32),V3(x,z+10),V3(x,z+2.4)].concat(curva(V3(x,z+2.4),V3(x,z),V3(F_X0+0.4,z),9))}; }
+function rotaSaidaEspecial(z){ const x=BR_SUL[1]; return {i:0,pts:curva(V3(F_X0+0.4,z),V3(x,z),V3(x,z-2.4),9).concat([V3(x,BR_Z0)])}; }
+let tTransito=1, tPed=1;
 function atualizarTransito(dt){
   const h=horaAgora(), mov=FLUXO_HORA[Math.floor(h)];
-  // carros andando
-  for(let i=TRANSITO.length-1;i>=0;i--){ const c=TRANSITO[i];
-    c.g.position.x+=c.dir*c.vel*dt; c.rodas.forEach(r=>r.rotation.y-=dt*c.vel*3*c.dir);
-    if(c.g.position.x>RUA_FIM+1||c.g.position.x<RUA_INI-1){ scene.remove(c.g); TRANSITO.splice(i,1); } }
+  for(let i=TRANSITO.length-1;i>=0;i--){ const v=TRANSITO[i], p=v.g.position, r=v.rota;
+    if(r.i>=r.pts.length){ scene.remove(v.g); TRANSITO.splice(i,1); continue; }
+    const alvo=r.pts[r.i]; _hd.subVectors(alvo,p); _hd.y=0; const dd=_hd.length(); if(dd>1e-4) _hd.multiplyScalar(1/dd); else _hd.set(Math.cos(-v.g.rotation.y),0,Math.sin(-v.g.rotation.y));
+    let alvoV=v.base*alvo.k;
+    // preferência: para antes do ponto de espera (placa de PARE, conversão) enquanto vier alguém
+    if(alvo.ced&&dd<1.6&&!v.liberado){ if(alvo.ced()) { alvoV=0; v.esperou=(v.esperou||0)+dt; } else v.liberado=true; if(v.esperou>9) v.liberado=true; }
+    const gap=livreAFrente(v,p,_hd); if(gap<7){ alvoV=Math.min(alvoV,Math.max(0,(gap-2.8)*1.6)); }
+    if(alvoV<0.05){ v.parado=(v.parado||0)+dt; if(v.parado>6){ alvoV=v.base*0.3; v.liberado=true; } } else v.parado=0;   // nunca trava para sempre
+    v.spd+=Math.max(-14*dt,Math.min(6*dt,alvoV-v.spd));
+    const antes=r.i; andarRota(v.g,r,v.spd,dt); if(r.i!==antes) v.liberado=false;
+    v.rodas.forEach(w=>w.rotation.y-=dt*v.spd*3);
+    v.naFelice=v.felice&&p.x>-28.6&&p.z>7.6&&p.z<12; }
   FAROL.color.setHex(ehNoite(h)?0xFFF6C8:0xD9DDE0);
   tTransito-=dt;
-  if(tTransito<=0){ tTransito=rnd(2.5,5)/Math.max(0.3,mov);
-    if(!ruaOcupada()&&TRANSITO.length<7){ const F=pega(FAIXAS_RUA), x0=F.dir>0?RUA_INI:RUA_FIM;
-      if(!TRANSITO.some(c=>c.dir===F.dir&&Math.abs(c.g.position.x-x0)<4.5)){
-        const v=veiculoRua(); v.dir=F.dir; v.vel=v.moto?(F.dir>0?5.2:8.4):(F.dir>0?4.6:7.6); v.g.position.set(x0,0,F.z); v.g.rotation.y=F.dir>0?0:Math.PI; scene.add(v.g); TRANSITO.push(v); } } }
+  if(tTransito<=0){ tTransito=rnd(0.9,2.2)/Math.max(0.35,mov);
+    if(TRANSITO.length<16){ const rota=sortearRota(), ini=rota.pts[0];
+      if(!TRANSITO.some(o=>o.g.position.distanceTo(ini)<7)){
+        const caminhao=rota.br&&Math.random()<0.3, v=caminhao?caminhaoBR():veiculoRua();
+        v.caminhaoBR=caminhao; v.base=caminhao?rnd(7,8.5):v.moto?rnd(8.5,10):rnd(7,8.6); v.spd=v.base*ini.k; v.felice=rota.felice;
+        v.rota={pts:rota.pts.slice(1),i:0}; v.g.position.copy(ini); const nx=rota.pts[1]; v.g.rotation.y=-Math.atan2(nx.z-ini.z,nx.x-ini.x);
+        scene.add(v.g); TRANSITO.push(v); } } }
   // pedestres na calçada (desviam do ponto de ônibus)
   for(let i=PEDESTRES.length-1;i>=0;i--){ const p=PEDESTRES[i]; if(mover(p,dt)){ scene.remove(p.g); PEDESTRES.splice(i,1); } }
   tPed-=dt;
   if(tPed<=0){ tPed=rnd(4,8)/Math.max(0.3,mov);
-    if(PEDESTRES.length<6){ const d=Math.random()<0.5?1:-1, z=7.55+rnd(-0.08,0.08), g=pessoa(); g.position.set(d>0?-28:RUA_FIM,0,z); scene.add(g);
-      let pts=[new THREE.Vector3(PONTO_X-1.4,0,z),new THREE.Vector3(PONTO_X-1.1,0,6.75),new THREE.Vector3(PONTO_X+1.2,0,6.75),new THREE.Vector3(PONTO_X+1.5,0,z),new THREE.Vector3(RUA_FIM,0,z)];
-      if(d<0) pts=[new THREE.Vector3(PONTO_X+1.5,0,z),new THREE.Vector3(PONTO_X+1.2,0,6.75),new THREE.Vector3(PONTO_X-1.1,0,6.75),new THREE.Vector3(PONTO_X-1.4,0,z),new THREE.Vector3(-28,0,z)];
+    if(PEDESTRES.length<6){ const d=Math.random()<0.5?1:-1, z=7.55+rnd(-0.08,0.08), g=pessoa(); g.position.set(d>0?-28.0:RUA_FIM,0,d>0?-40:z); scene.add(g);
+      let pts=[new THREE.Vector3(-28.0,0,z),new THREE.Vector3(PONTO_X-1.4,0,z),new THREE.Vector3(PONTO_X-1.1,0,6.75),new THREE.Vector3(PONTO_X+1.2,0,6.75),new THREE.Vector3(PONTO_X+1.5,0,z),new THREE.Vector3(RUA_FIM,0,z)];
+      if(d<0) pts=[new THREE.Vector3(PONTO_X+1.5,0,z),new THREE.Vector3(PONTO_X+1.2,0,6.75),new THREE.Vector3(PONTO_X-1.1,0,6.75),new THREE.Vector3(PONTO_X-1.4,0,z),new THREE.Vector3(-28.0,0,z),new THREE.Vector3(-28.0,0,-40)];
       PEDESTRES.push({g,caminho:pts,vel:rnd(1.3,1.8),passo:rnd(0,6)}); } }
 }
-const TRANSITO_BR=[]; let tBR=1;
 function caminhaoBR(){ const g=new THREE.Group(), rodas=[], cor=pega([0xE8433A,0x2F6FD8,0xF2F2F2,0xF2C31B,0x3CB371]);
   contorno(malha(geoArred(1.2,1.3,1.2,0.12),toon(cor),g,1.9,0.95,0),0.03);
   bloco(0.05,0.5,0.95,toon(0x9FD3EA),g,2.51,1.25,0);
   contorno(malha(geoArred(3.4,1.8,1.3,0.06),toon(0xEDEDED),g,-0.5,1.3,0),0.03);
   [-1.6,-0.6,1.9].forEach(x=>[0.6,-0.6].forEach(z=>{ const r=malha(new THREE.CylinderGeometry(0.28,0.28,0.18,12),toon(0x22252A),g,x,0.28,z); r.rotation.x=Math.PI/2; rodas.push(r); }));
   return {g,rodas}; }
-const TRANSITO_MM=[]; let tMM=3;
-function atualizarMilton(dt){
-  for(let i=TRANSITO_MM.length-1;i>=0;i--){ const c=TRANSITO_MM[i];
-    if(c.espera>0){ c.espera-=dt; continue; }
-    c.g.position.z+=c.dir*c.vel*dt; c.rodas.forEach(r=>r.rotation.y-=dt*c.vel*3);
-    if(c.g.position.z>40||c.g.position.z<11.4){ scene.remove(c.g); TRANSITO_MM.splice(i,1); } }
-  tMM-=dt; if(tMM>0) return; tMM=rnd(5,10)/Math.max(0.3,FLUXO_HORA[Math.floor(horaAgora())]);
-  if(TRANSITO_MM.length>=3) return;
-  const dir=Math.random()<0.5?1:-1, x=MILTON_X+(dir>0?-0.7:0.7), z0=dir>0?12.2:40;
-  if(TRANSITO_MM.some(c=>c.dir===dir&&Math.abs(c.g.position.z-z0)<5)) return;
-  const v=veiculoRua(); v.dir=dir; v.vel=v.moto?rnd(5,6.5):rnd(3.8,5); v.espera=0;
-  v.g.position.set(x,0,z0); v.g.rotation.y=dir>0?-Math.PI/2:Math.PI/2; scene.add(v.g); TRANSITO_MM.push(v); }
-function atualizarBR(dt){
-  for(let i=TRANSITO_BR.length-1;i>=0;i--){ const c=TRANSITO_BR[i]; c.g.position.z+=c.dir*c.vel*dt; c.rodas.forEach(r=>r.rotation.y-=dt*c.vel*3);
-    if(Math.abs(c.g.position.z-10)>58){ scene.remove(c.g); TRANSITO_BR.splice(i,1); } }
-  tBR-=dt; if(tBR>0) return; tBR=rnd(0.8,2.2)/Math.max(0.4,FLUXO_HORA[Math.floor(horaAgora())]);
-  if(TRANSITO_BR.length>=10) return;
-  const dir=Math.random()<0.5?1:-1, faixa=Math.random()<0.5?0.95:2.75, x=BR_X+(dir>0?-faixa:faixa), z0=10-dir*56;   // mão de direção: quem desce fica à esquerda da faixa amarela
-  if(TRANSITO_BR.some(c=>c.dir===dir&&Math.abs(c.g.position.x-x)<0.5&&Math.abs(c.g.position.z-z0)<6)) return;
-  const v=Math.random()<0.3?caminhaoBR():veiculoRua(); v.dir=dir; v.vel=v.moto===undefined?rnd(7,9):rnd(9,12);
-  v.g.position.set(x,0,z0); v.g.rotation.y=dir>0?-Math.PI/2:Math.PI/2; scene.add(v.g); TRANSITO_BR.push(v); }
+// placa de PARE na saída da Milton Martins Moura
+(function(){ bloco(0.07,2.0,0.07,toon(0x5B6066),scene,MM_SAI+1.55,1.0,MM_BOCA+0.2);
+  const t=texCanvas(128,128,(c)=>{ c.fillStyle='#C8102E'; c.beginPath(); for(let i=0;i<8;i++){ const a=Math.PI/8+i*Math.PI/4; c.lineTo(64+60*Math.cos(a),64+60*Math.sin(a)); } c.closePath(); c.fill();
+    c.strokeStyle='#fff'; c.lineWidth=5; c.stroke(); c.fillStyle='#fff'; c.font='900 38px Nunito, sans-serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillText('PARE',64,66); });
+  malha(new THREE.PlaneGeometry(0.62,0.62),new THREE.MeshBasicMaterial({map:t,transparent:true}),scene,MM_SAI+1.55,2.05,MM_BOCA+0.25,false); })();
+// casas no alto da rua (para o trânsito sumir longe, e não no meio do nada)
+[[21.6,0xA8D8F4],[26,0xF6E7A1],[30.4,0xC7E8B5]].forEach(([x,c])=>vizinho({x,z:2.2,w:3.6,d:3,h:2.2,cor:c,janelas:2}));
+[[24.4,0xF4B8A8],[28.8,0xE6C8F2],[33.2,0xDDEFE6]].forEach(([x,c])=>{ const o={x,z:16.2,w:3.6,d:3.2,h:2.2,cor:c,janelas:2}; const g=vizinho(o); g.rotation.y=Math.PI; fundosLoja(g,o,VIZINHOS[VIZINHOS.length-1].vitrine); });
 ruaPronta=true;
 
 
