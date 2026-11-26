@@ -434,6 +434,13 @@ body:not(.jogando) .alerta{display:none}
 .data-sai{font-size:.72rem;color:var(--sub);text-align:center;font-weight:800;line-height:1.3}
 .imprev-ic{font-size:3rem;text-align:center;margin:4px 0}
 .imprev-custo{text-align:center;font:900 1.5rem 'Nunito',sans-serif;margin:4px 0 10px;color:#C0392B}
+.cc-cartao{position:relative;border:3px solid var(--contorno);border-radius:18px;padding:14px 16px 12px;margin:2px 0 12px;color:#fff;background:linear-gradient(135deg,#1F4D3A,#2E7D57 55%,#C9A227);box-shadow:0 5px 0 rgba(42,26,18,.35);min-height:150px;display:flex;flex-direction:column;gap:10px}
+.cc-topo{display:flex;justify-content:space-between;align-items:baseline;font-weight:900;font-size:1.05rem}.cc-topo small{font-weight:700;opacity:.85;font-size:.75rem}
+.cc-chip{width:42px;height:30px;border-radius:7px;background:linear-gradient(135deg,#F7E08A,#C9A227);border:2px solid rgba(42,26,18,.5)}
+.cc-num{font-weight:900;letter-spacing:2px;font-size:1.05rem}
+.cc-rodape{display:flex;justify-content:space-between;gap:8px;font-size:.82rem;font-weight:700}.cc-rodape b{display:block;font-size:1rem}
+.cc-dica{background:#E7F4EC;border:2.5px solid var(--contorno);border-radius:12px;padding:8px 10px;font-size:.86rem;margin:10px 0}
+.pag-duas{display:grid;gap:8px}.pag-nota{font-size:.8rem;color:var(--sub);margin:2px 0 0;text-align:center}
 .imprev-reserva{background:#FFF3CD;border:2.5px solid var(--contorno);border-radius:12px;padding:8px 10px;font-size:.86rem;margin:10px 0}
 .imprev-reserva.tem{background:#DFF5E3}
 .des-card{background:#FFF8E6;border:3px solid var(--contorno);border-radius:14px;padding:10px 12px;margin:6px 0 10px}
@@ -1005,7 +1012,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 25/11/2026 · 22h · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 26/11/2026 · 18h · 🎄</p>
   </div>
 </section>
 
@@ -2746,7 +2753,7 @@ for(let i=0;i<NSEG;i++){
   [-1,1].forEach(l=>{ bloco(2.2,0.18,SEG,toon(0xC9C4BA),g,l*4.4,0.09,0,0.01,0.01); bloco(0.14,0.2,SEG,toon(0xE6E1D6),g,l*3.36,0.1,0,0.01,0.01); });
   const chao=malha(new THREE.PlaneGeometry(40,SEG),toon(0xA9D98B),g,0,-0.02,0,false); chao.rotation.x=-Math.PI/2;
   const extras=new THREE.Group(); g.add(extras);
-  const seg={g,extras}; segmentos.push(seg);
+  const seg={g,extras,rua,matCidade:rua.material}; segmentos.push(seg);
 }
 let ruaMontada=false;
 function posicionarSegmentos(){ segmentos.forEach((s,i)=>{ s.g.position.z=-i*SEG+SEG/2; if(!ruaMontada) montarSegmento(s); }); ruaMontada=true; }
@@ -2929,37 +2936,215 @@ function montarVeiculoViagem(){
   [-0.45,0.45].forEach(dx=>{ const l=malha(ESF,toon(0xE8433A),corpo,dx,0.7,kombi?1.46:1.36,false); l.scale.set(0.14,0.08,0.04); });
   piloto=pessoaV((S.perfil&&S.perfil.visual)||VISUAL_PADRAO); piloto.scale.setScalar(0.75); piloto.position.set(-0.3,kombi?0.55:0.35,-0.2); piloto.rotation.y=Math.PI; corpo.add(piloto);
 }
+// ---------- O caminho de verdade: Rua Felice Del Paggio, PARE, BR-116 e a saída do atacarejo ----------
+// Na Felice: a faixa da esquerda é contramão (carros vindo de frente) e a da direita tem carros estacionados.
+// Na BR-116: 3 faixas no mesmo sentido, caminhão e ônibus na direita, mureta no canteiro e a pista do outro sentido.
+// Ninguém atravessa ninguém: quem está atrás freia e segue o carro da frente. Batida só acontece ao trocar de faixa sem olhar.
+const ATAC_ROTA={felice:80};
+const etapaAtac=d=>d<ATAC_ROTA.felice?'felice':'br';
+const BOX1=new THREE.BoxGeometry(1,1,1);
+function cx3(w,h,d,mat,pai,x,y,z,cont){ const m=new THREE.Mesh(BOX1,mat); m.scale.set(w,h,d); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; pai.add(m); if(cont) contorno(m,cont); return m; }
+const _texAtac={};
+function texPlacaAtac(txt,fundo,cor,w,h,fs){ const k=txt+fundo+cor+w+h; return _texAtac[k]||(_texAtac[k]=texCanvas(w||512,h||128,(c,W,H)=>{ c.fillStyle=fundo; c.fillRect(0,0,W,H); c.fillStyle=cor; c.font=`bold ${fs||56}px Nunito, sans-serif`; c.textAlign='center'; c.textBaseline='middle';
+  const ls=String(txt).split('\n'); ls.forEach((l,i)=>c.fillText(l,W/2,H/2+(i-(ls.length-1)/2)*(fs||56)*1.08)); })); }
+function placa(txt,fundo,cor,w,h,pai,x,y,z,ry,fs){ const k=Math.max(1,256/(w*128)), t=texPlacaAtac(txt,fundo,cor,Math.round(w*128*k),Math.round(h*128*k),fs&&Math.round(fs*k)); const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:t})); m.position.set(x,y,z); m.rotation.y=ry||0; pai.add(m); m.userData.desc=true; return m; }
+const texRuaFelice=texCanvas(256,512,(c)=>{ c.fillStyle='#5A5D62'; c.fillRect(0,0,256,512); for(let i=0;i<600;i++){ c.fillStyle=Math.random()<.5?'rgba(255,255,255,.05)':'rgba(0,0,0,.07)'; c.fillRect(Math.random()*256,Math.random()*512,3,3);} c.fillStyle='#F2C230'; c.fillRect(88,0,5,512); c.fillRect(97,0,5,512); });
+const texRuaBR=texCanvas(256,512,(c)=>{ c.fillStyle='#4E5156'; c.fillRect(0,0,256,512); for(let i=0;i<700;i++){ c.fillStyle=Math.random()<.5?'rgba(255,255,255,.04)':'rgba(0,0,0,.08)'; c.fillRect(Math.random()*256,Math.random()*512,3,3);} c.fillStyle='#F2F2F2'; [95,161].forEach(x=>{ for(let y=0;y<512;y+=128) c.fillRect(x-3,y+20,6,64); }); c.fillStyle='#F2C230'; c.fillRect(6,0,6,512); c.fillStyle='#F2F2F2'; c.fillRect(244,0,6,512); });
+const matRuaFelice=new THREE.MeshToonMaterial({map:texRuaFelice,gradientMap:degraus}), matRuaBR=new THREE.MeshToonMaterial({map:texRuaBR,gradientMap:degraus});
+let matRuaCidade=null;
+function limparExtras(seg){ while(seg.extras.children.length){ const o=seg.extras.children[0]; seg.extras.remove(o); o.traverse(x=>{ if(x.userData&&x.userData.desc){ x.geometry&&x.geometry.dispose(); x.material&&x.material.dispose&&x.material.dispose(); } }); } }
+const CORES_CASA=[0xF6E7C8,0xF4D0C8,0xCFE8F5,0xE8F0C8,0xF2C9A0,0xE6E1D6,0xD8C8E8,0xFFE9A8];
+function casaFelice(pai,l,z,w,d){
+  const h=rnd(2.3,3.4), x=l*(5.7+w/2), cor=pega(CORES_CASA);
+  cx3(w,h,d,toonC(cor),pai,x,h/2,z,0.02);
+  cx3(w+0.12,0.16,d+0.12,toonC(0xE6E1D6),pai,x,h+0.08,z);                       // laje
+  if(Math.random()<0.45){ const t=new THREE.Mesh(new THREE.ConeGeometry(Math.max(w,d)*0.74,1.0,4),toonC(0xC2562B)); t.userData.desc=true; t.position.set(x,h+0.55,z); t.rotation.y=Math.PI/4; t.scale.set(w/Math.max(w,d),1,d/Math.max(w,d)); pai.add(t); }
+  const fx=l*5.68;
+  cx3(0.06,1.2,0.75,toonC(0x7A4E2C),pai,fx,0.6,z+d*0.2);                          // porta
+  cx3(0.06,0.7,0.9,toonC(0x9FD3EA),pai,fx,1.45,z-d*0.22);                          // janela
+  cx3(0.07,0.12,1.0,toonC(0x2A1A12),pai,fx,1.82,z-d*0.22);
+  if(Math.random()<0.5){ cx3(0.14,1.1,d,toonC(pega([0xE6E1D6,0xC9C4BA,0xF4D0C8])),pai,l*5.55,0.55,z,0.015); cx3(0.1,1.0,1.2,toonC(pega([0x2F6FD8,0x3A3A3A,0x1F7A5A])),pai,l*5.5,0.55,z+d*0.15); }   // muro e portão
+}
+function lojaFelice(pai,l,z,w,d,nome,cor){
+  const h=2.8, x=l*(5.7+w/2); cx3(w,h,d,toonC(0xF6F1E6),pai,x,h/2,z,0.02); cx3(w+0.12,0.16,d+0.12,toonC(0xE6E1D6),pai,x,h+0.08,z);
+  cx3(0.06,1.8,d*0.8,toonC(0x6E8FA0),pai,l*5.68,0.9,z);
+  const tl=cx3(0.9,0.12,d*0.9,toonC(cor),pai,l*5.35,2.15,z); tl.rotation.z=l*0.35;
+  placa(nome,'#FFFFFF','#2A1A12',d*0.9,0.55,pai,x,h+0.55,z,l<0?Math.PI/2:-Math.PI/2,40);
+}
+function postoFelice(pai,z){
+  const x=8.4; cx3(5.2,0.18,6.2,toonC(0xFFFFFF),pai,x,3.2,z,0.02); cx3(5.3,0.4,6.3,toonC(0xD7262E),pai,x,3.0,z);
+  [-1,1].forEach(a=>[-1,1].forEach(b=>cx3(0.22,3,0.22,toonC(0xF2F2F2),pai,x+a*1.8,1.5,z+b*2.2)));
+  [-1,1].forEach(b=>{ cx3(0.6,1.1,0.4,toonC(0xD7262E),pai,x,0.55,z+b*1.4,0.015); cx3(0.4,0.3,0.06,toonC(0x9FD3EA),pai,x-0.31,0.8,z+b*1.4); });
+  placa('1001','#D7262E','#FFFFFF',2.4,0.5,pai,x-2.67,3.0,z,-Math.PI/2,46);
+  const tot=cx3(0.3,4.2,1.4,toonC(0xD7262E),pai,5.9,2.1,z-3.6,0.02); placa('1001\nPOSTO','#D7262E','#FFFFFF',1.3,1.3,pai,5.74,3.4,z-3.6,-Math.PI/2,40);
+}
+function arvoreAtac(pai,x,z){ const t=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.13,1.2,8),toonC(0x7A4E2C)); t.userData.desc=true; t.position.set(x,0.6,z); pai.add(t); const c=new THREE.Mesh(ESF,toonC(pega([0x5BAE5B,0x4E9E4E,0x6BBF5B]))); c.position.set(x,1.65,z); c.scale.setScalar(rnd(0.65,0.85)); c.castShadow=true; pai.add(c); }
+function posteAtac(pai,l,z,alto){ const hh=alto?5.2:3.2, ax=l*(alto?5.9:4.6); const p=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.08,hh,8),toonC(0x6B7074)); p.userData.desc=true; p.position.set(ax,hh/2,z); pai.add(p); cx3(0.9,0.06,0.08,toonC(0x6B7074),pai,ax-l*0.45,hh,z); const lp=new THREE.Mesh(ESF,toonC(0xFFF2B0)); lp.position.set(ax-l*0.85,hh-0.05,z); lp.scale.set(0.22,0.1,0.22); pai.add(lp); }
+const NOMES_BR=['AUTO PEÇAS','PNEUS','MÓVEIS','MATERIAIS','TRANSPORTADORA','HOTEL','FUNILARIA','ELÉTRICA','TINTAS','BORRACHARIA'];
+function galpaoBR(pai,l,z,d,b){ const w=rnd(6,9), h=rnd(3.6,5.6), x=l*(b+w/2), cor=pega([0xE6E9EC,0xD9E2EA,0xEFE3CF,0xDDE8D6]);
+  cx3(w,h,d,toonC(cor),pai,x,h/2,z,0.03); cx3(w+0.2,0.35,d+0.2,toonC(pega([0x2F6FD8,0x8A8F96,0xC2362B,0x1F7A5A])),pai,x,h+0.17,z);
+  cx3(0.06,2.2,d*0.45,toonC(0x8A939A),pai,l*(b-0.03),1.1,z);
+  placa(pega(NOMES_BR),'#1F3A5F','#FFFFFF',d*0.8,0.8,pai,l*(b-0.05),h-0.7,z,l<0?Math.PI/2:-Math.PI/2,44); }
+function passarela(pai,z){ const m=toonC(0x2F6FD8);
+  cx3(17,0.35,1.4,toonC(0x9AA3AA),pai,0.5,5.6,z,0.02); [-1,1].forEach(s=>cx3(17,0.9,0.06,m,pai,0.5,6.2,z+s*0.68));
+  [[-8.0,0],[9.0,0]].forEach(([x])=>{ cx3(0.5,5.6,0.5,toonC(0x9AA3AA),pai,x,2.8,z); });
+  [-8.0,9.0].forEach(x=>{ const r=cx3(0.9,0.15,8,toonC(0x9AA3AA),pai,x+(x<0?-1:1)*0.9,2.9,z+3.6); r.rotation.x=-0.62; }); }
+function porticoBR(pai,z,txt){ cx3(0.25,6,0.25,toonC(0x8A939A),pai,6.1,3,z); cx3(0.25,6,0.25,toonC(0x8A939A),pai,-3.9,3,z); cx3(10.3,0.2,0.2,toonC(0x8A939A),pai,1.1,5.9,z);
+  placa(txt,'#1F7A3A','#FFFFFF',5.6,1.6,pai,2.4,5.0,z+0.13,0,44); }
+function montarSegmentoAtac(seg){
+  limparExtras(seg);
+  const zc=seg.g.position.z, d0=-zc, et=etapaAtac(d0), E=ENT, P=seg.extras;
+  seg.rua.material=et==='felice'?matRuaFelice:matRuaBR;
+  const noTrecho=d=>d>=d0-SEG/2&&d<d0+SEG/2, zl=d=>-(d-d0);                 // posição local de uma distância
+  if(et==='felice'){
+    [-1,1].forEach(l=>{ let z=-SEG/2+0.6; while(z<SEG/2-1){ const w=rnd(3.2,4.4), d=rnd(3.2,4.4), dd=d0-(z+d/2);
+        const loja=l<0&&dd>52&&dd<78, posto=l>0&&dd>60&&dd<80;
+        if(posto){ z+=d+0.3; continue; }
+        if(loja){ const k=Math.min(2,Math.floor((dd-52)/9)); lojaFelice(P,l,z+d/2,w,d,['SALGADOS','SACOLÃO','RAÇÃO'][2-k],[0xE8433A,0x3CB371,0x2F8FD8][2-k]); }
+        else casaFelice(P,l,z+d/2,w,d);
+        z+=d+rnd(0.2,0.8); }
+      if(Math.random()<0.7) posteAtac(P,l,rnd(-8,8));
+      if(Math.random()<0.45) arvoreAtac(P,l*4.7,rnd(-8,8)); });
+    if(noTrecho(70)) postoFelice(P,zl(70));
+    if(noTrecho(12)) placa('R. FELICE\nDEL PAGGIO','#2F5FA8','#FFFFFF',1.6,0.7,P,-4.3,2.6,zl(12),0,40);
+    if(noTrecho(78)){ const z=zl(78); const p=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,2.2,8),toonC(0x8A939A)); p.userData.desc=true; p.position.set(3.9,1.1,z); P.add(p);
+      const o=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.42,0.06,8),toonC(0xD7262E)); o.userData.desc=true; o.rotation.x=Math.PI/2; o.rotation.y=Math.PI/8; o.position.set(3.9,2.35,z+0.05); P.add(o);
+      placa('PARE','#D7262E','#FFFFFF',0.62,0.26,P,3.9,2.35,z+0.09,0,72);
+      cx3(3.3,0.03,0.35,toonC(0xF2F2F2),P,1.65,0.02,z); }
+  } else {
+    const saida=E.alvo;
+    // mureta New Jersey, canteiro e a pista do outro sentido
+    cx3(0.5,0.85,SEG,toonC(0xC9C9C2),P,-3.62,0.43,0,0.02);
+    const g2=new THREE.Mesh(new THREE.PlaneGeometry(6.6,SEG),matRuaBR); g2.rotation.x=-Math.PI/2; g2.rotation.z=Math.PI; g2.position.set(-11.2,0.005,0); g2.receiveShadow=true; g2.userData.desc=true; P.add(g2);
+    cx3(0.5,0.85,SEG,toonC(0xC9C9C2),P,-7.7,0.43,0);
+    const ac=new THREE.Mesh(new THREE.PlaneGeometry(2.1,SEG),toonC(0x55585D)); ac.rotation.x=-Math.PI/2; ac.position.set(4.4,0.19,0); ac.userData.desc=true; P.add(ac);   // acostamento
+    const perto=Math.abs(d0-saida)<SEG*1.2;
+    if(!perto) cx3(0.1,0.45,SEG,toonC(0xB9C0C6),P,5.55,0.55,0);                                        // defensa (guard-rail)
+    else { const pk=new THREE.Mesh(new THREE.PlaneGeometry(14,SEG),toonC(0x5E6166)); pk.rotation.x=-Math.PI/2; pk.position.set(12,0.02,0); pk.userData.desc=true; P.add(pk); }
+    let z=-SEG/2+1; while(z<SEG/2-2){ const d=rnd(6,9); if(!perto) galpaoBR(P,1,z+d/2,d,9); galpaoBR(P,-1,z+d/2,d,17); z+=d+rnd(1,4); }
+    if(Math.random()<0.6) posteAtac(P,1,rnd(-8,8),true);
+    [130,290].forEach(d=>{ if(noTrecho(d)) passarela(P,zl(d)); });
+    if(noTrecho(100)) porticoBR(P,zl(100),'BR-116 · Régis Bittencourt\n↑ São Paulo');
+    if(noTrecho(saida-110)) porticoBR(P,zl(saida-110),'🛒 Atacarejo\n→ saída 300 m');
+    if(noTrecho(saida-40)){ const z=zl(saida-40); cx3(0.12,2.6,0.12,toonC(0x8A939A),P,5.2,1.3,z); placa('SAÍDA ↗\nAtacarejo','#1F7A3A','#FFFFFF',1.6,0.9,P,5.2,2.7,z+0.08,0,40); }
+    [[180,'km 273'],[340,'km 272']].forEach(([d,t])=>{ if(noTrecho(d)){ const z=zl(d); cx3(0.08,1.3,0.08,toonC(0x8A939A),P,5.0,0.65,z); placa(t,'#FFFFFF','#2A1A12',0.7,0.42,P,5.0,1.45,z+0.05,0,46); } });
+  }
+}
+// ---------- Veículos do trânsito (frente para -z; quem vem de frente gira 180°) ----------
+function veiculoAtac(tipo){
+  const g=new THREE.Group(); let len=3.0, hx=0.74;
+  const luzF=toonC(0xFFF6B0), luzT=toonC(0xE8433A);
+  if(tipo==='carro'){ const cor=toonC(pega([0x2F8FD8,0xF2F2F2,0x9AA3AA,0x3CB371,0xFFC93C,0x22252A,0x8B2F2F]));
+    contorno(malha(geoCarroC||(geoCarroC=geoArred(1.45,0.6,3.0,0.18)),cor,g,0,0.62,0),0.02); contorno(malha(geoCabC||(geoCabC=geoArred(1.25,0.52,1.6,0.16)),cor,g,0,1.15,0.15),0.02);
+    cx3(1.27,0.36,1.3,toonC(0x9FD3EA),g,0,1.15,0.15);
+    [-0.45,0.45].forEach(dx=>{ cx3(0.3,0.12,0.06,luzF,g,dx,0.7,-1.5); cx3(0.3,0.12,0.06,luzT,g,dx,0.72,1.5); }); }
+  if(tipo==='caminhao'){ len=6.0; hx=0.86; const cab=toonC(pega([0xF2F2F2,0x2F6FD8,0xC2362B,0xFFC93C]));
+    cx3(1.65,1.55,1.5,cab,g,0,1.15,-2.2,0.02); cx3(1.5,0.6,0.05,toonC(0x9FD3EA),g,0,1.5,-2.96);
+    cx3(1.72,2.2,4.3,toonC(pega([0xE6E9EC,0xD9E2EA,0xF4F4F0])),g,0,1.55,0.75,0.025); cx3(1.6,1.9,0.05,toonC(0xB9C0C6),g,0,1.5,2.91);
+    [-0.6,0.6].forEach(dx=>cx3(0.22,0.14,0.06,luzT,g,dx,0.55,2.93)); cx3(1.7,0.3,0.1,toonC(0x22252A),g,0,0.4,2.9); }
+  if(tipo==='onibus'){ len=6.6; hx=0.88; const c=toonC(0xF4F4F0);
+    cx3(1.75,2.1,6.6,c,g,0,1.35,0,0.025); [-1,1].forEach(s=>{ cx3(0.05,0.65,5.4,toonC(0x9FD3EA),g,s*0.88,1.75,0.2); cx3(0.05,0.25,6.5,toonC(0x1F7A5A),g,s*0.88,0.85,0); });
+    cx3(1.5,0.9,0.05,toonC(0x9FD3EA),g,0,1.75,-3.31); cx3(1.4,0.5,0.05,toonC(0x9FD3EA),g,0,2.0,3.31);
+    [-0.6,0.6].forEach(dx=>cx3(0.22,0.14,0.06,luzT,g,dx,0.6,3.32)); }
+  const raio=tipo==='carro'?0.3:0.45, rz=tipo==='carro'?[-1.0,1.0]:tipo==='onibus'?[-2.3,2.2]:[-2.2,1.6,2.4];
+  rz.forEach(z=>[-1,1].forEach(a=>{ const r=malha(tipo==='carro'?geoRodaC:geoRodaG,toonC(0x22252A),g,a*(hx-0.05),raio,z,false); r.rotation.z=Math.PI/2; }));
+  return {g,len,hx};
+}
+let geoCarroC=null, geoCabC=null; const geoRodaC=new THREE.CylinderGeometry(0.3,0.3,0.22,14), geoRodaG=new THREE.CylinderGeometry(0.45,0.45,0.3,14);
+const LANE_X=FAIXAS;
+function novoVeiculoAtac(tipo,faixa,z,vz,deco){
+  const v=veiculoAtac(tipo); v.g.position.set(deco?faixa:LANE_X[faixa],0,z); if(vz>0) v.g.rotation.y=Math.PI; cenaEnt.add(v.g);
+  const o={g:v.g,tipo,faixa,z,len:v.len,hx:v.hx,vz,vd:vz,deco:!!deco,para:0}; ENT.obs.push(o); return o;
+}
 function criarChegadaAtac(z){
   const g=new THREE.Group(); g.position.z=z; cenaEnt.add(g);
-  const galpao=new THREE.Group(); galpao.position.set(-8,0,-4); g.add(galpao);
-  contorno(malha(new THREE.BoxGeometry(9,4,6),toon(0xE6E9EC),galpao,0,2,0),0.04);
-  bloco(9.2,0.5,6.2,toon(0x2F6FD8),galpao,0,4.1,0);
-  const tx=texCanvas(512,96,(c)=>{ c.fillStyle='#F2C31B'; c.fillRect(0,0,512,96); c.fillStyle='#1B3E8F'; c.font='bold 58px Nunito, sans-serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillText('ATACAREJO',256,52); });
-  malha(new THREE.PlaneGeometry(6,1.1),new THREE.MeshBasicMaterial({map:tx}),galpao,0,3.2,3.02,false);
-  bloco(3,2.2,0.1,toon(0x6E8FA0),galpao,0,1.1,3.02);
-  [-1,1].forEach(l=>malha(new THREE.CylinderGeometry(0.14,0.14,4.2,10),toon(0x1B3E8F),g,l*3.3,2.1,0));
-  const tb=texCanvas(512,96,(c)=>{ c.fillStyle='#1B3E8F'; c.fillRect(0,0,512,96); c.fillStyle='#FFFFFF'; c.font='bold 46px Nunito, sans-serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillText('🛒 Estacionamento',256,52); });
-  contorno(malha(new THREE.BoxGeometry(6.8,0.9,0.12),[toon(0x1B3E8F),toon(0x1B3E8F),toon(0x1B3E8F),toon(0x1B3E8F),new THREE.MeshBasicMaterial({map:tb}),new THREE.MeshBasicMaterial({map:tb})],g,0,4.0,0),0.02);
+  const galpao=new THREE.Group(); galpao.position.set(15,0,-6); g.add(galpao);
+  contorno(cx3(12,5,9,toonC(0xE6E9EC),galpao,0,2.5,0),0.04); cx3(12.2,0.6,9.2,toonC(0x2F6FD8),galpao,0,5.1,0);
+  placa('ATACAREJO','#F2C31B','#1B3E8F',7,1.3,galpao,-6.04,4.0,0,-Math.PI/2,64); cx3(0.1,2.4,4,toonC(0x6E8FA0),galpao,-6.03,1.2,0);
+  for(let i=0;i<5;i++){ cx3(0.08,0.02,2.2,toonC(0xF2F2F2),g,7.2,0.04,-2-i*2.6); cx3(0.08,0.02,2.2,toonC(0xF2F2F2),g,10.2,0.04,-2-i*2.6); }
+  [[8.7,-4.6],[8.7,-9.8]].forEach(([x,zz])=>{ const v=veiculoAtac('carro'); v.g.position.set(x,0,zz); v.g.rotation.y=Math.PI/2; g.add(v.g); });
+  [4.6,9.6].forEach(x=>cx3(0.14,4.2,0.14,toonC(0x1B3E8F),g,x,2.1,0));
+  cx3(5.3,0.9,0.12,toonC(0x1B3E8F),g,7.1,4.0,0,0.02); placa('🛒 Estacionamento','#1B3E8F','#FFFFFF',5.1,0.8,g,7.1,4.0,0.07,0,48);
   ENT.chegada=g;
 }
-function gerarLinhaAtac(z){
-  const livres=[0,1,2].sort(()=>Math.random()-0.5), dif=Math.min(1,ENT.dist/ENT.alvo);
-  const n=Math.random()<0.35+dif*0.35?2:1;
-  for(let i=0;i<n;i++){ const tipo=pega(['carro','carro','cone','buraco','caixote']); criarObstaculo(tipo,livres[i],tipo==='carro'?z-1.5:z); }
+const VEL_ATAC={felice:8.5,br:15};
+function trafegoAtac(dt){
+  const E=ENT, d=E.dist;
+  // novos veículos à frente
+  E.spawn=(E.spawn||0)-dt;
+  if(E.spawn<=0){ E.spawn=rnd(0.35,0.8);
+    const zS=E.z-rnd(58,70), dS=-zS, et=etapaAtac(dS), livre=(f,z,m)=>!E.obs.some(o=>!o.deco&&o.faixa===f&&Math.abs(o.z-z)<(m||14));
+    if(dS<E.alvo+60){
+      if(et==='felice'){ const r=Math.random();
+        if(r<0.42&&dS<ATAC_ROTA.felice-4&&livre(0,zS,16)) novoVeiculoAtac('carro',0,zS,rnd(5.5,7),false);                       // vem de frente
+        else if(r<0.8&&livre(2,zS,6.5)) novoVeiculoAtac('carro',2,zS,0,false);                                                 // estacionado
+        else if(dS<ATAC_ROTA.felice-10&&livre(1,zS,18)&&Math.random()<0.5) novoVeiculoAtac('carro',1,zS,-rnd(4,5.5),false); }  // carro devagar na frente
+      else { const f=pega([0,1,1,2,2,2]), tipo=f===2?pega(['caminhao','caminhao','onibus','carro']):f===1?pega(['carro','carro','caminhao']):'carro';
+        const v=f===2?rnd(7,9):f===1?rnd(10,12):rnd(12.5,14);
+        if(!(f===2&&Math.abs(dS-E.alvo)<45)&&livre(f,zS,15)) novoVeiculoAtac(tipo,f,zS,-v,false);
+        if(Math.random()<0.6) novoVeiculoAtac(pega(['carro','carro','caminhao','onibus']),pega([-12.9,-9.5]),zS,rnd(12,15),true); } } }
+  // cada um segue o da frente na mesma faixa (e o carro do Edu conta como "o da frente")
+  const pistaE=Math.round((E.x+1.7)/1.7);
+  for(const o of E.obs){
+    if(o.deco||o.vd===0){ o.z+=o.vz*dt; o.g.position.z=o.z; continue; }
+    if(o.para>0){ o.para-=dt; o.vz=0; o.g.position.z=o.z; continue; }
+    if(o.vd<0&&!o.br&&etapaAtac(-o.z)==='br'){ o.br=true; o.vd=-(o.faixa===2?rnd(7,9):o.faixa===1?rnd(10,12):rnd(12.5,14)); }
+    const dir=Math.sign(o.vd); let gap=99, vl=0;
+    for(const q of E.obs){ if(q===o||q.deco||q.faixa!==o.faixa) continue; const ahead=dir<0?q.z<o.z:q.z>o.z; if(!ahead) continue;
+      const gg=Math.abs(o.z-q.z)-(o.len+q.len)/2; if(gg<gap){ gap=gg; vl=Math.abs(q.vz)*(Math.sign(q.vz)===dir?1:-1); } }
+    if(pistaE===o.faixa||Math.abs(LANE_X[o.faixa]-E.x)<1.3){ const ahead=dir<0?E.z<o.z:E.z>o.z; if(ahead){ const gg=Math.abs(o.z-E.z)-(o.len/2+1.4); if(gg<gap){ gap=gg; vl=dir<0?E.vel:-E.vel; } } }
+    let alvo=Math.abs(o.vd); if(gap<9) alvo=Math.max(0,Math.min(alvo,vl+(gap-2.4)*1.3));
+    const cur=Math.abs(o.vz), nv=cur+Math.max(-14*dt,Math.min(5*dt,alvo-cur)); o.vz=dir*nv; o.z+=o.vz*dt; o.g.position.z=o.z;
+    o.g.children.forEach(ch=>{ if(ch.geometry===geoRodaC||ch.geometry===geoRodaG) ch.rotation.x-=o.vz*dt/0.35; });
+  }
 }
+function velAlvoAtac(dt){
+  const E=ENT, et=etapaAtac(E.dist); let v=VEL_ATAC[et];
+  if(!E.parouPare&&E.dist>ATAC_ROTA.felice-9){ const falta=ATAC_ROTA.felice-2.5-E.dist; v=Math.max(0,Math.min(v,falta*1.6));
+    if(falta<0.25||E.vel<0.15&&falta<1.2){ E.tPare=(E.tPare||0)+dt; v=0; if(E.tPare>0.9){ E.parouPare=true; avisoEnt('🛣️ Olhou e entrou na BR-116 (Régis Bittencourt)'); } } }
+  let gap=99, vl=0;
+  for(const o of E.obs){ if(o.deco||Math.abs(LANE_X[o.faixa]-E.x)>1.25) continue;
+    if(o.z<E.z){ const gg=E.z-o.z-(o.len/2+1.4); if(gg<gap){ gap=gg; vl=-o.vz; } } }
+  if(gap<9) v=Math.min(v,Math.max(0,vl+(gap-2.2)*1.3));
+  return v;
+}
+function batidaAtac(o){
+  const E=ENT, frente=o.vz>0||o.vd>0, valor=frente?FUNILARIA*3:FUNILARIA;
+  E.batidas++; E.funilaria+=valor; E.inv=1.4; E.lane=E.laneAnt!=null?E.laneAnt:E.lane; E.vel=Math.min(E.vel,2.5); o.para=1.6; SOM.erro();
+  avisoEnt(frente?`💥 Batida de frente na contramão! Funilaria +${fmt(valor)}`:o.vd===0?`💥 Raspou no carro estacionado! Funilaria +${fmt(valor)}`:`💥 Trocou de faixa sem olhar! Funilaria +${fmt(valor)}`);
+  $('#entMoedas').textContent=E.batidas;
+}
+function colisaoAtac(){
+  const E=ENT, hx=S.kombi?0.74:0.7, hz=S.kombi?1.45:1.35;
+  for(const o of E.obs){ if(o.deco) continue; if(Math.abs(o.g.position.x-E.x)<hx+o.hx-0.06&&Math.abs(o.z-E.z)<hz+o.len/2-0.05){ batidaAtac(o); return; } }
+}
+function saidaAtac(){
+  const E=ENT;
+  if(!E.avisoSaida&&E.dist>E.alvo-115){ E.avisoSaida=true; avisoEnt('🛒 Saída do atacarejo em 300 m: vá para a faixa da direita 👉'); }
+  if(E.dist>=E.alvo-14&&E.lane!==2){ E.alvo+=150; E.retorno=(E.retorno||0)+RETORNO_ATAC; E.avisoSaida=false; if(E.chegada) E.chegada.position.z=-E.alvo;
+    avisoEnt(`↩️ Passou da saída! Retorno 2 km à frente: +${fmt(RETORNO_ATAC)} de gasolina`); SOM.erro(); return false; }
+  return E.dist>=E.alvo;
+}
+const RETORNO_ATAC=8;
+
+function gerarLinhaAtac(){}
 const HUD_ENT_TXT={};
 function hudViagem(on){
   const m=$('#entMoto'), c=document.querySelector('.ent-casa'), d=$('#dicaEnt'), mo=document.querySelector('#entMoedas').previousElementSibling;
   if(on){ HUD_ENT_TXT.m=m.textContent; HUD_ENT_TXT.c=c.textContent; HUD_ENT_TXT.d=d.textContent; HUD_ENT_TXT.mo=mo.textContent;
-    m.textContent=S.kombi?'🚐':'🚗'; c.textContent='🛒'; d.textContent='Deslize ⬅️ ➡️ para trocar de faixa e desviar dos carros, cones e buracos. Batida vai para a funilaria!'; mo.textContent='🔧'; $('#entEscudo').style.display='none'; }
+    m.textContent=S.kombi?'🚐':'🚗'; c.textContent='🛒'; d.textContent='Deslize ⬅️ ➡️ para trocar de faixa. Olhe antes de mudar: na Felice, a esquerda é contramão. Na BR, a saída do atacarejo é pela direita!'; mo.textContent='🔧'; $('#entEscudo').style.display='none'; }
   else if(HUD_ENT_TXT.m){ m.textContent=HUD_ENT_TXT.m; c.textContent=HUD_ENT_TXT.c; d.textContent=HUD_ENT_TXT.d; mo.textContent=HUD_ENT_TXT.mo; HUD_ENT_TXT.m=null; }
 }
 function iniciarViagemAtac(){
   const R=resumoLista(); if(!R.cx||S.atac||eduOcupado()) return;
   $('#telaAtac').hidden=true;
-  limparPista(); posicionarSegmentos(); montarVeiculoViagem();
-  Object.assign(ENT,{ativo:true,modo:'atac',estado:'contagem',t:3,z:0,dist:0,vel:9,lane:1,x:0,y:0,vy:0,desl:0,moedas:0,prox:-40,escudo:false,inv:0,alvo:300,batidas:0,funilaria:0,bufPulo:0});
+  limparPista(); montarVeiculoViagem();
+  Object.assign(ENT,{ativo:true,modo:'atac',estado:'contagem',t:3,z:0,dist:0,vel:0,lane:1,laneAnt:1,x:0,y:0,vy:0,desl:0,moedas:0,prox:-40,escudo:false,inv:0,alvo:430,batidas:0,funilaria:0,bufPulo:0,
+    spawn:0,parouPare:false,tPare:0,avisoSaida:false,retorno:0});
+  segmentos.forEach((s,i)=>{ s.g.position.z=-i*SEG+SEG/2; montarSegmentoAtac(s); }); ruaMontada=false;
   criarChegadaAtac(-ENT.alvo);
+  for(let k=0;k<40;k++){ ENT.spawn=0; trafegoAtac(0); }                     // a rua já começa com movimento
+  setTimeout(()=>{ if(ENT.ativo&&ENT.modo==='atac') avisoEnt('📍 Saindo da Adega pela Rua Felice Del Paggio'); },400);
   ENT.prPrev=renderer.getPixelRatio(); renderer.setPixelRatio(Math.min(ENT.prPrev,1.25));
   camEnt.position.set(0,4.1,6.8); camEnt.lookAt(0,0.7,-9);
   moto.position.set(0,0,0);
@@ -2970,11 +3155,12 @@ function sairDaViagem(){
   ENT.ativo=false; ENT.estado=''; ENT.modo=''; limparPista(); $('#entAviso').hidden=true; if(motoCorpo) motoCorpo.visible=true;
   if(ENT.prPrev){ renderer.setPixelRatio(ENT.prPrev); ENT.prPrev=0; }
   $('#dicaEnt').hidden=true; hudViagem(false); montarMoto();
+  segmentos.forEach(s=>{ limparExtras(s); s.rua.material=s.matCidade; }); ruaMontada=false;
   document.body.classList.remove('entregando'); document.body.classList.add('jogando'); atualizarHUD(true);
 }
 function chegouAtacarejo(){
-  const fun=ENT.funilaria, bat=ENT.batidas;
-  setTimeout(()=>{ sairDaViagem(); abrirCorredor(); if(COR){ COR.dirigiu=true; COR.funilaria=fun; COR.batidas=bat; renderCorredor(); }
+  const fun=ENT.funilaria, bat=ENT.batidas, ret=ENT.retorno||0;
+  setTimeout(()=>{ sairDaViagem(); abrirCorredor(); if(COR){ COR.dirigiu=true; COR.funilaria=fun; COR.batidas=bat; COR.retorno=ret; renderCorredor(); }
     toastMissao(bat?`🛒 Chegou ao atacarejo com ${bat} ${bat>1?'batidas':'batida'}: funilaria de ${fmt(fun)}.`:'🛒 Chegou ao atacarejo sem nenhuma batida! Motorista cuidadoso.'); },1200);
 }
 function cancelarViagemAtac(){
@@ -2995,13 +3181,16 @@ function atualizarEntrega(dt){
   const E=ENT;
   if(E.estado==='contagem'){ E.t-=dt; if(E.t<=0){ E.estado='correndo'; setTimeout(()=>{ $('#dicaEnt').hidden=true; },3500); } }
   if(E.estado==='correndo'){
-    E.vel=Math.min(21,9+E.dist*0.015); const avanco=E.vel*dt; E.z-=avanco; E.dist+=avanco;
-    while(E.prox>E.z-62&&E.prox>-E.alvo+28){ gerarLinha(E.prox); E.prox-=rnd(13.5,18.5)-Math.min(3,E.dist*0.004); }
-    E.x+=(FAIXAS[E.lane]-E.x)*Math.min(1,dt*18);
+    if(E.modo==='atac'){ const va=velAlvoAtac(dt); E.vel+=Math.max(-16*dt,Math.min(4.5*dt,va-E.vel)); } else E.vel=Math.min(21,9+E.dist*0.015);
+    const avanco=E.vel*dt; E.z-=avanco; E.dist+=avanco;
+    if(E.modo==='atac') trafegoAtac(dt);
+    else while(E.prox>E.z-62&&E.prox>-E.alvo+28){ gerarLinha(E.prox); E.prox-=rnd(13.5,18.5)-Math.min(3,E.dist*0.004); }
+    E.x+=(FAIXAS[E.lane]-E.x)*Math.min(1,dt*(E.modo==='atac'?5:18));
     if(E.bufPulo>0){ E.bufPulo-=dt; if(E.y===0&&E.vy===0){ E.vy=8.2; E.desl=0; E.bufPulo=0; } }
     if(E.y>0||E.vy>0){ E.vy-=24*dt; E.y=Math.max(0,E.y+E.vy*dt); if(E.y===0) E.vy=0; }
     if(E.desl>0) E.desl-=dt;
     if(E.inv>0) E.inv-=dt;
+    else if(E.modo==='atac') colisaoAtac();
     else for(const o of E.obs){ if(colide(o)){
       if(E.modo==='atac'){ E.batidas++; E.funilaria+=FUNILARIA; E.inv=1.2; cenaEnt.remove(o.g); E.obs.splice(E.obs.indexOf(o),1); SOM.erro(); avisoEnt(`💥 Batida! Funilaria +${fmt(FUNILARIA)}`); $('#entMoedas').textContent=E.batidas; }
       else if(E.escudo){ E.escudo=false; E.inv=1.6; cenaEnt.remove(o.g); E.obs.splice(E.obs.indexOf(o),1); SOM.erro(); avisoEnt('💥 Cuidado! Mais uma batida e o pedido se perde'); }
@@ -3011,13 +3200,13 @@ function atualizarEntrega(dt){
       if(Math.abs(m.position.z-E.z)<0.8&&Math.abs(m.position.x-E.x)<0.8&&Math.abs(m.position.y-(E.y+0.75))<1.0){ cenaEnt.remove(m); E.moedasObj.splice(i,1); E.moedas++; SOM.venda&&SOM.venda(); } }
     for(let i=E.obs.length-1;i>=0;i--){ if(E.obs[i].z>E.z+12){ cenaEnt.remove(E.obs[i].g); E.obs.splice(i,1); } }
     for(let i=E.moedasObj.length-1;i>=0;i--){ if(E.moedasObj[i].position.z>E.z+12){ cenaEnt.remove(E.moedasObj[i]); E.moedasObj.splice(i,1); } }
-    segmentos.forEach(s=>{ if(s.g.position.z-SEG/2>E.z+10){ s.g.position.z-=NSEG*SEG; } });
+    segmentos.forEach(s=>{ if(s.g.position.z-SEG/2>E.z+10){ s.g.position.z-=NSEG*SEG; if(E.modo==='atac') montarSegmentoAtac(s); } });
     rodasMoto.forEach(r=>r.rotation.x-=avanco/0.32);
     if(E.modo==='atac'&&piloto) piloto.userData.corpo.scale.y=1;
-    if(E.dist>=E.alvo){ E.estado='chegou'; E.t=1.2; if(E.modo==='atac') chegouAtacarejo(); else encerrarEntrega(true); }
+    if(E.modo==='atac'?saidaAtac():E.dist>=E.alvo){ E.estado='chegou'; E.t=1.2; if(E.modo==='atac') chegouAtacarejo(); else encerrarEntrega(true); }
   }
   if(E.estado==='batida'){ E.t-=dt; motoCorpo.rotation.z=Math.min(1.2,(motoCorpo.rotation.z||0)+dt*3); if(E.t<=0&&E.estado==='batida'){ encerrarEntrega(false); } }
-  if(E.estado==='chegou'){ E.vel=Math.max(0,E.vel-dt*18); E.z-=E.vel*dt; }
+  if(E.estado==='chegou'){ if(E.modo==='atac'){ E.vel=Math.max(0,E.vel-dt*7); E.z-=E.vel*dt; E.x+=(5.8-E.x)*Math.min(1,dt*2.2); trafegoAtac(dt); } else { E.vel=Math.max(0,E.vel-dt*18); E.z-=E.vel*dt; } }
   moto.position.set(E.x,E.y,E.z);
   if(motoCorpo) motoCorpo.visible=!(E.inv>0&&Math.floor(E.inv*10)%2===0);
   if(motoCorpo){ if(E.estado!=='batida') motoCorpo.rotation.z=(FAIXAS[E.lane]-E.x)*-0.18; motoCorpo.rotation.x=E.y>0?-0.15:0; piloto.userData.corpo.scale.y=E.desl>0?0.72:1; }
@@ -3027,6 +3216,7 @@ function atualizarEntrega(dt){
 }
 function comandoEnt(c){
   if(!ENT.ativo||ENT.estado!=='correndo') return;
+  if((c==='esq'&&ENT.lane>0)||(c==='dir'&&ENT.lane<2)){ if(Math.abs(FAIXAS[ENT.lane]-ENT.x)<0.5) ENT.laneAnt=ENT.lane; }
   if(c==='esq'&&ENT.lane>0) ENT.lane--;
   if(c==='dir'&&ENT.lane<2) ENT.lane++;
   if(ENT.modo==='atac'&&(c==='pula'||c==='abaixa')) return;
@@ -4428,8 +4618,9 @@ function resumoLista(){
 }
 function renderListaAtac(){
   const V=veiculo(), R=resumoLista(), el=$('#atacConteudo');
-  if(S.atac){ el.innerHTML='<p class="txt">🚗 O Edu já está no atacarejo. Espere ele voltar para fazer outra lista.</p>'; return; }
-  let h=`<p class="txt" style="font-size:.9rem">O atacarejo só vende <b>caixa fechada de ${CAIXA_UN} unidades</b>. A viagem (gasolina, estacionamento e tempo) custa o mesmo para a compra toda: quanto mais coisa você trouxer de uma vez, mais ela se dilui.</p><div class="atac-lista">`;
+  const bCartao=`<button type="button" class="pilula guia-btn" id="bAtacCartao" style="white-space:normal;line-height:1.25;text-align:center">💳 Cartão da adega · ${fmt(dispCartao())} livres · fatura fecha em ${diasTxt(fechaEm())}</button>`;
+  if(S.atac){ el.innerHTML='<p class="txt">🚗 O Edu já está no atacarejo. Espere ele voltar para fazer outra lista.</p>'+bCartao; $('#bAtacCartao').onclick=abrirCartao; return; }
+  let h=`<p class="txt" style="font-size:.9rem">O atacarejo só vende <b>caixa fechada de ${CAIXA_UN} unidades</b>. A viagem (gasolina, estacionamento e tempo) custa o mesmo para a compra toda: quanto mais coisa você trouxer de uma vez, mais ela se dilui.</p>${bCartao}<div class="atac-lista">`;
   IDS.filter(id=>S.est[id].aberta).forEach(id=>{
     const mx=maxCaixas(id), n=listaAtac[id]||0;
     h+=`<div class="atac-item${mx?'':' cheio'}"><span class="atac-ic">${EST[id].ic}</span><span class="bol-tx"><b>${EST[id].nome}</b><small>${mx?`cabem ${mx} ${mx>1?'caixas':'caixa'} · caixa ${fmt(caixaAtac(id))} (distribuidor: ${fmt(CAIXA_UN*custoUnit(id))})`:'geladeira cheia: não cabe uma caixa'}</small></span>
@@ -4440,15 +4631,16 @@ function renderListaAtac(){
     const dif=R.dist-R.total;
     h+=`<div class="stats"><div class="stat"><span>Produtos (${R.cx*CAIXA_UN} un.)</span><b>${fmt(R.prod)}</b></div><div class="stat"><span>⛽ Viagem (gasolina, estacionamento e tempo)</span><b>${fmt(R.gas)}</b></div><div class="stat destaque"><span>Total no atacarejo</span><b>${fmt(R.total)}</b></div></div>`;
     h+=`<p class="atac-comp ${dif>=0?'bom':'ruim'}">No distribuidor, a mesma compra sairia ${fmt(R.dist)}. ${dif>=0?`Você economiza ${fmt(dif)}.`:`O atacarejo sai ${fmt(-dif)} mais caro: a gasolina pesou numa compra pequena.`}</p>`;
-    const pode=!eduOcupado()&&S.din>=R.total;
+    const pode=!eduOcupado()&&(S.din>=R.total||dispCartao()>=R.total);
     h+=`<button class="btn" id="bIrAtac" type="button" ${pode?'':'disabled'}>${V.ic} Ir ao atacarejo ${NOTA} ${fmt(R.total)}</button>`;
     if(eduOcupado()) h+='<p class="compra-nota">O Edu está recebendo mercadoria. Espere ele terminar.</p>';
-    else if(S.din<R.total) h+='<p class="compra-nota">Falta dinheiro no caixa para essa lista.</p>';
+    else if(S.din<R.total&&dispCartao()>=R.total) h+='<p class="compra-nota">O caixa não tem tudo isso agora, mas dá para pagar no <b>cartão de crédito</b> no caixa do atacarejo.</p>';
+    else if(S.din<R.total) h+='<p class="compra-nota">Falta dinheiro no caixa e limite no cartão para essa lista.</p>';
   } else h+='<p class="compra-nota">Toque em + para colocar caixas na lista.</p>';
   if(!S.kombi) h+=`<div class="atac-kombi"><span>🚐 <b>Kombi</b>: leva ${VEICULOS.kombi.caixas} caixas por viagem (gasta um pouco mais de gasolina).</span>${btnCusto(precoKombi(),'Comprar a Kombi','bKombi')}</div>`;
-  el.innerHTML=h;
+  el.innerHTML=h; $('#bAtacCartao').onclick=abrirCartao;
   el.querySelectorAll('.atac-passo button').forEach(b=>b.onclick=()=>{ const id=b.dataset.id; listaAtac[id]=Math.max(0,Math.min(maxCaixas(id),(listaAtac[id]||0)+(+b.dataset.d))); if(!listaAtac[id]) delete listaAtac[id]; SOM.abrir(); renderListaAtac(); });
-  const bi=$('#bIrAtac'); if(bi) bi.onclick=()=>{ const R2=resumoLista(); el.querySelector('#bIrAtac').outerHTML=`<div class="duas"><button class="btn" id="bDirigir" type="button">${veiculo().ic} Dirigir até lá</button><button class="btn azul" id="bDireto" type="button">⏩ Ir direto</button></div><p class="compra-nota">Dirigindo, você desvia do trânsito; cada batida custa ${fmt(FUNILARIA)} de funilaria. Indo direto, o Edu leva o tempo normal da viagem.</p>`; SOM.abrir();
+  const bi=$('#bIrAtac'); if(bi) bi.onclick=()=>{ const R2=resumoLista(); el.querySelector('#bIrAtac').outerHTML=`<div class="duas"><button class="btn" id="bDirigir" type="button">${veiculo().ic} Dirigir até lá</button><button class="btn azul" id="bDireto" type="button">⏩ Ir direto</button></div><p class="compra-nota">Dirigindo, você faz o caminho de verdade: Felice Del Paggio, BR-116 e a saída do atacarejo. Troque de faixa só com espaço: batida custa ${fmt(FUNILARIA)} de funilaria (de frente, ${fmt(FUNILARIA*3)}). Indo direto, o Edu leva o tempo normal da viagem.</p>`; SOM.abrir();
     $('#bDirigir').onclick=iniciarViagemAtac; $('#bDireto').onclick=abrirCorredor; };
   const bk=$('#bKombi'); if(bk) bk.onclick=()=>{ const c=precoKombi(); if(S.din<c) return; S.din-=c; S.kombi=true; montarCarroEdu(); SOM.marco(); toastMissao('🚐 A Kombi chegou! Agora cabem 14 caixas por viagem.'); atualizarHUD(true); salvar(); renderListaAtac(); };
 }
@@ -4478,7 +4670,7 @@ function corResumo(){
   for(const id in COR.lista){ const f=COR.lista[id]-(COR.pego[id]||0); if(f>0) faltou.push([id,f]); }
   COR.cor.forEach(c=>c.itens.forEach(x=>{ if(x.promo!=null&&COR.promo[x.promo]){ imp+=COR.promo[x.promo]*x.por; fora+=COR.promo[x.promo]; } }));
   if(dist>0) dist+=FRETE_PEDIDO;
-  const gas=gasolinaViagem(), fun=COR.funilaria||0; return {prod,dist,parado,imp,gas,fun,total:prod+imp+gas+fun,carregar,faltou,fora};
+  const gas=gasolinaViagem()+(COR.retorno||0), fun=COR.funilaria||0; return {prod,dist,parado,imp,gas,fun,total:prod+imp+gas+fun,carregar,faltou,fora};
 }
 function renderCorredor(){
   const V=veiculo(), cx=corCaixas(), c=COR.cor[COR.c], el=$('#corConteudo');
@@ -4517,18 +4709,22 @@ function caixaCorredor(){
   h+=`<p>📦 Caixas: ${fmt(R.prod)}</p>`;
   if(R.imp) h+=`<p>🔥 Promoções fora da lista: ${fmt(R.imp)}</p>`;
   if(R.fun) h+=`<p>🔧 Funilaria (${COR.batidas} ${COR.batidas>1?'batidas':'batida'}): ${fmt(R.fun)}</p>`;
-  h+=`<p>⛽ Viagem: gasolina ${fmt(gasolinaSo())} + estacionamento ${fmt(VIAGEM.estacionamento)} + tempo de ir e vir ${fmt(VIAGEM.tempo)} = ${fmt(R.gas)}</p><p style="font-size:1.05rem">Total: <b>${fmt(R.total)}</b></p></div>`;
+  h+=`<p>⛽ Viagem: gasolina ${fmt(gasolinaSo())}${COR.retorno?` + retorno por perder a saída ${fmt(COR.retorno)}`:''} + estacionamento ${fmt(VIAGEM.estacionamento)} + tempo de ir e vir ${fmt(VIAGEM.tempo)} = ${fmt(R.gas)}</p><p style="font-size:1.05rem">Total: <b>${fmt(R.total)}</b></p></div>`;
   if(certinho) h+=`<p class="atac-comp bom">✔ Compra certinha: só o que estava na lista! O Edu volta mais rápido.</p>`;
   if(R.faltou.length) h+=`<p class="atac-comp ruim">Faltou pegar: ${R.faltou.map(([id,n])=>`${EST[id].ic} ${n} ${n>1?'caixas':'caixa'}`).join(', ')}. Esses produtos podem acabar na loja.</p>`;
   if(R.imp+R.parado>0) h+=`<p class="atac-comp ruim">${fmt(R.imp+R.parado)} ficaram fora da lista${R.parado?' (ou não cabem nas prateleiras)':''}. Vão para o depósito e o dinheiro volta aos poucos, sem lucro: é <b>dinheiro parado</b> que podia estar repondo o que vende.</p>`;
-  const pode=S.din>=R.total;
-  if(!pode) h+=`<p class="compra-nota">Falta ${fmt(R.total-S.din)} no caixa da adega. Volte aos corredores e devolva alguma caixa.</p>`;
-  h+=`<button class="btn" type="button" id="corPagar" ${pode?'':'disabled'}>💳 Pagar ${fmt(R.total)} e voltar para a adega</button><button class="btn azul peq" type="button" id="corVoltarCor" style="margin-top:8px">◀ Voltar aos corredores</button>`;
+  const pode=S.din>=R.total, podeC=dispCartao()>=R.total, pr=prazoCartao();
+  if(!pode&&!podeC) h+=`<p class="compra-nota">Falta ${fmt(R.total-S.din)} no caixa da adega e o cartão só tem ${fmt(dispCartao())} de limite. Volte aos corredores e devolva alguma caixa.</p>`;
+  h+=`<div class="pag-duas"><button class="btn" type="button" id="corPagar" ${pode?'':'disabled'}>💵 Pagar à vista ${fmt(R.total)}</button>
+    <button class="btn azul" type="button" id="corCartao" ${podeC?'':'disabled'}>💳 Cartão de crédito: pagar daqui a ${diasTxt(pr)}</button></div>
+    <p class="pag-nota">No cartão, as caixas viram venda antes de a fatura vencer. Limite disponível: ${fmt(dispCartao())} · <a href="#" id="corVerCartao">ver o cartão</a></p>
+    <button class="btn azul peq" type="button" id="corVoltarCor" style="margin-top:8px">◀ Voltar aos corredores</button>`;
   el.innerHTML=h; SOM.abrir();
   $('#corVoltarCor').onclick=()=>{ SOM.abrir(); renderCorredor(); };
-  $('#corPagar').onclick=()=>{
-    if(S.din<R.total||S.atac) return;
-    S.din-=R.total;
+  $('#corVerCartao').onclick=e=>{ e.preventDefault(); abrirCartao(); };
+  const pagar=(cartao)=>{
+    if(S.atac||(cartao?dispCartao()<R.total:S.din<R.total)) return;
+    if(cartao) comprarNoCartao(R.total); else S.din-=R.total;
     const t=S.tempoJogo||0;
     S.atac={itens:R.carregar,entregues:[],custo:R.prod-R.parado+R.gas,distrib:R.dist,volta:t+(COR.dirigiu?8:certinho?Math.round(ATAC_TEMPO*0.6):ATAC_TEMPO),saiu:COR.dirigiu?t-10:t};
     if(!Object.keys(R.carregar).length){ S.atac=null; }
@@ -4536,9 +4732,10 @@ function caixaCorredor(){
     const A=S.compras||(S.compras={viagens:0,un:0,gasto:0,economia:0}); A.certinhas=(A.certinhas||0)+(certinho?1:0); A.impulso=(A.impulso||0)+R.imp;
     atacFase=null; S.pedidos=(S.pedidos||0)+1; missaoEvento('repor',1); listaAtac={}; COR=null;
     $('#telaCorredor').hidden=true; pop(eduDono.position.clone().setY(2.2),'🚗 Comprei tudo!','');
-    toastMissao(certinho?`${veiculo().ic} Compra certinha! O Edu já está voltando com as caixas.`:`${veiculo().ic} O Edu pagou e está voltando com as caixas.`);
-    SOM.comprar(); atualizarHUD(true); salvar();
+    toastMissao(cartao?`💳 Pago no cartão: ${fmt(R.total)} só vence daqui a ${diasTxt(prazoCartao())}. Até lá, as caixas viram venda!`:certinho?`${veiculo().ic} Compra certinha! O Edu já está voltando com as caixas.`:`${veiculo().ic} O Edu pagou e está voltando com as caixas.`);
+    SOM.comprar(); atualizarHUD(true); salvar(); if(cartao) oferecerLicao('cartao');
   };
+  $('#corPagar').onclick=()=>pagar(false); $('#corCartao').onclick=()=>pagar(true);
 }
 // estoque parado (compra por impulso): sai aos poucos, pelo preço de custo
 setInterval(()=>{
@@ -4549,9 +4746,10 @@ setInterval(()=>{
 },15000);
 
 function irAtacarejo(){
-  const R=resumoLista(); if(!R.cx||S.atac||eduOcupado()||S.din<R.total) return false;
+  const R=resumoLista(); if(!R.cx||S.atac||eduOcupado()) return false;
+  const noCartao=S.din<R.total; if(noCartao&&dispCartao()<R.total) return false;
   const itens={}; for(const id in listaAtac) itens[id]=listaAtac[id]*CAIXA_UN;
-  S.din-=R.total; S.atac={itens,entregues:[],custo:R.total,distrib:R.dist,volta:(S.tempoJogo||0)+ATAC_TEMPO,saiu:(S.tempoJogo||0)};
+  if(noCartao){ comprarNoCartao(R.total); setTimeout(()=>toastMissao(`💳 Faltou dinheiro no caixa: o Edu pagou no cartão. Vence daqui a ${diasTxt(prazoCartao())}.`),2600); } else S.din-=R.total; S.atac={itens,entregues:[],custo:R.total,distrib:R.dist,volta:(S.tempoJogo||0)+ATAC_TEMPO,saiu:(S.tempoJogo||0)};
   atacFase=null; S.pedidos=(S.pedidos||0)+1; missaoEvento('repor',1);
   $('#telaAtac').hidden=true; pop(eduDono.position.clone().setY(2.2),'🚗 Fui ao atacarejo!',''); toastMissao(`${veiculo().ic} O Edu saiu para o atacarejo com a lista. Volta em 1 minutinho!`); SOM.comprar(); atualizarHUD(true); salvar(); return true;
 }
@@ -4716,9 +4914,76 @@ function abrirImprevisto(){
   $('#imprevDepois').onclick=()=>{ $('#telaImprev').hidden=true; };
   const bc=$('#imprevCorr'); if(bc) bc.onclick=()=>{ $('#telaImprev').hidden=true; toastMissao('🐷 Resgate a reserva para o caixa. Daqui a pouco o imprevisto volta para você pagar com o caixa, sem juros.'); if(typeof abrirCorretora==='function') abrirCorretora(); };
 }
+// ================= Cartão de crédito da adega (só no atacarejo) =================
+// O cartão dá PRAZO: a fatura fecha no fim do ciclo (30 dias do jogo) e vence 10 dias depois.
+// Quem compra logo depois do fechamento tem até ~40 dias para vender o estoque antes de pagar: é o "melhor dia de compra".
+// Se no vencimento faltar dinheiro, o que não foi pago vai para o ROTATIVO, com multa de 2% e juros de 14% ao mês.
+// Por lei (Lei 14.690/2023), juros e encargos do rotativo não podem passar de 100% da dívida original.
+const CARTAO={ciclo:MES_ADEGA, dias:30, vence:10, juros:0.14, multa:0.02};
+const DIA_CARTAO=CARTAO.ciclo/CARTAO.dias;
+function Cc(){ if(!S.cartao) S.cartao={inicio:S.tempoJogo||0,aberta:0,fechada:null,rotativo:0,rotBase:0,rotEnc:0,compras:0,faturas:0,atrasos:0,encPagos:0}; return S.cartao; }
+const limiteCartao=()=>Math.min(6000,600+150*(S.nivelJ||1));
+const usadoCartao=()=>{ const c=S.cartao; return c?c.aberta+(c.fechada?c.fechada.v:0)+c.rotativo:0; };
+const dispCartao=()=>Math.max(0,limiteCartao()-usadoCartao());
+const diaCiclo=()=>{ const c=Cc(); return Math.min(CARTAO.dias,Math.floor(((S.tempoJogo||0)-c.inicio)/DIA_CARTAO)+1); };
+const fechaEm=()=>Math.max(0,Math.ceil((Cc().inicio+CARTAO.ciclo-(S.tempoJogo||0))/DIA_CARTAO));
+const prazoCartao=()=>fechaEm()+CARTAO.vence;                       // dias até pagar uma compra feita hoje
+const venceEm=()=>{ const f=S.cartao&&S.cartao.fechada; return f?Math.max(0,Math.ceil((f.vence-(S.tempoJogo||0))/DIA_CARTAO)):0; };
+const diasTxt=n=>n+' '+(n===1?'dia':'dias');
+function comprarNoCartao(v){ const c=Cc(); v=Math.round(v*100)/100; c.aberta=Math.round((c.aberta+v)*100)/100; c.compras++; salvar(); return prazoCartao(); }
+function pagarFatura(manual){
+  const c=Cc(), f=c.fechada; if(!f) return;
+  const pago=Math.min(f.v,Math.max(0,Math.floor(S.din*100)/100)); S.din-=pago; const resto=Math.round((f.v-pago)*100)/100;
+  c.fechada=null; c.faturas++;
+  if(resto<=0){ c.encPagos+=f.enc||0; c.rotBase=0; c.rotEnc=0;
+    toastMissao(manual?`💳 Fatura paga: ${fmt(f.v)}.`:`💳 Fatura paga em dia: ${fmt(f.v)}. As caixas já tinham virado venda: o cartão deu prazo, sem juros.`); SOM.coletar(); }
+  else { const multa=Math.round(resto*CARTAO.multa*100)/100; c.rotativo=Math.round((resto+multa)*100)/100; if(!c.rotBase) c.rotBase=resto; c.rotEnc+=multa; c.atrasos++;
+    toastMissao(`⚠️ Faltou ${fmt(resto)} para pagar a fatura. Foi para o rotativo: multa de ${fmt(multa)} e juros de 14% ao mês.`); SOM.erro(); oferecerLicao('cartao'); }
+  salvar(); atualizarHUD(true);
+}
+function pagarRotativo(){ const c=Cc(); if(!c.rotativo||S.din<c.rotativo) return; S.din-=c.rotativo; c.encPagos+=c.rotEnc; toastMissao(`💳 Rotativo quitado: ${fmt(c.rotativo)}. Chega de juros!`); c.rotativo=0; c.rotBase=0; c.rotEnc=0; SOM.coletar(); salvar(); atualizarHUD(true); }
+function atualizarCartao(t){
+  const c=S.cartao; if(!c) return;
+  if(c.fechada&&t>=c.fechada.vence) pagarFatura(false);
+  if(t-c.inicio>=CARTAO.ciclo){
+    c.inicio+=CARTAO.ciclo*Math.floor((t-c.inicio)/CARTAO.ciclo);
+    let juros=0;
+    if(c.rotativo>0){ juros=Math.round(c.rotativo*CARTAO.juros*100)/100; juros=Math.max(0,Math.min(juros,c.rotBase-c.rotEnc)); c.rotEnc+=juros; }
+    const v=Math.round((c.aberta+c.rotativo+juros)*100)/100;
+    if(v>0){ const enc=c.rotativo>0?Math.round(c.rotEnc*100)/100:0;
+      c.fechada={v,compras:c.aberta,rot:c.rotativo,juros,enc,vence:c.inicio+CARTAO.vence*DIA_CARTAO};
+      toastMissao(`💳 A fatura do cartão fechou: ${fmt(v)}${juros?` (com ${fmt(juros)} de juros do rotativo)`:''}. Vence em ${CARTAO.vence} dias.`); }
+    c.aberta=0; c.rotativo=0; salvar();
+  }
+}
+function htmlCartaoVisual(){
+  return `<div class="cc-cartao"><div class="cc-topo"><span>💳 Cartão da Adega</span><small>crédito empresarial</small></div><div class="cc-chip"></div>
+    <div class="cc-num">•••• •••• •••• 1001</div><div class="cc-rodape"><span>Limite <b>${fmt(limiteCartao())}</b></span><span>Disponível <b>${fmt(dispCartao())}</b></span></div></div>`;
+}
+function abrirCartao(){
+  const c=Cc(), dia=diaCiclo(), fe=fechaEm(), pr=prazoCartao();
+  let h=htmlCartaoVisual();
+  h+=`<div class="stats"><div class="stat"><span>🧾 Fatura aberta (dia ${dia} de ${CARTAO.dias})</span><b>${fmt(c.aberta)}</b></div><div class="stat"><span>Fecha em</span><b>${diasTxt(fe)}</b></div>`;
+  if(c.fechada) h+=`<div class="stat destaque"><span>📬 Fatura fechada · vence em ${diasTxt(venceEm())}</span><b>${fmt(c.fechada.v)}</b></div>`;
+  if(c.rotativo>0) h+=`<div class="stat" style="background:#FDE2DF"><span>⚠️ Rotativo (14% ao mês)</span><b>${fmt(c.rotativo)}</b></div>`;
+  h+=`</div>`;
+  if(c.fechada) h+=`<button class="btn peq" type="button" id="ccPagar" ${S.din>=c.fechada.v?'':'disabled'}>💵 Pagar a fatura agora (${fmt(c.fechada.v)})</button><p class="compra-nota">No vencimento, a fatura é paga sozinha com o dinheiro do caixa.</p>`;
+  if(c.rotativo>0) h+=`<button class="btn amarelo peq" type="button" id="ccRot" ${S.din>=c.rotativo?'':'disabled'} style="margin-top:8px">Quitar o rotativo agora (${fmt(c.rotativo)})</button>`;
+  h+=`<div class="cc-dica">📅 <b>Comprando hoje, você só paga daqui a ${diasTxt(pr)}.</b> A fatura fecha no dia ${CARTAO.dias} e vence ${CARTAO.vence} dias depois. O <b>melhor dia de compra</b> é logo depois do fechamento: dá até ${CARTAO.dias+CARTAO.vence} dias de prazo.</div>`;
+  h+=`<div class="tempo-dia"><div class="tempo-cab"><span class="tempo-ic" style="font-size:1.6rem">🔄</span><span><b>Por que a adega usa o cartão</b><small>O Edu compra as caixas hoje, coloca nas geladeiras e vende nos próximos dias. Quando a fatura vence, o dinheiro das vendas já entrou no caixa: o cartão financiou o estoque <b>sem juros</b>. Isso é <b>capital de giro</b>.</small></span></div></div>`;
+  h+=`<div class="tempo-dia"><div class="tempo-cab"><span class="tempo-ic" style="font-size:1.6rem">🚨</span><span><b>O perigo: o rotativo</b><small>Se no vencimento não tiver dinheiro para a fatura inteira, o resto vira <b>rotativo</b>: multa de 2% e juros de uns <b>14% ao mês</b> (mais de 380% ao ano!). Cartão é prazo, não é dinheiro a mais: só compre o que você vai vender antes de a fatura vencer.</small></span></div></div>`;
+  if(c.compras) h+=`<p class="bol-nota">Você já fez ${c.compras} ${c.compras===1?'compra':'compras'} no cartão${c.atrasos?` e atrasou ${c.atrasos} ${c.atrasos===1?'fatura':'faturas'}`:' e nunca atrasou a fatura 👏'}.${c.encPagos?` Já pagou ${fmt(c.encPagos)} de juros e multa.`:''}</p>`;
+  if(licaoDisponivel('cartao')||licaoFeita('cartao')) h+=`<button class="btn azul peq" id="ccLicao" type="button" style="margin-top:8px">💳 ${licaoFeita('cartao')?'Rever':'Fazer'} a lição do Edu</button>`;
+  h+=`<p class="bol-nota">Limite e juros de exemplo, parecidos com os de verdade. O limite cresce com o nível da adega.</p>`;
+  $('#tempoConteudo').innerHTML=h; document.querySelector('#telaTempo h2').textContent='💳 Cartão de crédito da adega'; $('#telaTempo').hidden=false; SOM.abrir();
+  const bp=$('#ccPagar'); if(bp) bp.onclick=()=>{ if(c.fechada&&S.din>=c.fechada.v){ pagarFatura(true); abrirCartao(); } };
+  const br=$('#ccRot'); if(br) br.onclick=()=>{ pagarRotativo(); abrirCartao(); };
+  const bl=$('#ccLicao'); if(bl) bl.onclick=()=>{ $('#telaTempo').hidden=true; abrirLicao('cartao'); };
+}
 let tContas=0;
 function atualizarContas(dt){
   tContas+=dt; if(tContas<1) return; tContas=0;
+  atualizarCartao(S.tempoJogo||0);
   if(!contasLiberadas()) return;
   const C=Ct(), t=S.tempoJogo||0;
   if(S.divida>0&&S.din>=S.divida){ S.din-=S.divida; toastMissao(`🏦 Empréstimo quitado: ${fmt(S.divida)}. Com reserva, não teria juros.`); S.divida=0; salvar(); atualizarHUD(true); }
@@ -5099,6 +5364,19 @@ const LICOES={
     errado:'Quase! Pense na taxa da maquininha e em quando o dinheiro chega. Tente de novo.',
     nota:'Taxas de exemplo. Cada banco e cada maquininha cobra um valor diferente.',
     libera:()=>true},
+  cartao:{ic:'💳',tit:'O cartão de crédito da adega',
+    falas:['A adega usa bastante o <b>cartão de crédito</b> nas compras do atacarejo. Não é porque falta dinheiro: é porque o cartão dá <b>prazo</b>.',
+           'O Edu compra as caixas hoje, vende nos próximos dias e só paga quando a fatura vence. O dinheiro das vendas paga a fatura: isso é <b>capital de giro</b>, sem juros.',
+           'E tem o <b>melhor dia de compra</b>: logo depois que a fatura fecha, a compra só vai ser paga na fatura seguinte. São até 40 dias de prazo!',
+           'O perigo é o <b>rotativo</b>: se não pagar a fatura inteira, o resto tem multa e juros de uns <b>14% ao mês</b>. Cartão é prazo, não é dinheiro a mais.'],
+    perg:'Qual é o jeito certo de a adega usar o cartão de crédito?',
+    ops:[{t:'Comprar o que vai vender antes de a fatura vencer, e pagar a fatura inteira com o dinheiro das vendas.',ok:true},
+         {t:'Comprar bastante promoção, porque o limite é dinheiro extra.'},
+         {t:'Pagar só o mínimo da fatura todo mês.'}],
+    certo:'Isso! O cartão financia o estoque sem juros, desde que a fatura seja paga inteira. 💛',
+    errado:'Quase! O limite não é dinheiro a mais, e pagar só o mínimo joga o resto no rotativo, com juros altíssimos. Tente de novo.',
+    nota:'Juros de exemplo, parecidos com os de verdade. Por lei, juros e encargos do rotativo não podem passar do valor da dívida.',
+    libera:()=>!!(S.cartao&&S.cartao.compras>0)},
   isca:{ic:'🎣',tit:'O produto isca',
     falas:['O refri é o produto que todo mundo procura e compara o preço. Por isso ele fica <b>baratinho</b>: a adega ganha só uns <b>10%</b> nele.',
            'Ele é a <b>isca</b>: traz o cliente até a loja. O lucro vem do que ele leva junto, como o <b>gelo</b> (30%) e o <b>salgadinho</b> (25%).',
