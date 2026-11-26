@@ -446,7 +446,11 @@ body:not(.jogando) .alerta{display:none}
 .cc-num{font-weight:900;letter-spacing:2px;font-size:1.05rem}
 .cc-rodape{display:flex;justify-content:space-between;gap:8px;font-size:.82rem;font-weight:700}.cc-rodape b{display:block;font-size:1rem}
 .cc-dica{background:#E7F4EC;border:2.5px solid var(--contorno);border-radius:12px;padding:8px 10px;font-size:.86rem;margin:10px 0}
-.pag-duas{display:grid;gap:8px}.pag-nota{font-size:.8rem;color:var(--sub);margin:2px 0 0;text-align:center}
+.pag-duas{display:grid;gap:8px}
+.pag-tit{margin:10px 2px 6px;font-weight:900;font-size:.98rem}
+.btn.pag-op{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.15;padding-top:10px;padding-bottom:10px}
+.btn.pag-op small{font:700 .78rem 'Nunito',system-ui,sans-serif;opacity:.92;text-shadow:none;letter-spacing:0}
+.btn.pag-pix:not(:disabled){background:#2BB3A3}.pag-nota{font-size:.8rem;color:var(--sub);margin:2px 0 0;text-align:center}
 .imprev-reserva{background:#FFF3CD;border:2.5px solid var(--contorno);border-radius:12px;padding:8px 10px;font-size:.86rem;margin:10px 0}
 .imprev-reserva.tem{background:#DFF5E3}
 .des-card{background:#FFF8E6;border:3px solid var(--contorno);border-radius:14px;padding:10px 12px;margin:6px 0 10px}
@@ -1018,7 +1022,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 26/11/2026 · 20h · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 26/11/2026 · 20h30 · 🎄</p>
   </div>
 </section>
 
@@ -4721,16 +4725,22 @@ function caixaCorredor(){
   if(R.imp+R.parado>0) h+=`<p class="atac-comp ruim">${fmt(R.imp+R.parado)} ficaram fora da lista${R.parado?' (ou não cabem nas prateleiras)':''}. Vão para o depósito e o dinheiro volta aos poucos, sem lucro: é <b>dinheiro parado</b> que podia estar repondo o que vende.</p>`;
   const pode=S.din>=R.total, podeC=dispCartao()>=R.total, pr=prazoCartao();
   if(!pode&&!podeC) h+=`<p class="compra-nota">Falta ${fmt(R.total-S.din)} no caixa da adega e o cartão só tem ${fmt(dispCartao())} de limite. Volte aos corredores e devolva alguma caixa.</p>`;
-  h+=`<div class="pag-duas"><button class="btn" type="button" id="corPagar" ${pode?'':'disabled'}>💵 Pagar à vista ${fmt(R.total)}</button>
-    <button class="btn azul" type="button" id="corCartao" ${podeC?'':'disabled'}>💳 Cartão de crédito: pagar daqui a ${diasTxt(pr)}</button></div>
-    <p class="pag-nota">No cartão, as caixas viram venda antes de a fatura vencer. Limite disponível: ${fmt(dispCartao())} · <a href="#" id="corVerCartao">ver o cartão</a></p>
+  h+=`<p class="pag-tit">Como a adega vai pagar ${fmt(R.total)}?</p><div class="pag-duas">
+    <button class="btn pag-op" type="button" id="corDinheiro" ${pode?'':'disabled'}><span>💵 Dinheiro do caixa</span><small>sai agora da gaveta da adega</small></button>
+    <button class="btn pag-op pag-pix" type="button" id="corPix" ${pode?'':'disabled'}><span>⚡ Pix</span><small>sai agora da conta da adega, sem taxa</small></button>
+    <button class="btn azul pag-op" type="button" id="corCartao" ${podeC?'':'disabled'}><span>💳 Cartão de crédito</span><small>paga só daqui a ${diasTxt(pr)}</small></button></div>
+    <p class="pag-nota">💵 e ⚡ tiram o dinheiro hoje (no caixa: ${fmt(S.din)}). 💳 Cartão: as caixas viram venda antes de a fatura vencer. Limite livre: ${fmt(dispCartao())} · <a href="#" id="corVerCartao">ver o cartão</a></p>`;
+  if(pode) h+=`<p class="pag-nota">💡 Dinheiro em espécie e Pix custam o mesmo. A diferença: o Pix fica registrado no extrato, e o dinheiro precisa ser anotado no controle do caixa.</p>`;
+  h+=`
     <button class="btn azul peq" type="button" id="corVoltarCor" style="margin-top:8px">◀ Voltar aos corredores</button>`;
   el.innerHTML=h; SOM.abrir();
   $('#corVoltarCor').onclick=()=>{ SOM.abrir(); renderCorredor(); };
   $('#corVerCartao').onclick=e=>{ e.preventDefault(); abrirCartao(); };
-  const pagar=(cartao)=>{
+  const pagar=(forma)=>{
+    const cartao=forma==='cartao';
     if(S.atac||(cartao?dispCartao()<R.total:S.din<R.total)) return;
     if(cartao) comprarNoCartao(R.total); else S.din-=R.total;
+    const F=S.formasAtac||(S.formasAtac={dinheiro:0,pix:0,cartao:0}); F[forma]=(F[forma]||0)+1;
     const t=S.tempoJogo||0;
     S.atac={itens:R.carregar,entregues:[],custo:R.prod-R.parado+R.gas,distrib:R.dist,volta:t+(COR.dirigiu?8:certinho?Math.round(ATAC_TEMPO*0.6):ATAC_TEMPO),saiu:COR.dirigiu?t-10:t};
     if(!Object.keys(R.carregar).length){ S.atac=null; }
@@ -4738,10 +4748,10 @@ function caixaCorredor(){
     const A=S.compras||(S.compras={viagens:0,un:0,gasto:0,economia:0}); A.certinhas=(A.certinhas||0)+(certinho?1:0); A.impulso=(A.impulso||0)+R.imp;
     atacFase=null; S.pedidos=(S.pedidos||0)+1; missaoEvento('repor',1); listaAtac={}; COR=null;
     $('#telaCorredor').hidden=true; pop(eduDono.position.clone().setY(2.2),'🚗 Comprei tudo!','');
-    toastMissao(cartao?`💳 Pago no cartão: ${fmt(R.total)} só vence daqui a ${diasTxt(prazoCartao())}. Até lá, as caixas viram venda!`:certinho?`${veiculo().ic} Compra certinha! O Edu já está voltando com as caixas.`:`${veiculo().ic} O Edu pagou e está voltando com as caixas.`);
+    toastMissao(cartao?`💳 Pago no cartão: ${fmt(R.total)} só vence daqui a ${diasTxt(prazoCartao())}. Até lá, as caixas viram venda!`:forma==='pix'?`⚡ Pix de ${fmt(R.total)} enviado da conta da adega. ${veiculo().ic} O Edu já está voltando com as caixas.`:forma==='dinheiro'?`💵 Pago com ${fmt(R.total)} do caixa da adega. ${veiculo().ic} O Edu já está voltando com as caixas.`:certinho?`${veiculo().ic} Compra certinha! O Edu já está voltando com as caixas.`:`${veiculo().ic} O Edu pagou e está voltando com as caixas.`);
     SOM.comprar(); atualizarHUD(true); salvar(); if(cartao) oferecerLicao('cartao');
   };
-  $('#corPagar').onclick=()=>pagar(false); $('#corCartao').onclick=()=>pagar(true);
+  $('#corDinheiro').onclick=()=>pagar('dinheiro'); $('#corPix').onclick=()=>pagar('pix'); $('#corCartao').onclick=()=>pagar('cartao');
 }
 // estoque parado (compra por impulso): sai aos poucos, pelo preço de custo
 setInterval(()=>{
