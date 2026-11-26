@@ -1005,7 +1005,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 25/11/2026 · 21h · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 25/11/2026 · 22h · 🎄</p>
   </div>
 </section>
 
@@ -7043,7 +7043,7 @@ function veiculoRua(){
 // na saída dela tem placa de PARE e o motorista espera a Felice ficar livre. Ônibus só na Felice Del Paggio.
 const FZ_SOBE=10.8, FZ_DESCE=8.75, F_X0=-27.0, F_X1=RUA_FIM-0.5;
 const BR_SUL=[BR_X+0.95,BR_X+2.75], BR_NORTE=[BR_X-0.95,BR_X-2.75], BR_Z0=-52, BR_Z1=72;
-const MM_ENTRA=MILTON_X-0.7, MM_SAI=MILTON_X+0.7, MM_Z1=42, MM_BOCA=12.7;
+const MM_ENTRA=MILTON_X-0.85, MM_SAI=MILTON_X+0.85, MM_Z1=42, MM_BOCA=12.7;
 const V3=(x,z,k,ced)=>{ const v=new THREE.Vector3(x,0,z); v.k=k==null?1:k; if(ced) v.ced=ced; return v; };
 function curva(a,c,b,n,k){ const pts=[]; for(let i=1;i<=n;i++){ const t=i/n, u=1-t; pts.push(V3(u*u*a.x+2*u*t*c.x+t*t*b.x,u*u*a.z+2*u*t*c.z+t*t*b.z,k==null?0.45:k)); } return pts; }
 const TRANSITO=[];
@@ -7058,16 +7058,16 @@ const R={
   subir:(ate)=>[V3(ate,FZ_SOBE,0.68)],
   descer:(ate)=>[V3(ate,FZ_DESCE,1.05)],
   subirParaMilton:()=>[V3(MM_ENTRA-2.2,FZ_SOBE,0.68)].concat(curva(V3(MM_ENTRA-2.2,FZ_SOBE),V3(MM_ENTRA,FZ_SOBE),V3(MM_ENTRA,MM_BOCA),7),[V3(MM_ENTRA,MM_Z1,0.8)]),
-  descerParaMilton:()=>[V3(MM_SAI+2.4,FZ_DESCE,1.05,()=>vemAlguem(MM_ENTRA-9,MM_SAI+1,FZ_SOBE-0.6,FZ_SOBE+0.6))].concat(curva(V3(MM_SAI+2.4,FZ_DESCE),V3(MM_ENTRA,FZ_DESCE),V3(MM_ENTRA,MM_BOCA),9),[V3(MM_ENTRA,MM_Z1,0.8)]),
-  miltonSai:()=>[V3(MM_SAI,MM_Z1,0.8),V3(MM_SAI,MM_BOCA+0.3,0.5,()=>vemAlguem(MILTON_X-9,MILTON_X+9,FZ_DESCE-0.7,FZ_SOBE+0.7))],
-  miltonDireita:()=>curva(V3(MM_SAI,MM_BOCA+0.3),V3(MM_SAI,FZ_SOBE),V3(MM_SAI+2.2,FZ_SOBE),7),
-  miltonEsquerda:()=>curva(V3(MM_SAI,MM_BOCA+0.3),V3(MM_SAI,FZ_DESCE),V3(MM_SAI-2.6,FZ_DESCE),9),
+  descerParaMilton:()=>[V3(MM_SAI+2.4,FZ_DESCE,1.05)].concat(curva(V3(MM_SAI+2.4,FZ_DESCE),V3(MM_ENTRA,FZ_DESCE),V3(MM_ENTRA,MM_BOCA),9),[V3(MM_ENTRA,MM_Z1,0.8)]),
+  miltonSai:()=>[V3(MM_SAI,MM_Z1,0.8),V3(MM_SAI,MM_BOCA+0.9,0.5)],
+  miltonDireita:()=>curva(V3(MM_SAI,MM_BOCA+0.9),V3(MM_SAI,FZ_SOBE),V3(MM_SAI+2.2,FZ_SOBE),7),
+  miltonEsquerda:()=>curva(V3(MM_SAI,MM_BOCA+0.9),V3(MM_SAI,FZ_DESCE),V3(MM_SAI-2.6,FZ_DESCE),9),
 };
 function sortearRota(){ const r=Math.random(), livre=!ruaOcupada();
   if(r<0.42||!livre){ const sul=Math.random()<0.5; return {pts:sul?R.brSul(pega(BR_SUL)):R.brNorte(pega(BR_NORTE)),felice:false,br:true}; }
-  if(r<0.62){ const p=R.brParaFelice(); return {pts:Math.random()<0.25?p.concat(R.subirParaMilton()):p.concat(R.subir(F_X1)),felice:true}; }
-  if(r<0.86){ const p=[V3(F_X1,FZ_DESCE,1.05)]; return {pts:Math.random()<0.2?p.concat(R.descerParaMilton()):p.concat(R.feliceParaBR()),felice:true}; }
-  const p=R.miltonSai(); return {pts:Math.random()<0.5?p.concat(R.miltonDireita(),R.subir(F_X1)):p.concat(R.miltonEsquerda(),R.feliceParaBR()),felice:true}; }
+  if(r<0.62){ const p=R.brParaFelice(), vira=Math.random()<0.25; return {pts:vira?p.concat(R.subirParaMilton()):p.concat(R.subir(F_X1)),felice:true,manobra:vira?'V':'S'}; }
+  if(r<0.86){ const p=[V3(F_X1,FZ_DESCE,1.05)], vira=Math.random()<0.2; return {pts:vira?p.concat(R.descerParaMilton()):p.concat(R.feliceParaBR()),felice:true,manobra:vira?'VE':'D'}; }
+  const p=R.miltonSai(); return {pts:Math.random()<0.5?p.concat(R.miltonDireita(),R.subir(F_X1)):p.concat(R.miltonEsquerda(),R.feliceParaBR()),felice:true,manobra:'VM'}; }
 // veículos da loja (caminhão, van, ônibus, carro do Edu) também são obstáculos
 function especiais(){ const l=[]; if(typeof caminhao!=='undefined'&&caminhao.visible&&FORN.estado!=='parado') l.push(caminhao); if(typeof vanPdr!=='undefined'&&vanPdr.visible&&!['parado','aguardando'].includes(VAN.estado)) l.push(vanPdr);
   if(typeof carroEdu!=='undefined'&&carroEdu.visible&&['partindo','chegando','saindoBR'].includes(atacFase)) l.push(carroEdu); FROTA_ONIBUS.forEach(o=>{ if(o.ativo&&o.estado!=='parado') l.push(o.g); }); return l; }
@@ -7075,6 +7075,16 @@ const _hd=new THREE.Vector3(), _d=new THREE.Vector3();
 function livreAFrente(v,pos,hd){ // distância até o próximo veículo na mesma faixa, à frente
   let m=99; const olha=(p,larg)=>{ _d.subVectors(p,pos); const al=_d.x*hd.x+_d.z*hd.z, lat=Math.abs(_d.x*hd.z-_d.z*hd.x); if(al>0.3&&al<7&&lat<larg) m=Math.min(m,al); };
   TRANSITO.forEach(o=>{ if(o!==v) olha(o.g.position,o.caminhaoBR||v.caminhaoBR?1.15:0.95); }); especiais().forEach(g=>olha(g.position,1.15)); return m; }
+// Olha o caminho que o veículo VAI fazer (inclusive a curva), e não só uma linha reta à frente:
+// devolve a distância, pelo trajeto, até o primeiro veículo que ocupa esse caminho.
+const _a=new THREE.Vector3(), _b=new THREE.Vector3();
+function caminhoLivre(v,p){
+  const outros=TRANSITO.filter(o=>o!==v).map(o=>[o.g.position,o.caminhaoBR?1.5:1.25]).concat(especiais().map(g=>[g.position,1.7]));
+  let s=0, x=p.x, z=p.z, i=v.rota.i; const pts=v.rota.pts;
+  while(s<7&&i<pts.length){ const q=pts[i], dx=q.x-x, dz=q.z-z, L=Math.hypot(dx,dz);
+    if(L<1e-4){ i++; continue; } const passo=Math.min(0.4,L); x+=dx/L*passo; z+=dz/L*passo; s+=passo; if(passo>=L) i++;
+    for(const [o,raio] of outros){ if(Math.hypot(o.x-x,o.z-z)<raio) return s; } }
+  return 99; }
 function andarRota(obj,r,vmax,dt){ // move um objeto pela lista de pontos; devolve true quando chega no fim
   let resta=vmax*dt;
   while(resta>0&&r.i<r.pts.length){ const alvo=r.pts[r.i]; _d.subVectors(alvo,obj.position); _d.y=0; const dd=_d.length();
@@ -7095,6 +7105,35 @@ const Z_DESVIO=9.75;
 function desvioZ(x,zFaixa,eu){ if(zFaixa>9.8) return 0; let f=0;
   for(const [x0,x1,z] of parados(eu)){ if(Math.abs(z-zFaixa)>1.3) continue; const k=Math.min((x-(x0-3.4))/2.2,((x1+3.4)-x)/2.2); if(k>0) f=Math.max(f,Math.min(1,k)); }
   f=f*f*(3-2*f); return (Z_DESVIO-zFaixa)*f; }
+// ---------- Cruzamento da Felice Del Paggio com a Milton Martins Moura ----------
+// Uma caixa de cruzamento: quem faz conversão só entra com a caixa vazia; quem segue reto não entra se tiver
+// alguém convertendo dentro dela, nem se a fila do outro lado não deixar espaço para sair (não bloqueia o cruzamento).
+// Quem vem pela Milton para no PARE; quem converte à esquerda espera a mão contrária. Se alguém espera muito,
+// quem segue reto dá a vez (ninguém fica parado para sempre e ninguém atravessa ninguém).
+const CRUZ={x0:MILTON_X-3.3,x1:MILTON_X+3.3,z0:7.8,z1:12.9,dono:null};   // dono: quem está fazendo conversão agora (só um por vez)
+const naCaixa=(q,m)=>q.x>CRUZ.x0-(m||0)&&q.x<CRUZ.x1+(m||0)&&q.z>CRUZ.z0-(m||0)&&q.z<CRUZ.z1+(m||0);
+const _q=new THREE.Vector3();
+function distCaixa(p,hd){ if(naCaixa(p)) return 0; for(let t=0.25;t<=4;t+=0.25){ _q.set(p.x+hd.x*t,0,p.z+hd.z*t); if(naCaixa(_q)) return t; } return 99; }
+function podeEntrar(v,p,hd){
+  const vira=v.manobra&&v.manobra[0]==='V', outros=TRANSITO.filter(o=>o!==v), dentro=outros.filter(o=>naCaixa(o.g.position,0.4));
+  const esp=especiais().filter(g=>naCaixa(g.position,0.6)||(Math.abs(g.position.z-FZ_DESCE)<1.5||Math.abs(g.position.z-FZ_SOBE)<1.5)&&g.position.x>CRUZ.x0-20&&g.position.x<CRUZ.x1+20);
+  if(CRUZ.dono&&!TRANSITO.includes(CRUZ.dono)) CRUZ.dono=null;
+  if(vira){
+    if(CRUZ.dono&&CRUZ.dono!==v) return false;
+    if(dentro.length) return false;
+    if(esp.length) return false;
+    // ninguém seguindo reto pode estar chegando ao cruzamento (a mão principal tem a preferência)
+    const chegando=outros.some(o=>o.manobra&&!(o.manobra[0]==='V')&&o.naFelice&&!naCaixa(o.g.position)&&((o.manobra==='S'&&o.g.position.x<CRUZ.x0&&o.g.position.x>CRUZ.x0-6)||(o.manobra==='D'&&o.g.position.x>CRUZ.x1&&o.g.position.x<CRUZ.x1+6))&&(o.spd>0.5||o.entrou));
+    if(chegando) return false;   // quem vem reto passa primeiro (e dá a vez depois de 7 s de espera, veja abaixo)
+    return !outros.some(o=>o.manobra&&o.manobra[0]==='V'&&o.naLinha&&(o.espBox||0)>(v.espBox||0));   // quem chegou primeiro vai primeiro
+  }
+  if(CRUZ.dono&&CRUZ.dono!==v) return false;
+  if(dentro.some(o=>o.manobra&&o.manobra[0]==='V')) return false;
+  if(outros.some(o=>o.manobra&&o.manobra[0]==='V'&&o.naLinha&&(o.espBox||0)>7)&&!(v.naLinha&&(v.espBox||0)>14)) return false;   // dá a vez para quem espera há muito tempo na linha
+  // espaço para sair do outro lado
+  const sobe=v.manobra==='S', saida=sobe?CRUZ.x1:CRUZ.x0, zf=sobe?FZ_SOBE:FZ_DESCE;
+  if(outros.some(o=>Math.abs(o.g.position.z-zf)<0.7&&(sobe?o.g.position.x>saida-0.5&&o.g.position.x<saida+3.2:o.g.position.x<saida+0.5&&o.g.position.x>saida-3.2)&&o.spd<1)) return false;
+  return true; }
 let tTransito=1, tPed=1;
 function atualizarTransito(dt){
   const h=horaAgora(), mov=FLUXO_HORA[Math.floor(h)];
@@ -7105,8 +7144,13 @@ function atualizarTransito(dt){
     let alvoV=v.base*alvo.k;
     // preferência: para antes do ponto de espera (placa de PARE, conversão) enquanto vier alguém
     if(alvo.ced&&dd<1.6&&!v.liberado){ if(alvo.ced()) { alvoV=0; v.esperou=(v.esperou||0)+dt; } else v.liberado=true; if(v.esperou>9) v.liberado=true; }
-    const gap=livreAFrente(v,p,_hd); if(gap<7){ alvoV=Math.min(alvoV,Math.max(0,(gap-2.8)*1.6)); }
-    if(alvoV<0.05){ v.parado=(v.parado||0)+dt; if(v.parado>6) v.liberado=true; } else v.parado=0;   // depois de esperar, libera a preferência, mas nunca atravessa outro veículo
+    const gap=caminhoLivre(v,p); if(gap<7){ alvoV=Math.min(alvoV,Math.max(0,(gap-1.9)*1.6)); }   // para com uns 3 m de para-choque a para-choque
+    if(v.manobra){ const dc=distCaixa(p,_hd);
+      v.naLinha=false;
+      if(dc>0&&dc<4){ if(!v.entrou&&!podeEntrar(v,p,_hd)){ alvoV=Math.min(alvoV,Math.max(0,(dc-0.6)*2.2)); if(dc<1.6){ v.naLinha=true; v.espBox=(v.espBox||0)+dt; } } else if(dc<1.2){ v.entrou=true; if(v.manobra[0]==='V') CRUZ.dono=v; } }
+      else if(dc===0){ v.entrou=true; if(v.manobra[0]==='V'&&!CRUZ.dono) CRUZ.dono=v; }
+      if(naCaixa(p)) v.jaDentro=true; else if(v.jaDentro&&!naCaixa(p,0.8)&&CRUZ.dono===v) CRUZ.dono=null; }
+    if(alvoV<0.05) v.parado=(v.parado||0)+dt; else v.parado=0;   // nunca atravessa outro veículo: espera
     v.spd+=Math.max(-14*dt,Math.min(6*dt,alvoV-v.spd));
     const antes=r.i; andarRota(v.g,r,v.spd,dt); if(r.i!==antes) v.liberado=false;
     v.dz=(v.felice&&p.x>-27&&Math.abs(p.z-FZ_DESCE)<0.3)?desvioZ(p.x,p.z,null):0; p.z+=v.dz;
@@ -7118,7 +7162,7 @@ function atualizarTransito(dt){
     if(TRANSITO.length<16){ const rota=sortearRota(), ini=rota.pts[0];
       if(!TRANSITO.some(o=>o.g.position.distanceTo(ini)<7)){
         const caminhao=rota.br&&Math.random()<0.3, v=caminhao?caminhaoBR():veiculoRua();
-        v.caminhaoBR=caminhao; v.base=caminhao?rnd(7,8.5):v.moto?rnd(8.5,10):rnd(7,8.6); v.spd=v.base*ini.k; v.felice=rota.felice;
+        v.caminhaoBR=caminhao; v.base=caminhao?rnd(7,8.5):v.moto?rnd(8.5,10):rnd(7,8.6); v.spd=v.base*ini.k; v.felice=rota.felice; v.manobra=rota.manobra||null;
         v.rota={pts:rota.pts.slice(1),i:0}; v.g.position.copy(ini); const nx=rota.pts[1]; v.g.rotation.y=-Math.atan2(nx.z-ini.z,nx.x-ini.x);
         scene.add(v.g); TRANSITO.push(v); } } }
   // pedestres na calçada (desviam do ponto de ônibus)
