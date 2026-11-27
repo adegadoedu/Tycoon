@@ -1022,7 +1022,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 26/11/2026 · 20h30 · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 26/11/2026 · 21h45 · 🎄</p>
   </div>
 </section>
 
@@ -1118,6 +1118,33 @@ body:not(.jogando) .alerta{display:none}
   </div>
 </section>
 
+<script>
+/* rede de segurança da abertura: se algo falhar, a tela de "Abrindo a adega…" mostra o motivo e um botão para tentar de novo */
+(function(){
+  var erro='';
+  window.addEventListener('error',function(e){ if(erro) return; var t=e&&e.target, u=t&&(t.src||t.href); if(t&&t!==window&&!/three|\.js/.test(u||'')) return; erro=u?'não carregou '+String(u).split('/').pop():(((e&&e.message)||'erro desconhecido')+(e&&e.lineno?' (linha '+e.lineno+')':'')); },true);
+  function temCopia(){ try{ var a=localStorage.getItem('adegaEdu.tycoon.v2.ok'); return !!a&&a!==localStorage.getItem('adegaEdu.tycoon.v2'); }catch(e){ return false; } }
+  function aviso(){
+    var c=document.getElementById('carregandoAdega'); if(!c) return;
+    var semTres=typeof THREE==='undefined';
+    c.innerHTML='<p class="titulo">Adega do Edu</p><span style="animation:none;max-width:22rem;text-align:center;line-height:1.35">'+
+      (semTres?'A internet não trouxe todos os arquivos do jogo.':'A adega não conseguiu abrir.')+
+      '<br>Toque no botão para tentar de novo.</span>'+
+      '<button type="button" id="btnTentar" style="font:900 1.1rem Nunito,system-ui,sans-serif;padding:12px 22px;border-radius:16px;border:3px solid #2A1A12;background:#3FBF7F;color:#fff;box-shadow:0 4px 0 #2A1A12;cursor:pointer">🔄 Tentar de novo</button>'+
+      (temCopia()?'<button type="button" id="btnCopia" style="font:800 .95rem Nunito,system-ui,sans-serif;padding:8px 16px;border-radius:14px;border:3px solid #2A1A12;background:#FFF7E6;color:#2A1A12;cursor:pointer">💾 Abrir com a cópia de segurança</button>':'')+
+      (erro?'<small style="opacity:.75;font-weight:700;max-width:22rem;text-align:center;word-break:break-word">Detalhe: '+String(erro).replace(/</g,'&lt;').slice(0,160)+'</small>':'');
+    var bc=document.getElementById('btnCopia'); if(bc) bc.onclick=function(){ try{ localStorage.setItem('adegaEdu.tycoon.v2',localStorage.getItem('adegaEdu.tycoon.v2.ok')); }catch(e){} location.replace(location.pathname+'?v='+Date.now()); };
+    document.getElementById('btnTentar').onclick=function(){
+      var limpar=[];
+      try{ if(navigator.serviceWorker) navigator.serviceWorker.getRegistrations().then(function(r){ r.forEach(function(x){ x.unregister(); }); }); }catch(e){}
+      try{ if(window.caches) limpar.push(caches.keys().then(function(k){ return Promise.all(k.map(function(n){ return caches.delete(n); })); })); }catch(e){}
+      Promise.all(limpar).catch(function(){}).then(function(){ location.replace(location.pathname+'?v='+Date.now()); });
+    };
+  }
+  window.addEventListener('load',function(){ setTimeout(function(){ if(typeof THREE==='undefined'||erro) aviso(); },1500); });
+  setTimeout(aviso,15000);
+})();
+</script>
 <script src="three.min.js"></script>
 <script>
 (function(){
@@ -6786,8 +6813,23 @@ else if(S.saiu){ $('#telaInicio').hidden=true; mostrarSaiu(); }
 else if(!S.viuInicio){ $('#telaInicio').hidden=false; }
 else if(S.viuInicio){ $('#telaInicio').hidden=true; if(!verificarOffline()) document.body.classList.add('jogando'); sincronizar(); setTimeout(()=>{ if(S.certificado) mostrarCertificado(); else if(S.perfil&&!S.perfil.visual&&!S.falido) abrirPersonagem({primeiraVez:true,depois:pedirSenhaSeNecessario}); else pedirSenhaSeNecessario(); },1200); }
 aplicarVisualJogador();
-laco();
-{ const c=document.getElementById('carregandoAdega'); if(c) c.remove(); }
+setTimeout(()=>{ laco(); const c=document.getElementById('carregandoAdega'); if(c) c.remove(); copiaSeguranca(); setInterval(copiaSeguranca,5*60*1000); },0);   // começa quando o jogo inteiro já foi lido
+// versão nova: de tempos em tempos o jogo confere se o site tem versão mais nova e oferece atualizar
+const versaoDe=t=>((String(t).match(/Versão ([^<]+?)\s*<\/p>/)||[])[1]||'').trim();
+const VERSAO_JOGO=versaoDe(document.documentElement.innerHTML);
+async function conferirVersao(){
+  if(!VERSAO_JOGO||!/^https?:/.test(location.protocol)||document.getElementById('avisoVersao')) return;
+  try{ const r=await fetch(location.pathname+'?versao='+Date.now(),{cache:'no-store'}); if(!r.ok) return; const v=versaoDe(await r.text());
+    if(v&&v!==VERSAO_JOGO){ const b=document.createElement('button'); b.id='avisoVersao'; b.type='button';
+      b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 74px);z-index:9;font:900 .95rem Nunito,system-ui,sans-serif;padding:10px 18px;border-radius:999px;border:3px solid #2A1A12;background:#FFC93C;color:#2A1A12;box-shadow:0 4px 0 #2A1A12;cursor:pointer;max-width:92vw';
+      b.textContent='🆕 Saiu uma versão nova do jogo! Toque para atualizar';
+      b.onclick=()=>{ salvar(); location.replace(location.pathname+'?v='+Date.now()); };
+      document.body.appendChild(b); } }catch(e){}
+}
+setTimeout(conferirVersao,20000); setInterval(conferirVersao,10*60*1000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) conferirVersao(); });
+// cópia de segurança: guarda o último progresso que abriu bem (usada pela tela de erro da abertura)
+function copiaSeguranca(){ setTimeout(()=>{ try{ const v=localStorage.getItem(CHAVE); if(v) localStorage.setItem(CHAVE+'.ok',v); }catch(e){} },8000); }
 if(location.hash==='#mapa'){ // voltou do Motoca pelo mapa
   try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
   if(S.perfil&&S.viuInicio&&!S.falido&&!S.saiu) setTimeout(()=>{ if(document.body.classList.contains('jogando')&&!algumaTelaAberta()) abrirMapa({quieto:true}); },400);
