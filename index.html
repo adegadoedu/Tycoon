@@ -1025,7 +1025,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 27/11/2026 · 18h30 · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 27/11/2026 · 19h45 · 🎄</p>
   </div>
 </section>
 
@@ -4329,7 +4329,7 @@ const PARADA_ONIBUS_X=PONTO_X+2.22;   // ônibus no sentido da adega para com a 
   pl.rotation.y=-0.45;
 })();
 function desembarcarPassageiro(){
-  if(!document.body.classList.contains('jogando')||clientes.length>=MAX_CLIENTES_MIN) return false;
+  if(!document.body.classList.contains('jogando')||clientes.length>=limiteClientesMin()) return false;
   novoCliente(); const c=clientes[clientes.length-1];
   c.g.position.set(PONTO_X-0.2+rnd(-0.15,0.15),0,PONTO_Z+0.45);
   c.caminho=[new THREE.Vector3(PONTO_X-1.6,0,7.55),new THREE.Vector3(PONTO_X-1.6,0,6.2),FORA_PORTA.clone(),PORTA.clone()];   // contorna o abrigo do ponto pela lateral
@@ -6677,7 +6677,7 @@ function renderPainel(){
   } else if(k==='letreiro'){
     h+=`<div class="cab"><div class="ic">📣</div><div><h3>Letreiro da calçada</h3><p>Atrai mais clientes para a adega.</p></div></div>
     <div class="stats"><div class="stat"><span>Clientes por minuto</span><b>${porMinTxt()}${S.letreiro<MAX_LETREIRO?` <span class="prox">→ ${porMinTxt(S.letreiro+1)}</span>`:''}</b></div></div>`+
-    (S.letreiro<MAX_LETREIRO?btnCusto(custoLetreiro(),'Melhorar','bAcao'):'<button class="btn" disabled>Limite de '+MAX_CLIENTES_MIN+' clientes por minuto</button>');
+    (S.letreiro<MAX_LETREIRO?btnCusto(custoLetreiro(),'Melhorar','bAcao'):'<button class="btn" disabled>Limite de '+MAX_CLIENTES_MIN+' clientes por minuto</button>')+`<p class="compra-nota">🔥 Nos horários de pico da Adega o limite sobe para <b>10 por minuto</b>: todo dia das 18h às 19h, sexta das 19h às 22h, sábado das 16h às 22h e domingo das 13h às 16h.${picoAgora()?' <b>É pico agora!</b>':''}</p>`;
   }
   el.innerHTML=h;
   $('#btnFechar').onclick=fecharPainel;
@@ -6894,7 +6894,7 @@ function laco(){
   if(document.body.classList.contains('jogando')){
     S.tempoJogo=(S.tempoJogo||0)+dt;
     proxCliente-=dt;
-    if(proxCliente<=0){ if(clientes.length<18) novoCliente(); proxCliente=intervalo()*rnd(0.75,1.25)/(tempoPronto?fluxoAgora():1); }
+    if(proxCliente<=0){ if(clientes.length<18) novoCliente(); proxCliente=proximoCliente(); }
     atualizarClientes(dt);
     atualizarFiado(dt);
     atualizarContas(dt);
@@ -7058,6 +7058,17 @@ function efDia(d){
   const r={f:base.f,peso,txt:ev&&TXT_EV[ev.id]?ev.ic+' '+TXT_EV[ev.id][0].toUpperCase()+TXT_EV[ev.id].slice(1)+(fer?` (feriado de ${fer})`:''):base.txt,fer,ev};
   return _efCache[k]=r;
 }
+// Horários de pico da Adega de verdade: o limite sobe de 5 para 10 clientes por minuto
+// (todo dia das 18h às 19h; sexta das 19h às 22h; sábado das 16h às 22h; domingo das 13h às 16h)
+const PICOS=[{d:null,de:18,ate:19},{d:4,de:19,ate:22},{d:5,de:16,ate:22},{d:6,de:13,ate:16}];   // d: 0 = segunda … 6 = domingo
+function picoAgora(){ if(typeof horaAgora!=='function') return null; const h=horaAgora(), w=diaSemana(diaAgora()); return PICOS.find(p=>(p.d===null||p.d===w)&&h>=p.de&&h<p.ate)||null; }
+const limiteClientesMin=()=>picoAgora()?10:MAX_CLIENTES_MIN;
+function proximoCliente(){ const pico=!!(tempoPronto&&picoAgora()), base=60/intervalo()*(tempoPronto?fluxoAgora():1)*(pico?2:1), taxa=Math.max(0.5,Math.min(limiteClientesMin(),base)); return 60/taxa*rnd(0.75,1.25); }
+let avisouPico=null;
+function avisoPico(){ if(!tempoPronto||!document.body.classList.contains('jogando')) return; const p=picoAgora(), k=p?diaAgora()+'-'+p.de:null;
+  if(p&&avisouPico!==k){ avisouPico=k; toastMissao(`🔥 Horário de pico na Adega! Até ${p.ate}h, o limite sobe para 10 clientes por minuto.`); }
+  if(!p) avisouPico=null; }
+setInterval(avisoPico,5000);
 function fluxoAgora(){ const d=diaAgora(); return FLUXO_HORA[Math.floor(horaAgora())]*CLIMAS[climaDia(d)].f*efDia(d).f; }
 function pesoSetor(id){ const d=diaAgora(), c=CLIMAS[climaDia(d)], w=efDia(d); return ((c.peso&&c.peso[id])||1)*((w.peso&&w.peso[id])||1); }
 // próximas datas que mexem com a adega (eventos e feriados)
@@ -7554,9 +7565,12 @@ const _a=new THREE.Vector3(), _b=new THREE.Vector3();
 function caminhoLivre(v,p){
   const outros=TRANSITO.filter(o=>o!==v).map(o=>[o.g.position,o.caminhaoBR?1.5:1.25]).concat(especiais().map(g=>[g.position,1.7]),pedestresNaRua().map(g=>[g.position,1.1]));
   let s=0, x=p.x, z=p.z, i=v.rota.i; const pts=v.rota.pts;
+  let hx=Math.cos(-v.g.rotation.y), hz=Math.sin(-v.g.rotation.y); if(i<pts.length){ const q=pts[i], L=Math.hypot(q.x-p.x,q.z-p.z); if(L>0.05){ hx=(q.x-p.x)/L; hz=(q.z-p.z)/L; } }
   while(s<7&&i<pts.length){ const q=pts[i], dx=q.x-x, dz=q.z-z, L=Math.hypot(dx,dz);
     if(L<1e-4){ i++; continue; } const passo=Math.min(0.4,L); x+=dx/L*passo; z+=dz/L*passo; s+=passo; if(passo>=L) i++;
-    for(const [o,raio] of outros){ if(Math.hypot(o.x-x,o.z-z)<raio) return s; } }
+    for(const [o,raio] of outros){ if(Math.hypot(o.x-x,o.z-z)<raio){ const ox=o.x-p.x, oz=o.z-p.z, dd=Math.hypot(ox,oz);
+        if(dd<0.05||ox*hx+oz*hz<0.35*dd) continue;   // do lado ou atrás: não é "quem está na frente" (evita os dois esperarem um pelo outro)
+        return s; } } }
   return 99; }
 function andarRota(obj,r,vmax,dt){ // move um objeto pela lista de pontos; devolve true quando chega no fim
   let resta=vmax*dt;
@@ -7619,13 +7633,17 @@ function atualizarTransito(dt){
     let alvoV=v.base*alvo.k;
     // preferência: para antes do ponto de espera (placa de PARE, conversão) enquanto vier alguém
     if(alvo.ced&&dd<1.6&&!v.liberado){ if(alvo.ced()) { alvoV=0; v.esperou=(v.esperou||0)+dt; } else v.liberado=true; if(v.esperou>9) v.liberado=true; }
-    const gap=caminhoLivre(v,p); if(gap<7){ alvoV=Math.min(alvoV,Math.max(0,(gap-1.9)*1.6)); }   // para com uns 3 m de para-choque a para-choque
+    const esperandoPare=alvo.ced&&dd<1.6&&!v.liberado;
+    if(!esperandoPare&&(v.parado||0)>14&&!(v.forca>0)) v.forca=3.5;   // ninguém fica travado para sempre
+    if(v.forca>0) v.forca-=dt;
+    const gap=v.forca>0?99:caminhoLivre(v,p); if(gap<7){ alvoV=Math.min(alvoV,Math.max(0,(gap-1.9)*1.6)); }   // para com uns 3 m de para-choque a para-choque
+    if(v.forca>0) alvoV=Math.max(alvoV,Math.min(v.base*0.4,2.5));
     if(v.manobra){ const dc=distCaixa(p,_hd);
       v.naLinha=false;
-      if(dc>0&&dc<4){ if(!v.entrou&&!podeEntrar(v,p,_hd)){ alvoV=Math.min(alvoV,Math.max(0,(dc-0.6)*2.2)); if(dc<1.6){ v.naLinha=true; v.espBox=(v.espBox||0)+dt; } } else if(dc<1.2){ v.entrou=true; if(v.manobra[0]==='V') CRUZ.dono=v; } }
+      if(dc>0&&dc<4){ if(!v.entrou&&!(v.forca>0)&&!podeEntrar(v,p,_hd)){ alvoV=Math.min(alvoV,Math.max(0,(dc-0.6)*2.2)); if(dc<1.6){ v.naLinha=true; v.espBox=(v.espBox||0)+dt; } } else if(dc<1.2){ v.entrou=true; if(v.manobra[0]==='V') CRUZ.dono=v; } }
       else if(dc===0){ v.entrou=true; if(v.manobra[0]==='V'&&!CRUZ.dono) CRUZ.dono=v; }
       if(naCaixa(p)) v.jaDentro=true; else if(v.jaDentro&&!naCaixa(p,0.8)&&CRUZ.dono===v) CRUZ.dono=null; }
-    if(alvoV<0.05) v.parado=(v.parado||0)+dt; else v.parado=0;   // nunca atravessa outro veículo: espera
+    if(alvoV<0.05&&!esperandoPare) v.parado=(v.parado||0)+dt; else if(alvoV>=0.05) v.parado=0;   // nunca atravessa outro veículo: espera
     v.spd+=Math.max(-14*dt,Math.min(6*dt,alvoV-v.spd));
     const antes=r.i; andarRota(v.g,r,v.spd,dt); if(r.i!==antes) v.liberado=false;
     v.dz=(v.felice&&p.x>-27&&Math.abs(p.z-FZ_DESCE)<0.3)?desvioZ(p.x,p.z,null):0; p.z+=v.dz;
