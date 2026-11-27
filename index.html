@@ -1025,7 +1025,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 27/11/2026 · 16h · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 27/11/2026 · 17h · 🎄</p>
   </div>
 </section>
 
@@ -2270,7 +2270,7 @@ function atualizarFornecedor(dt){
     rodas.forEach(r=>r.rotation.y-=dt*12);
     if(F.rota){ if(andarRota(caminhao,F.rota,7,dt)){ F.rota=null; caminhao.visible=false; F.estado='ocioso'; } }
     else { const alvo=F.estado==='chegando'?PARADA_X:F_X0+0.4, v=F.estado==='chegando'?Math.min(6.5,1.2+(caminhao.position.x-PARADA_X)*1.2):Math.min(7,2+(PARADA_X-caminhao.position.x)*0.8);
-      caminhao.position.x=Math.max(alvo,caminhao.position.x-v*dt); caminhao.position.z=Z_RUA+desvioZ(caminhao.position.x,Z_RUA,caminhao); caminhao.rotation.y=Math.PI;
+      caminhao.position.x=Math.max(alvo,caminhao.position.x-v*dt); caminhao.position.z=Z_RUA+desvioZ(caminhao.position.x,Z_RUA,caminhao); rumoDesvio(caminhao,caminhao.position.x,Z_RUA,-1);
       if(caminhao.position.x<=alvo){ if(F.estado==='chegando') F.estado='parado'; else F.rota=rotaSaidaEspecial(Z_RUA); } }
   }
   else if(F.estado==='parado'){
@@ -3179,6 +3179,7 @@ function velAlvoAtac(dt){
   return v;
 }
 function batidaAtac(o){
+  ENT.vx=(ENT.vx||0)*-0.3;
   const E=ENT, frente=o.vz>0||o.vd>0, valor=frente?FUNILARIA*3:FUNILARIA;
   E.batidas++; E.funilaria+=valor; E.inv=1.4; E.lane=E.laneAnt!=null?E.laneAnt:E.lane; E.vel=Math.min(E.vel,2.5); o.para=1.6; SOM.erro();
   avisoEnt(frente?`💥 Batida de frente na contramão! Funilaria +${fmt(valor)}`:o.vd===0?`💥 Raspou no carro estacionado! Funilaria +${fmt(valor)}`:`💥 Trocou de faixa sem olhar! Funilaria +${fmt(valor)}`);
@@ -3213,7 +3214,7 @@ function iniciarViagemAtac(){
   $('#telaAtac').hidden=true;
   limparPista(); montarVeiculoViagem();
   Object.assign(ENT,{ativo:true,modo:'atac',estado:'contagem',t:3,z:0,dist:0,vel:0,lane:1,laneAnt:1,x:0,y:0,vy:0,desl:0,moedas:0,prox:-40,escudo:false,inv:0,alvo:430,batidas:0,funilaria:0,bufPulo:0,
-    spawn:0,parouPare:false,tPare:0,avisoSaida:false,retorno:0,rampa:false,park:null,yaw:0,camX:null,lookX:null});
+    spawn:0,parouPare:false,tPare:0,avisoSaida:false,retorno:0,rampa:false,park:null,yaw:0,vx:0,camX:null,lookX:null});
   segmentos.forEach((s,i)=>{ s.g.position.z=-i*SEG+SEG/2; montarSegmentoAtac(s); }); ruaMontada=false;
   criarChegadaAtac(-ENT.alvo);
   for(let k=0;k<40;k++){ ENT.spawn=0; trafegoAtac(0); }                     // a rua já começa com movimento
@@ -3272,7 +3273,10 @@ function atualizarEntrega(dt){
     else while(E.prox>E.z-62&&E.prox>-E.alvo+28){ gerarLinha(E.prox); E.prox-=rnd(13.5,18.5)-Math.min(3,E.dist*0.004); }
     if(E.rampa){ const k=Math.max(0,Math.min(1,(E.dist-(E.alvo-RAMPA_ATAC))/RAMPA_ATAC)); E.x+=(xRampa(k)-E.x)*Math.min(1,dt*8);
       E.yaw=-Math.atan((X_LOTE-1.7)*6*k*(1-k)/RAMPA_ATAC); }
-    else E.x+=(FAIXAS[E.lane]-E.x)*Math.min(1,dt*(E.modo==='atac'?5:18));
+    else if(E.modo==='atac'){ const k=9, c=2*Math.sqrt(k), ax=k*(FAIXAS[E.lane]-E.x)-c*(E.vx||0);   // mola amortecida: sai devagar, curva e endireita
+      E.vx=(E.vx||0)+ax*dt; E.vx=Math.max(-3.2,Math.min(3.2,E.vx)); E.x+=E.vx*dt;
+      E.yaw=-Math.max(-0.42,Math.min(0.42,Math.atan2(E.vx,Math.max(E.vel,2.5)))); }
+    else E.x+=(FAIXAS[E.lane]-E.x)*Math.min(1,dt*18);
     if(E.bufPulo>0){ E.bufPulo-=dt; if(E.y===0&&E.vy===0){ E.vy=8.2; E.desl=0; E.bufPulo=0; } }
     if(E.y>0||E.vy>0){ E.vy-=24*dt; E.y=Math.max(0,E.y+E.vy*dt); if(E.y===0) E.vy=0; }
     if(E.desl>0) E.desl-=dt;
@@ -3297,7 +3301,7 @@ function atualizarEntrega(dt){
   moto.position.set(E.x,E.y,E.z); if(E.modo==='atac') moto.rotation.y=E.yaw||0;
   if(E.modo==='atac'&&ENT.cancela){ const perto=E.z-(-E.alvo); ENT.cancela.rotation.z=perto<9?Math.max(-1.45,(ENT.cancela.rotation.z||0)-dt*2.5):0; }
   if(motoCorpo) motoCorpo.visible=!(E.inv>0&&Math.floor(E.inv*10)%2===0);
-  if(motoCorpo){ if(E.estado!=='batida') motoCorpo.rotation.z=E.rampa?0:(FAIXAS[E.lane]-E.x)*-0.18; motoCorpo.rotation.x=E.y>0?-0.15:0; piloto.userData.corpo.scale.y=E.desl>0?0.72:1; }
+  if(motoCorpo){ if(E.estado!=='batida') motoCorpo.rotation.z=E.modo==='atac'?Math.max(-0.05,Math.min(0.05,(E.vx||0)*0.02)):(FAIXAS[E.lane]-E.x)*-0.18; motoCorpo.rotation.x=E.y>0?-0.15:0; piloto.userData.corpo.scale.y=E.desl>0?0.72:1; }
   const fimAtac=E.modo==='atac'&&(E.rampa||E.estado==='chegou'), cxA=fimAtac?E.x-1.2:E.x*0.55, lxA=fimAtac?E.x+0.8:E.x*0.35;
   if(E.modo!=='atac'||E.camX==null){ E.camX=cxA; E.lookX=lxA; } else { E.camX+=(cxA-E.camX)*Math.min(1,dt*2.5); E.lookX+=(lxA-E.lookX)*Math.min(1,dt*2.5); }
   camEnt.position.set(E.camX,4.1,E.z+6.8); camEnt.lookAt(E.lookX,0.7,E.z-9);
@@ -3405,7 +3409,7 @@ function atualizarPdr(dt){
     rodasVan.forEach(r=>r.rotation.y-=dt*12);
     if(VAN.rota){ if(andarRota(vanPdr,VAN.rota,7,dt)){ VAN.rota=null; vanPdr.visible=false; VAN.estado='ocioso'; const nAt=Object.keys(PARCEIROS).filter(k=>p.parceiros[k]).length; VAN.t=rnd(35,65)/(1+(nAt-1)*0.35); } }
     else { const alvo=VAN.estado==='chegando'?PARADA_VAN:F_X0+0.4, v=VAN.estado==='chegando'?Math.min(6.5,1.2+(vanPdr.position.x-PARADA_VAN)*1.2):Math.min(7,2+(PARADA_VAN-vanPdr.position.x)*0.8);
-      vanPdr.position.x=Math.max(alvo,vanPdr.position.x-v*dt); vanPdr.position.z=Z_VAN+desvioZ(vanPdr.position.x,Z_VAN,vanPdr); vanPdr.rotation.y=Math.PI;
+      vanPdr.position.x=Math.max(alvo,vanPdr.position.x-v*dt); vanPdr.position.z=Z_VAN+desvioZ(vanPdr.position.x,Z_VAN,vanPdr); rumoDesvio(vanPdr,vanPdr.position.x,Z_VAN,-1);
       if(vanPdr.position.x<=alvo){ if(VAN.estado==='chegando'){ VAN.estado='parado'; VAN.n=2+Math.floor(Math.random()*4)+(VAN.parceiro==='amazon'?1:0); } else VAN.rota=rotaSaidaEspecial(Z_VAN); } }
   }
   else if(VAN.estado==='parado'&&G.estado==='livre'){
@@ -4343,7 +4347,7 @@ function atualizarOnibus(dt){
     }
     o.rodas.forEach(r=>r.rotation.y-=dt*o.vel*2.6);
     if(o.rota){ if(andarRota(o.g,o.rota,o.dir>0?5.5:7,dt)){ o.rota=null; if(o.dir>0) o.g.rotation.y=0; else { o.ativo=false; o.g.visible=false; } } return; }
-    o.g.position.x+=o.dir*o.vel*dt; if(o.dir<0) o.g.position.z=FAIXAS_ONIBUS.volta.z+desvioZ(o.g.position.x,FAIXAS_ONIBUS.volta.z,o.g);
+    o.g.position.x+=o.dir*o.vel*dt; if(o.dir<0){ o.g.position.z=FAIXAS_ONIBUS.volta.z+desvioZ(o.g.position.x,FAIXAS_ONIBUS.volta.z,o.g); rumoDesvio(o.g,o.g.position.x,FAIXAS_ONIBUS.volta.z,-1); }
     if(o.dir<0&&o.g.position.x<=F_X0+0.4){ o.rota=rotaSaidaEspecial(o.g.position.z); return; }
     if(o.dir<0&&!o.parou&&o.g.position.x<=PARADA_ONIBUS_X){ o.g.position.x=PARADA_ONIBUS_X; o.parou=true; o.estado='parado'; o.t=3; o.tDesc=0.6; o.desc=1+Math.floor(Math.random()*3); o.desceram=0; }
     if(o.g.position.x>RUA_FIM+2){ o.ativo=false; o.g.visible=false; } });
@@ -4903,55 +4907,80 @@ function montarCarroEdu(){
 montarCarroEdu();
 const caixaEdu=new THREE.Group(); caixaEdu.position.set(0,0.6,0.3); caixaEdu.visible=false; eduDono.userData.corpo.add(caixaEdu);
 [0,0.26].forEach(y=>{contorno(malha(geoArred(0.42,0.24,0.32,0.03),toon(0xC8935A),caixaEdu,0,y,0),0.015); malha(new THREE.BoxGeometry(0.08,0.245,0.325),toon(0xE8D2A8),caixaEdu,0,y,0,false);});
-function carroNaVaga(){ carroEdu.position.copy(CARRO_PARADO); carroEdu.rotation.y=Math.PI; carroEdu.visible=!!(S&&S.atac); } // o carro só fica na frente da adega durante a viagem
+function carroNaVaga(){ carroEdu.position.copy(CARRO_PARADO); carroEdu.rotation.y=Math.PI; carroEdu.visible=false; }
 carroNaVaga();
+// pilha de caixas do atacarejo junto à porta (o Edu descarrega rápido e depois tira o carro da rua)
+const pilhaAtac=new THREE.Group(); pilhaAtac.position.set(PORTA.x-0.85,0,PORTA.z+0.15); scene.add(pilhaAtac);
+for(let i=0;i<6;i++){ const c=contorno(malha(geoArred(0.42,0.24,0.32,0.03),toon(0xC8935A),pilhaAtac,(i%2)*0.46-0.23,0.12+Math.floor(i/2)*0.25,0),0.015); c.visible=false; }
+function mostrarPilha(n){ pilhaAtac.children.forEach((c,i)=>c.visible=i<n); }
 // ---------- a viagem ----------
+// Ida: o Edu sai a pé até onde o carro fica estacionado. Volta: para na guia só para descarregar,
+// leva o carro para estacionar (não fica atrapalhando a rua) e volta andando para repor os setores.
+const CALCADA_LONGE=new THREE.Vector3(-22,0,6.0), CALCADA_MEIO=new THREE.Vector3(-9,0,6.0);
 let atacFase=null, avisoForn=false, atacAlvo=null, rotaEdu=null;
-function andarCarro(dt,alvoX,dir){ carroEdu.position.x+=dir*(dir>0?4.4:6.6)*dt; carroEdu.position.z=CARRO_PARADO.z+desvioZ(carroEdu.position.x,CARRO_PARADO.z,carroEdu); carroEdu.rotation.y=dir>0?0:Math.PI; rodasCarro.forEach(r=>r.rotation.y-=dt*12*dir); return dir>0?carroEdu.position.x>=alvoX:carroEdu.position.x<=alvoX; }
+function andarCarro(dt,alvoX,dir,frear){ const vmax=dir>0?4.4:6.6, falta=Math.abs(alvoX-carroEdu.position.x), v=frear?vmax*Math.max(0.18,Math.min(1,falta/5)):vmax;
+  carroEdu.position.x+=dir*v*dt; if(dir<0?carroEdu.position.x<alvoX:carroEdu.position.x>alvoX) carroEdu.position.x=alvoX;
+  carroEdu.position.z=CARRO_PARADO.z+desvioZ(carroEdu.position.x,CARRO_PARADO.z,carroEdu); rumoDesvio(carroEdu,carroEdu.position.x,CARRO_PARADO.z,dir);
+  rodasCarro.forEach(r=>r.rotation.y-=dt*v*1.8*dir); return dir>0?carroEdu.position.x>=alvoX:carroEdu.position.x<=alvoX; }
+const viagensDescarga=A=>Math.max(1,Math.ceil(Object.keys(A.itens).length/2));
 function proximaCaixa(){
   const A=S.atac, E=EDU, g=E.g;
   const pend=Object.keys(A.itens).filter(id=>!A.entregues.includes(id));
+  mostrarPilha(Math.min(6,pend.length*2));
   if(!pend.length) return false;
-  atacAlvo=pend[0]; caixaEdu.visible=true;
-  const desde=g.position.distanceTo(CARRO_PT)<0.6?[FORA_PORTA.clone(),PORTA.clone()]:rota(g.position,PORTA).concat([FORA_PORTA.clone(),CARRO_PT.clone(),FORA_PORTA.clone(),PORTA.clone()]);
-  E.caminho=desde.concat(rota(PORTA,pontoEst(atacAlvo,1))); atacFase='levando'; return true;
+  atacAlvo=pend[0]; caixaEdu.visible=true; mostrarPilha(Math.min(6,(pend.length-1)*2));
+  E.caminho=(g.position.distanceTo(PORTA)<0.6?[]:rota(g.position,PORTA)).concat(rota(PORTA,pontoEst(atacAlvo,1))); atacFase='levando'; return true;
 }
 function concluirAtacarejo(){
   const A=S.atac, C=Cmp(), E=EDU;
   let un=0; for(const id in A.itens) un+=A.itens[id];
   C.viagens++; C.un+=un; C.gasto+=A.custo; C.economia+=A.distrib-A.custo;
   toastMissao(A.distrib-A.custo>=0?`🚗 Viagem ao atacarejo: economia de ${fmt(A.distrib-A.custo)}`:`🚗 Viagem ao atacarejo: ${fmt(A.custo-A.distrib)} mais caro que o distribuidor`);
-  S.atac=null; atacFase=null; avisoForn=false; caixaEdu.visible=false; E.vel=1.2; E.estado='parado'; E.t=1.5; E.caminho=[];
+  S.atac=null; atacFase=null; avisoForn=false; caixaEdu.visible=false; mostrarPilha(0); E.vel=1.2; E.estado='parado'; E.t=1.5; E.caminho=[];
   const u=E.g.userData; u.pE.rotation.x=u.pD.rotation.x=0; u.corpo.position.y=0;
   salvar(); oferecerLicao('compras');
 }
+function comecarReposicao(){ const E=EDU; E.g.visible=true; E.vel=2.2; A_estacionou(); if(!proximaCaixa()) concluirAtacarejo(); }
+function A_estacionou(){ if(S.atac){ S.atac.estacionou=true; salvar(); } }
 function atualizarAtacarejo(dt){ // devolve true enquanto o Edu está fora da rotina normal
   const A=S.atac, E=EDU, g=E.g;
-  if(!A){ if(atacFase){ atacFase=null; g.visible=true; caixaEdu.visible=false; carroNaVaga(); } return false; }
+  if(!A){ if(atacFase){ atacFase=null; g.visible=true; caixaEdu.visible=false; mostrarPilha(0); carroNaVaga(); } return false; }
   const t=S.tempoJogo||0;
   if(!atacFase){ // começo da viagem, ou jogo reaberto no meio dela
-    E.vel=2.2; carroEdu.visible=true;
-    if(A.entregues.length||(t>=A.volta&&A.chegou)){ carroNaVaga(); g.visible=true; g.position.copy(CARRO_PT); if(!proximaCaixa()){ concluirAtacarejo(); return false; } }
-    else if(t-A.saiu<2){ carroNaVaga(); atacFase='indoCarro'; E.caminho=rota(g.position,PORTA).concat([FORA_PORTA.clone(),CARRO_PT.clone()]); }
-    else { atacFase='fora'; g.visible=false; carroEdu.visible=false; }
+    E.vel=2.2; carroEdu.visible=false;
+    if(A.entregues.length||A.chegou){ g.visible=true; g.position.copy(PORTA); atacFase='repondo'; comecarReposicao(); if(!S.atac) return false; }
+    else if(t-A.saiu<2){ atacFase='indoCarro'; E.vel=3; E.caminho=rota(g.position,PORTA).concat([FORA_PORTA.clone(),CALCADA_MEIO.clone(),CALCADA_LONGE.clone()]); }
+    else { atacFase='fora'; g.visible=false; }
   }
-  if(atacFase==='indoCarro'){ if(mover(E,dt)){ g.visible=false; atacFase='partindo'; } }
-  else if(atacFase==='partindo'){ if((carroEdu.position.x<CARRO_PARADO.x-0.05||!ruaPronta||ruaParaVeiculo())&&andarCarro(dt,F_X0+0.4,-1)){ atacFase='saindoBR'; rotaEdu=rotaSaidaEspecial(carroEdu.position.z); } }
-  else if(atacFase==='saindoBR'){ if(andarRota(carroEdu,rotaEdu,7,dt)){ carroEdu.visible=false; atacFase='fora'; } }
+  if(atacFase==='indoCarro'){ if(mover(E,dt)){ g.visible=false; E.vel=2.2; atacFase='fora'; } }
   else if(atacFase==='fora'){
     if(!S.gerente&&FORN.estado==='parado'&&!avisoForn){ avisoForn=true; toastMissao('🚚 O fornecedor chegou, mas o Edu está no atacarejo. Ninguém para receber!'); }
-    if(t>=A.volta&&(!ruaPronta||ruaParaVeiculo())){ carroEdu.visible=true; carroEdu.position.set(F_X1,0,CARRO_PARADO.z); atacFase='chegando'; }
+    if(t>=A.volta&&(!ruaPronta||ruaParaVeiculo())){ carroEdu.visible=true; carroEdu.position.set(F_X1,0,CARRO_PARADO.z); carroEdu.rotation.y=Math.PI; atacFase='chegando'; }
   }
   else if(atacFase==='chegando'){
-    if(andarCarro(dt,CARRO_PARADO.x,-1)){ carroNaVaga(); A.chegou=true; g.visible=true; g.position.copy(CARRO_PT); pop(CARRO_PT.clone().setY(2.2),'🚗 Voltei com as caixas!',''); toastMissao(`${veiculo().ic} O Edu voltou! Agora ele leva as caixas para cada setor.`); salvar(); if(!proximaCaixa()) concluirAtacarejo(); }
+    if(andarCarro(dt,CARRO_PARADO.x,-1,true)){ carroEdu.rotation.y=Math.PI; A.chegou=true; A.descargas=0; g.visible=true; g.position.copy(CARRO_PT); E.vel=2.6;
+      pop(CARRO_PT.clone().setY(2.2),'🚗 Voltei com as caixas!',''); toastMissao(`${veiculo().ic} O Edu voltou! Ele descarrega rapidinho e tira o carro da frente da adega.`); salvar();
+      caixaEdu.visible=true; E.caminho=[FORA_PORTA.clone(),PORTA.clone()]; atacFase='descarregando'; }
   }
+  else if(atacFase==='descarregando'){
+    if(mover(E,dt)){
+      if(caixaEdu.visible){ caixaEdu.visible=false; A.descargas=(A.descargas||0)+1; mostrarPilha(Math.min(6,A.descargas*2)); SOM.abrir&&SOM.abrir();
+        E.caminho=[FORA_PORTA.clone(),CARRO_PT.clone()]; }
+      else if(A.descargas<viagensDescarga(A)){ caixaEdu.visible=true; E.caminho=[FORA_PORTA.clone(),PORTA.clone()]; }
+      else { g.visible=false; atacFase='partindo'; pop(CARRO_PT.clone().setY(2.2),'🅿️ Vou estacionar','');
+        toastMissao('🅿️ O Edu foi estacionar o carro: parado na frente da adega ele atrapalha o trânsito e o ônibus.'); }
+    }
+  }
+  else if(atacFase==='partindo'){ if((!ruaPronta||ruaParaVeiculo()||carroEdu.position.x<CARRO_PARADO.x-0.05)&&andarCarro(dt,F_X0+0.4,-1)){ atacFase='saindoBR'; rotaEdu=rotaSaidaEspecial(carroEdu.position.z); } }
+  else if(atacFase==='saindoBR'){ if(andarRota(carroEdu,rotaEdu,7,dt)){ carroEdu.visible=false; atacFase='voltandoAPe'; g.visible=true; g.position.copy(CALCADA_LONGE); E.vel=3; E.caminho=[CALCADA_MEIO.clone(),FORA_PORTA.clone(),PORTA.clone()]; } }
+  else if(atacFase==='voltandoAPe'){ if(mover(E,dt)){ atacFase='repondo'; comecarReposicao(); } }
   else if(atacFase==='levando'){
     if(mover(E,dt)){
       const id=atacAlvo, e=S.est[id]; e.estoque=Math.min(cap(id),e.estoque+A.itens[id]); atualizarProdutos(id);
       A.entregues.push(id); caixaEdu.visible=false; SOM.marco();
       pop(objEst[id].g.position.clone().setY(2.7),`📦 +${A.itens[id]} do atacarejo`,'grande'); salvar(); if(painelAtual===id) renderPainel();
       if(Object.keys(A.itens).every(x=>A.entregues.includes(x))) concluirAtacarejo();
-      else { E.caminho=rota(g.position,PORTA).concat([FORA_PORTA.clone(),CARRO_PT.clone()]); atacFase='buscando'; }
+      else { E.caminho=rota(g.position,PORTA); atacFase='buscando'; }
     }
   }
   else if(atacFase==='buscando'){ if(mover(E,dt)){ E.caminho=[]; proximaCaixa(); } }
@@ -7537,8 +7566,10 @@ function parados(ignorar){ const l=[];
 // quanto o veículo na faixa zFaixa, na posição x, precisa se afastar da guia para passar pelos parados (0 se nada atrapalha)
 const Z_DESVIO=9.75;
 function desvioZ(x,zFaixa,eu){ if(zFaixa>9.8) return 0; let f=0;
-  for(const [x0,x1,z] of parados(eu)){ if(Math.abs(z-zFaixa)>1.3) continue; const k=Math.min((x-(x0-3.4))/2.2,((x1+3.4)-x)/2.2); if(k>0) f=Math.max(f,Math.min(1,k)); }
+  for(const [x0,x1,z] of parados(eu)){ if(Math.abs(z-zFaixa)>1.3) continue; const k=Math.min((x-(x0-6.5))/4.8,((x1+6.5)-x)/4.8); if(k>0) f=Math.max(f,Math.min(1,k)); }
   f=f*f*(3-2*f); return (Z_DESVIO-zFaixa)*f; }
+// aponta o veículo para onde ele está indo durante o desvio (dir: +1 andando para +x, -1 para -x)
+function rumoDesvio(obj,x,zFaixa,dir){ const s=(desvioZ(x+0.2,zFaixa,obj)-desvioZ(x-0.2,zFaixa,obj))/0.4; obj.rotation.y=-Math.atan2(s*dir,dir); }
 // ---------- Cruzamento da Felice Del Paggio com a Milton Martins Moura ----------
 // Uma caixa de cruzamento: quem faz conversão só entra com a caixa vazia; quem segue reto não entra se tiver
 // alguém convertendo dentro dela, nem se a fila do outro lado não deixar espaço para sair (não bloqueia o cruzamento).
@@ -7588,6 +7619,8 @@ function atualizarTransito(dt){
     v.spd+=Math.max(-14*dt,Math.min(6*dt,alvoV-v.spd));
     const antes=r.i; andarRota(v.g,r,v.spd,dt); if(r.i!==antes) v.liberado=false;
     v.dz=(v.felice&&p.x>-27&&Math.abs(p.z-FZ_DESCE)<0.3)?desvioZ(p.x,p.z,null):0; p.z+=v.dz;
+    if(v.dz||v.desviando){ const zf=p.z-v.dz, s=(desvioZ(p.x+0.2,zf,null)-desvioZ(p.x-0.2,zf,null))/0.4, dir=Math.cos(v.g.rotation.y)<0?-1:1; v.desviando=Math.abs(s)>1e-4;
+      if(Math.abs(_hd.z)<0.2) v.g.rotation.y=-Math.atan2(s*dir,dir); }
     v.rodas.forEach(w=>w.rotation.y-=dt*v.spd*3);
     v.naFelice=v.felice&&p.x>-28.6&&p.z>7.6&&p.z<12; }
   FAROL.color.setHex(ehNoite(h)?0xFFF6C8:0xD9DDE0);
