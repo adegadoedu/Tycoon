@@ -1025,7 +1025,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 27/11/2026 · 17h · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 27/11/2026 · 18h30 · 🎄</p>
   </div>
 </section>
 
@@ -1364,12 +1364,15 @@ malha(new THREE.PlaneGeometry(200,200),new THREE.MeshLambertMaterial({color:0x8F
 const RUA_INI=-30, RUA_FIM=34, BR_X=-32.2, MILTON_X=9.3;
 const calcada=malha(new THREE.BoxGeometry(RUA_FIM+28.5,0.1,2.6),toon(0xD8D2C4),scene,(RUA_FIM-28.5)/2,0.0,6.5,false); calcada.receiveShadow=true;
 const rua=malha(new THREE.BoxGeometry(RUA_FIM+28.5,0.05,4),toon(0x4A4E55),scene,(RUA_FIM-28.5)/2,-0.01,9.8,false);
-for(let x=-26.5;x<=17;x+=2.2) if(Math.abs(x-MILTON_X)>2.4) malha(new THREE.BoxGeometry(1.0,0.06,0.16),toon(0xF2F2F2),scene,x,0.0,9.8,false);
+const FAIXA_FELICE_X=1.6, FAIXA_MILTON_Z=15.0;   // faixas de pedestre: em frente à Adega e na Milton Martins Moura
+for(let x=-26.5;x<=17;x+=2.2) if(Math.abs(x-MILTON_X)>2.4&&Math.abs(x-FAIXA_FELICE_X)>1.5) malha(new THREE.BoxGeometry(1.0,0.06,0.16),toon(0xF2F2F2),scene,x,0.0,9.8,false);
+for(let z=8.05;z<11.7;z+=0.55) malha(new THREE.BoxGeometry(1.6,0.06,0.3),toon(0xF4F4F0),scene,FAIXA_FELICE_X,0.005,z,false);   // zebra na Felice
 // calçada do outro lado (lojas e Santo Forno), cortada pela Rua Milton Martins Moura
 [[-28.5,MILTON_X-1.5],[MILTON_X+1.5,RUA_FIM]].forEach(([a,b])=>malha(new THREE.BoxGeometry(b-a,0.1,2.2),toon(0xD8D2C4),scene,(a+b)/2,0.0,12.9,false).receiveShadow=true);
 // Rua Milton Martins Moura (sai da Felice Del Paggio, do lado da Santo Forno)
 malha(new THREE.BoxGeometry(3,0.05,30),rua.material,scene,MILTON_X,-0.01,26.8,false);
 [MILTON_X-2.3,MILTON_X+2.3].forEach(x=>malha(new THREE.BoxGeometry(1.6,0.1,28),toon(0xD8D2C4),scene,x,0.0,28,false));
+for(let x=MILTON_X-1.25;x<MILTON_X+1.4;x+=0.55) malha(new THREE.BoxGeometry(0.3,0.06,1.6),toon(0xF4F4F0),scene,x,0.005,FAIXA_MILTON_Z,false);   // zebra na Milton
 // BR-116 (Régis Bittencourt): duas pistas em cada sentido, faixa amarela no meio
 malha(new THREE.BoxGeometry(7.4,0.05,140),rua.material,scene,BR_X,-0.012,10,false);
 [-0.1,0.1].forEach(d=>malha(new THREE.BoxGeometry(0.08,0.06,140),toon(0xF2C31B),scene,BR_X+d,0.0,10,false));
@@ -4886,7 +4889,7 @@ function irAtacarejo(){
   $('#telaAtac').hidden=true; pop(eduDono.position.clone().setY(2.2),'🚗 Fui ao atacarejo!',''); toastMissao(`${veiculo().ic} O Edu saiu para o atacarejo com a lista. Volta em 1 minutinho!`); SOM.comprar(); atualizarHUD(true); salvar(); return true;
 }
 // ---------- o carro do Edu na rua ----------
-const CARRO_PARADO=new THREE.Vector3(0.6,0,8.5), CARRO_PT=new THREE.Vector3(0.6,0,7.35);
+const CARRO_PARADO=new THREE.Vector3(-0.4,0,8.5), CARRO_PT=new THREE.Vector3(-0.4,0,7.35);
 const carroEdu=new THREE.Group(); scene.add(carroEdu); carroEdu.visible=false;
 const rodasCarro=[];
 function montarCarroEdu(){
@@ -7144,6 +7147,13 @@ let tRel=0; tempoPronto=true;
 // ================= Rua viva: vizinhos, postes, trânsito e pedestres =================
 // Os outros veículos (caminhão, van, ônibus e o carro do Edu) só entram quando a rua está livre do trânsito.
 const PEDESTRES=[];
+// quem está atravessando (na pista da Felice ou da Milton): os carros param para eles
+const pedestresNaRua=()=>PEDESTRES.filter(p=>{ const q=p.g.position; return (q.z>7.6&&q.z<12)||(q.z>12&&q.x>MILTON_X-1.7&&q.x<MILTON_X+1.7); }).map(p=>p.g);
+// o pedestre só começa a atravessar com a rua livre perto da faixa (olha para os dois lados)
+function felicaLivre(){ const x0=FAIXA_FELICE_X; if(TRANSITO.some(o=>{ const q=o.g.position; return q.z>7.6&&q.z<12&&Math.abs(q.x-x0)<7&&o.spd>0.3; })) return false;
+  return !especiais().some(g=>g.position.z>7.6&&g.position.z<12&&Math.abs(g.position.x-x0)<14); }
+function miltonLivre(){ const z0=FAIXA_MILTON_Z; if(TRANSITO.some(o=>{ const q=o.g.position; return Math.abs(q.x-MILTON_X)<1.8&&q.z>11&&Math.abs(q.z-z0)<7&&o.spd>0.3; })) return false;
+  return !TRANSITO.some(o=>{ const q=o.g.position; return o.manobra&&o.manobra[0]==='V'&&Math.abs(q.x-MILTON_X)<6&&q.z>7.6&&q.z<12.5; }); }
 let pedidoRua=0;
 const transitoNaRua=()=>TRANSITO.some(v=>v.felice);   // carro a caminho da Felice (mesmo ainda na BR) conta
 function ruaParaVeiculo(){ if(transitoNaRua()){ pedidoRua=performance.now(); return false; } return true; }
@@ -7542,7 +7552,7 @@ function livreAFrente(v,pos,hd){ // distância até o próximo veículo na mesma
 // devolve a distância, pelo trajeto, até o primeiro veículo que ocupa esse caminho.
 const _a=new THREE.Vector3(), _b=new THREE.Vector3();
 function caminhoLivre(v,p){
-  const outros=TRANSITO.filter(o=>o!==v).map(o=>[o.g.position,o.caminhaoBR?1.5:1.25]).concat(especiais().map(g=>[g.position,1.7]));
+  const outros=TRANSITO.filter(o=>o!==v).map(o=>[o.g.position,o.caminhaoBR?1.5:1.25]).concat(especiais().map(g=>[g.position,1.7]),pedestresNaRua().map(g=>[g.position,1.1]));
   let s=0, x=p.x, z=p.z, i=v.rota.i; const pts=v.rota.pts;
   while(s<7&&i<pts.length){ const q=pts[i], dx=q.x-x, dz=q.z-z, L=Math.hypot(dx,dz);
     if(L<1e-4){ i++; continue; } const passo=Math.min(0.4,L); x+=dx/L*passo; z+=dz/L*passo; s+=passo; if(passo>=L) i++;
@@ -7633,13 +7643,23 @@ function atualizarTransito(dt){
         v.rota={pts:rota.pts.slice(1),i:0}; v.g.position.copy(ini); const nx=rota.pts[1]; v.g.rotation.y=-Math.atan2(nx.z-ini.z,nx.x-ini.x);
         scene.add(v.g); TRANSITO.push(v); } } }
   // pedestres na calçada (desviam do ponto de ônibus)
-  for(let i=PEDESTRES.length-1;i>=0;i--){ const p=PEDESTRES[i]; if(mover(p,dt)){ scene.remove(p.g); PEDESTRES.splice(i,1); } }
+  for(let i=PEDESTRES.length-1;i>=0;i--){ const p=PEDESTRES[i];
+    const w=p.esperas&&p.esperas.find(e=>!e.foi&&p.caminho.length===e.n);
+    if(w){ if(w.ok()) w.foi=true; else { const u=p.g.userData; u.pE.rotation.x=u.pD.rotation.x=0; u.corpo.position.y=0; continue; } }
+    if(mover(p,dt)){ scene.remove(p.g); PEDESTRES.splice(i,1); } }
   tPed-=dt;
   if(tPed<=0){ tPed=rnd(4,8)/Math.max(0.3,mov);
     if(PEDESTRES.length<6){ const d=Math.random()<0.5?1:-1, z=6.85+rnd(-0.05,0.05), g=pessoa(); g.position.set(d>0?-28.0:RUA_FIM,0,d>0?-40:z); scene.add(g);
       let pts=[new THREE.Vector3(-28.0,0,z),new THREE.Vector3(PONTO_X-2.0,0,z),new THREE.Vector3(PONTO_X-1.6,0,6.25),new THREE.Vector3(PONTO_X+1.7,0,6.25),new THREE.Vector3(PONTO_X+2.1,0,z),new THREE.Vector3(RUA_FIM,0,z)];
       if(d<0) pts=[new THREE.Vector3(PONTO_X+2.1,0,z),new THREE.Vector3(PONTO_X+1.7,0,6.25),new THREE.Vector3(PONTO_X-1.6,0,6.25),new THREE.Vector3(PONTO_X-2.0,0,z),new THREE.Vector3(-28.0,0,z),new THREE.Vector3(-28.0,0,-40)];
-      PEDESTRES.push({g,caminho:pts,vel:rnd(1.3,1.8),passo:rnd(0,6)}); } }
+      let esperas=null;
+      if(Math.random()<0.4){   // atravessa pela faixa da Felice e segue pela calçada de lá, cruzando a Milton pela outra faixa
+        const V=(x,z)=>new THREE.Vector3(x,0,z), xf=FAIXA_FELICE_X, zo=12.9, xm0=MILTON_X-2.3, xm1=MILTON_X+2.3;
+        if(d>0){ pts=[V(-28.0,z),V(xf,z),V(xf,7.75),V(xf,12.1),V(xf,zo),V(xm0,zo),V(xm0,FAIXA_MILTON_Z),V(xm1,FAIXA_MILTON_Z),V(xm1,zo),V(RUA_FIM,zo)];
+          esperas=[{n:pts.length-3,ok:felicaLivre},{n:pts.length-7,ok:miltonLivre}]; g.position.set(-28.0,0,-40); }
+        else { pts=[V(RUA_FIM,zo),V(xm1,zo),V(xm1,FAIXA_MILTON_Z),V(xm0,FAIXA_MILTON_Z),V(xm0,zo),V(xf,zo),V(xf,12.1),V(xf,7.75),V(xf,z),V(-28.0,z),V(-28.0,-40)];
+          g.position.set(RUA_FIM,0,zo); esperas=[{n:pts.length-3,ok:miltonLivre},{n:pts.length-7,ok:felicaLivre}]; } }
+      PEDESTRES.push({g,caminho:pts,vel:rnd(1.3,1.8),passo:rnd(0,6),esperas}); } }
 }
 function caminhaoBR(){ const g=new THREE.Group(), rodas=[], cor=pega([0xE8433A,0x2F6FD8,0xF2F2F2,0xF2C31B,0x3CB371]);
   contorno(malha(geoArred(1.2,1.3,1.2,0.12),toon(cor),g,1.9,0.95,0),0.03);
