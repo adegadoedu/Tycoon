@@ -1022,7 +1022,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 26/11/2026 · 21h45 · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 27/11/2026 · 11h30 · 🎄</p>
   </div>
 </section>
 
@@ -1219,7 +1219,9 @@ function converterT1(a,t2){
 let S;
 try{S=JSON.parse(localStorage.getItem(CHAVE));}catch(e){}
 (function(){
-  let ant=null; try{ ant=JSON.parse(localStorage.getItem(CHAVE_T1)); }catch(e){}
+  let ant=null, trocou=false; try{ trocou=!!localStorage.getItem('adegaEdu.trocar'); localStorage.removeItem('adegaEdu.trocar'); }catch(e){}
+  if(trocou){ S=estadoNovo(); S.convertidoT1=true; }   // "Entrar com outro apelido": começa limpo, sem puxar o save antigo deste aparelho
+  try{ if(!trocou) ant=JSON.parse(localStorage.getItem(CHAVE_T1)); }catch(e){}
   const temT1=ant&&ant.est, mesmo=(a,b)=>!a||!b||!a.perfil||!b.perfil||!a.perfil.id||!b.perfil.id||a.perfil.id===b.perfil.id;
   if(!S||!S.est||S.temporada!==TEMPORADA){
     S=temT1?converterT1(ant):estadoNovo(); if(temT1) S.avisoT2=true;
@@ -2421,7 +2423,7 @@ $('#btnEntrar').addEventListener('click',async()=>{
     let novo=!e?estadoNovo():e.temporada===TEMPORADA?e:converterT1(e,e.t2);
     if(e&&e.temporada!==TEMPORADA) novo.avisoT2=true;
     novo.perfil={apelido:l.apelido,idade:l.idade,id:l.jogador_id,token:l.chave,temSenha:true,visual:(l.estado&&l.estado.perfil&&l.estado.perfil.visual)||null};
-    novo.viuInicio=true; novo.saiu=false; novo.salvo=Date.now();
+    novo.viuInicio=true; novo.convertidoT1=true; novo.saiu=false; novo.salvo=Date.now();
     if(l.falido){ novo.falido=true; novo.falidoApelido=l.apelido; } else if(novo.falido){ novo.falido=false; delete novo.falidoApelido; }
     trocandoConta=true;
     localStorage.setItem(CHAVE,JSON.stringify(novo));
@@ -2449,7 +2451,7 @@ $('#btnSalvarSenha').addEventListener('click',async()=>{
 // ---------- Trocar de jogador ----------
 $('#btnTrocarConta').addEventListener('click',async()=>{
   try{ await sincronizar(true); }catch(e){}
-  trocandoConta=true; try{ localStorage.removeItem(CHAVE); }catch(e){}
+  trocandoConta=true; try{ localStorage.removeItem(CHAVE); localStorage.removeItem(CHAVE+'.ok'); localStorage.setItem('adegaEdu.trocar','1'); }catch(e){}
   location.reload();
 });
 
@@ -3556,7 +3558,7 @@ async function aceitarProposta(i){
   const N=estadoNovo((ant.prest||0)+pts);
   Object.assign(N,{perfil:ant.perfil,viuInicio:true,mes:ant.mes,totalBase:(ant.totalBase||0)+ant.total,totalInicioMes:-fatMes(),
     conclusaoMes:ant.conclusaoMes,regrasChat:ant.regrasChat,entregas:ant.entregas,apelidosFalidos:ant.apelidosFalidos,
-    nivelJ:ant.nivelJ,xp:ant.xp,metas:ant.metas,vendas:(ant.vendas||[]).concat([venda]),adegaNum:num+1,certificado:venda});
+    nivelJ:ant.nivelJ,xp:ant.xp,metas:ant.metas,vendas:(ant.vendas||[]).concat([venda]),adegaNum:num+1,certificado:venda,convertidoT1:true});
   N.din=Math.round(c.capital*(1+0.25*N.prest));
   if(c.brinde==='operador') N.operadores=1;
   trocandoConta=true;
