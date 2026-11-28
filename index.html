@@ -1047,7 +1047,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 28/11/2026 · 12h15 · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 28/11/2026 · 14h45 · 🎄</p>
   </div>
 </section>
 
@@ -2181,7 +2181,7 @@ function atualizarClientes(dt){
           c.estado='saindo'; c.caminho=[a.aprox.clone()].concat(rota(a.aprox,PORTA)).concat(saidaCli(c));
         }
         break;}
-      case 'saindo': if(c.frentista&&moverPed(c,dt)){ const F=c.frentista; c.g.userData.sacola.visible=false; F.fora=null; F.caminho=[]; F.vel=1.6; clientes.splice(i,1); break; }
+      case 'saindo': if(c.frentista&&moverPed(c,dt)){ const F=c.frentista; const u=c.g.userData; u.sacola.visible=false; if(u.guarda) u.guarda.visible=false; if(u.fechado) u.fechado.visible=false; F.fora=null; F.caminho=[]; F.vel=1.6; clientes.splice(i,1); break; }
         if(!c.frentista&&moverPed(c,dt)){ if(c.retirada&&!c.retirou) pdrEmRota=Math.max(0,pdrEmRota-1); scene.remove(c.g); clientes.splice(i,1); } break;
     }
   }
@@ -7537,11 +7537,14 @@ const POSTO={x:-22.6,z:0.6,pistas:[-23.55,-21.65],parada:2.0,visores:[[],[]],fre
   const VERM=toon(0xC2362B), BRANCO=toon(0xF5F5F1);
   // cobertura sobre as bombas
   [[-4.1,-0.4],[4.1,-0.4],[-4.1,3.2],[4.1,3.2]].forEach(([x,z])=>bloco(0.3,3.3,0.3,BRANCO,g,x,1.65,z));
-  bloco(9.6,0.32,5.2,BRANCO,g,0,3.45,1.4,0.04,0.02);
-  bloco(9.7,0.42,5.3,VERM,g,0,3.1,1.4,0.03);
+  // cobertura vista "em corte", como a Adega: o teto é translúcido para ver o abastecimento; a faixa vermelha em volta é sólida
+  const tetoMat=new THREE.MeshLambertMaterial({color:0xFFFFFF,transparent:true,opacity:0.28,depthWrite:false});
+  malha(new THREE.BoxGeometry(9.6,0.12,5.2),tetoMat,g,0,3.52,1.4,false);
+  [[0,3.1,-1.2,9.7,0.42,0.14],[0,3.1,4.0,9.7,0.42,0.14],[-4.8,3.1,1.4,0.14,0.42,5.3],[4.8,3.1,1.4,0.14,0.42,5.3]].forEach(([x,y,z,w,h,d])=>bloco(w,h,d,VERM,g,x,y,z,0.02));
+  [[0,3.38,-1.2,9.8,0.16,0.2],[0,3.38,4.0,9.8,0.16,0.2],[-4.85,3.38,1.4,0.2,0.16,5.4],[4.85,3.38,1.4,0.2,0.16,5.4]].forEach(([x,y,z,w,h,d])=>bloco(w,h,d,BRANCO,g,x,y,z,0.02));
   const tPosto=placaTex('POSTO 1001','#C2362B','#FFFFFF');
-  malha(new THREE.PlaneGeometry(4.4,0.38),new THREE.MeshBasicMaterial({map:tPosto}),g,0,3.1,4.07,false);
-  const lt=malha(new THREE.PlaneGeometry(3.4,0.36),new THREE.MeshBasicMaterial({map:tPosto}),g,4.87,3.1,1.4,false); lt.rotation.y=Math.PI/2;
+  malha(new THREE.PlaneGeometry(4.4,0.38),new THREE.MeshBasicMaterial({map:tPosto}),g,0,3.1,4.09,false);
+  const lt=malha(new THREE.PlaneGeometry(3.4,0.36),new THREE.MeshBasicMaterial({map:tPosto}),g,4.89,3.1,1.4,false); lt.rotation.y=Math.PI/2;
   // ilhas com bombas, uma de cada lado das duas pistas de abastecimento (o visor acende quando abastece)
   [-2.4,2.4].forEach((x,k)=>{ bloco(0.9,0.2,3.0,toon(0x9A9EA3),g,x,0.1,1.4); const lado=x<0?1:-1;
     [0.5,2.3].forEach(z=>{ bloco(0.5,1.25,0.32,BRANCO,g,x,0.82,z,0.05,0.015); bloco(0.52,0.28,0.34,VERM,g,x,1.32,z);
@@ -7567,23 +7570,75 @@ const POSTO={x:-22.6,z:0.6,pistas:[-23.55,-21.65],parada:2.0,visores:[[],[]],fre
 POSTO.tCompra=rnd(70,140);
 const ladoBomba=k=>POSTO.pistas[k]+(k===0?-1:1)*0.95;
 function caminhoFrentistaVolta(F){ const V=(x,z)=>new THREE.Vector3(x,0,z); return [FORA_PORTA.clone(),V(-9,6.0),V(ENTRADA_POSTO_X,6.3),V(ENTRADA_POSTO_X,4.9),F.base.clone()]; }
+// ---------- atendimento na bomba: bico e mangueira, tampa do tanque, óleo e para-brisa ----------
+const _v1=new THREE.Vector3(), _v2=new THREE.Vector3();
+const matMangueira=new THREE.MeshLambertMaterial({color:0x1E1E22});
+function bicoDaBomba(k){ const ix=POSTO.x+(k===0?-2.4:2.4), lado=k===0?1:-1; return new THREE.Vector3(ix+lado*0.28,0.95,POSTO.z+2.3); }
+function mangueira(F,k){   // mangueira da bomba até a mão do frentista
+  if(!F.mang){ F.mang=new THREE.Mesh(new THREE.BufferGeometry(),matMangueira); scene.add(F.mang); }
+  F.g.updateMatrixWorld(true); const mao=F.g.userData.bD.localToWorld(_v1.set(0,-0.3,0.04)).clone(), b=bicoDaBomba(k);
+  const meio=b.clone().lerp(mao,0.5); meio.y=Math.min(b.y,mao.y)-0.45;
+  if(F.mangMao&&F.mangMao.distanceTo(mao)<0.015&&F.mang.visible) return;
+  F.mangMao=mao; F.mang.geometry.dispose(); F.mang.geometry=new THREE.TubeGeometry(new THREE.CatmullRomCurve3([b,b.clone().setY(b.y-0.2),meio,mao]),18,0.022,6,false); F.mang.visible=true; }
+function semMangueira(F){ if(F.mang) F.mang.visible=false; F.mangMao=null; }
+function capo(v){   // capô que abre (só carro)
+  const g=v.g; if(g.userData.capo||!g.userData.lg) return g.userData.capo||null; const lg=g.userData.lg, x0=lg*0.27-0.06, len=lg/2-x0+0.04;
+  const piv=new THREE.Group(); piv.position.set(x0,0.835,0); g.add(piv);
+  const tampa=malha(geoArred(len,0.05,0.96,0.02),toon(g.userData.cor),piv,len/2,0,0); contorno(tampa,0.02);
+  malha(new THREE.BoxGeometry(len*0.8,0.02,0.7),toon(0x3A3D42),piv,len/2,-0.04,0,false);   // motor por baixo
+  g.userData.capo=piv; return piv; }
+function posturaNormal(F){ const u=F.g.userData; u.bD.rotation.set(0,0,0.14); u.bE.rotation.set(0,0,-0.14); u.corpo.rotation.x=0; }
+function olharPara(F,x,z){ F.g.rotation.y=lerpAng(F.g.rotation.y,Math.atan2(x-F.g.position.x,z-F.g.position.z),0.25); }
+function andarAte(F,p,dt){ if(F.g.position.distanceTo(p)<0.06){ const u=F.g.userData; u.pE.rotation.x=u.pD.rotation.x=0; u.corpo.position.y=0; return true; }
+  const ch=p.x.toFixed(2)+'|'+p.z.toFixed(2); if(F.alvoAtual!==ch){ F.caminho=[p.clone()]; F.alvoAtual=ch; } mover(F,dt); return false; }
+// pontos ao redor do carro parado na pista k (o carro aponta para -z; a bomba fica do lado da ilha)
+function pontosCarro(v,k){ const xl=POSTO.pistas[k], zc=v.g.position.z, lado=k===0?-1:1, lg=v.moto?1.0:(v.g.userData.lg||2);
+  return {tampa:new THREE.Vector3(xl+lado*0.78,0,zc+lg*0.28), boca:new THREE.Vector3(xl+lado*0.55,0.75,zc+lg*0.28),
+          frente:new THREE.Vector3(xl+lado*0.25,0,zc-lg/2-0.55), vidro:new THREE.Vector3(xl+lado*0.85,0,zc-lg*0.12)}; }
+function atenderBomba(F,dt){
+  const J=F.job, v=J.v, k=J.k, P=pontosCarro(v,k), u=F.g.userData; J.t+=dt;
+  if(!TRANSITO.includes(v)){ semMangueira(F); posturaNormal(F); F.job=null; return; }
+  switch(J.fase){
+    case 'ir': if(andarAte(F,P.tampa,dt)){ J.fase='pegar'; J.t=0; } break;
+    case 'pegar': olharPara(F,P.boca.x,P.boca.z); u.bD.rotation.x=-0.6*Math.min(1,J.t/0.5); mangueira(F,k); if(J.t>0.7){ J.fase='abastecer'; J.t=0; } break;
+    case 'abastecer': olharPara(F,P.boca.x,P.boca.z); u.bD.rotation.x=-1.05; u.bD.rotation.z=0.05; u.bE.rotation.x=-0.25; mangueira(F,k); J.abast=true;
+      if(J.t>J.dur){ J.fase='devolver'; J.t=0; J.abast=false; } break;
+    case 'devolver': u.bD.rotation.x=-0.6*(1-Math.min(1,J.t/0.5)); if(J.t>0.4) semMangueira(F); else mangueira(F,k);
+      if(J.t>0.6){ posturaNormal(F); J.fase=J.extra?'irFrente':'fim'; J.t=0; } break;
+    case 'irFrente': if(andarAte(F,J.extra==='oleo'?P.frente:P.vidro,dt)){ J.fase=J.extra; J.t=0; } break;
+    case 'oleo': { const c=capo(v); olharPara(F,POSTO.pistas[k],v.g.position.z); const ab=Math.min(1,J.t/0.6), fe=J.t>3.2?Math.min(1,(J.t-3.2)/0.6):0;
+      if(c) c.rotation.z=1.05*(ab-fe); u.corpo.rotation.x=(J.t>0.6&&J.t<3.2)?0.45:0; u.bD.rotation.x=(J.t>0.8&&J.t<3.0)?-0.9+Math.sin(J.t*5)*0.15:0; u.bE.rotation.x=u.bD.rotation.x*0.6;
+      if(J.t>3.9){ if(c) c.rotation.z=0; posturaNormal(F); J.fase='afastar'; } break; }
+    case 'vidro': olharPara(F,POSTO.pistas[k],v.g.position.z); u.bD.rotation.x=-1.6; u.bD.rotation.z=0.14+Math.sin(J.t*7)*0.5;
+      if(J.t>2.4){ posturaNormal(F); J.fase='afastar'; } break;
+    case 'afastar': if(andarAte(F,P.tampa,dt)) J.fase='fim'; break;   // sai da frente do carro antes de liberar
+    case 'fim': v.servido=true; F.job=null; break;
+  }
+}
+// De vez em quando, um frentista dá uma passada na Adega: vai pela calçada, compra como qualquer cliente e volta para a bomba.
+// Enquanto ele está fora, o outro frentista atende as duas pistas.
+POSTO.tCompra=rnd(70,140);
+function caminhoFrentistaVolta(F){ const V=(x,z)=>new THREE.Vector3(x,0,z); return [FORA_PORTA.clone(),V(-9,6.0),V(ENTRADA_POSTO_X,6.3),V(ENTRADA_POSTO_X,4.9),F.base.clone()]; }
 function atualizarPosto(dt){
-  const t=performance.now()/1000, abast=[0,1].map(k=>TRANSITO.find(v=>v.posto===k+1&&v.abastecendo)||null);
+  const t=performance.now()/1000;
   const presentes=POSTO.frentistas.filter(F=>!F.fora);
+  // carros parados na bomba que ainda não foram atendidos recebem um frentista (o da pista; se ele estiver fora, o outro)
+  [0,1].forEach(k=>{ const v=TRANSITO.find(o=>o.posto===k+1&&o.abastecendo&&!o.servido); if(!v||POSTO.frentistas.some(F=>F.job&&F.job.v===v)) return;
+    const F=presentes.find(f=>f.pista===k&&!f.job)||presentes.find(f=>!f.job); if(!F) return;
+    const r=Math.random(); F.job={v,k,fase:'ir',t:0,dur:rnd(4,6),extra:v.moto?null:(r<0.35?'oleo':r<0.6?'vidro':null)}; });
   POSTO.frentistas.forEach(F=>{
     if(F.fora==='indo'){ if(mover(F,dt)) virarClienteFrentista(F); return; }
     if(F.fora) return;
-    let k=F.pista, carro=abast[k];
-    if(!carro&&presentes.length===1){ const o=1-F.pista; if(abast[o]){ k=o; carro=abast[o]; } }   // sozinho, atende as duas pistas
-    const alvo=carro?new THREE.Vector3(ladoBomba(k),0,POSTO.z+POSTO.parada+0.6):F.base;
-    if(F.g.position.distanceTo(alvo)>0.08){ const ch=alvo.x+'|'+alvo.z; if(!F.caminho.length||F.alvoAtual!==ch){ F.caminho=[alvo.clone()]; F.alvoAtual=ch; } mover(F,dt); }
-    else { const u=F.g.userData; u.pE.rotation.x=u.pD.rotation.x=0; u.corpo.position.y=0; F.g.rotation.y=lerpAng(F.g.rotation.y,carro?(k===0?Math.PI/2:-Math.PI/2):Math.PI,0.15); } });
-  [0,1].forEach(k=>POSTO.visores[k].forEach(m=>m.color.setHex(abast[k]&&Math.sin(t*6)>-0.6?0x3BE07A:0x2A3A44)));
+    const u=F.g.userData; if(u.guarda) u.guarda.visible=false; if(u.fechado) u.fechado.visible=false;   // debaixo da cobertura: sem guarda-chuva
+    if(F.job){ atenderBomba(F,dt); return; }
+    semMangueira(F);
+    if(andarAte(F,F.base,dt)) F.g.rotation.y=lerpAng(F.g.rotation.y,Math.PI,0.12); });
+  [0,1].forEach(k=>{ const on=POSTO.frentistas.some(F=>F.job&&F.job.k===k&&F.job.abast); POSTO.visores[k].forEach(m=>m.color.setHex(on&&Math.sin(t*6)>-0.6?0x3BE07A:0x2A3A44)); });
   // hora de alguém dar uma passada na Adega?
   POSTO.tCompra-=dt;
   if(POSTO.tCompra<=0){ POSTO.tCompra=rnd(150,300);
-    if(document.body.classList.contains('jogando')&&presentes.length===2&&clientes.length<limiteClientesMin()+4){
-      const F=pega(POSTO.frentistas.filter(f=>!abast[f.pista])); if(F){ const V=(x,z)=>new THREE.Vector3(x,0,z);
+    if(document.body.classList.contains('jogando')&&presentes.length===2&&!TRANSITO.some(v=>v.posto)&&clientes.length<limiteClientesMin()+4){
+      const F=pega(POSTO.frentistas.filter(f=>!f.job)); if(F){ const V=(x,z)=>new THREE.Vector3(x,0,z); semMangueira(F); posturaNormal(F);
         F.fora='indo'; F.vel=1.7; F.caminho=[V(ENTRADA_POSTO_X,4.9),V(ENTRADA_POSTO_X,6.3),V(-9,6.0)]; } } }
 }
 // chegou na calçada da Adega: entra como cliente (compra, paga no caixa e volta para o posto)
@@ -7739,7 +7794,7 @@ function veiculoRua(){
     [-0.4,0.4].forEach(x=>{ const r=malha(new THREE.CylinderGeometry(0.2,0.2,0.1,12),toon(0x22252A),g,x,0.2,0); r.rotation.x=Math.PI/2; rodas.push(r); });
     malha(new THREE.BoxGeometry(0.05,0.1,0.12),FAROL,g,0.52,0.65,0,false);
   } else {
-    const lg=rnd(1.8,2.2);
+    const lg=rnd(1.8,2.2); g.userData.lg=lg; g.userData.cor=cor;
     contorno(malha(geoArred(lg,0.55,1.0,0.16),toon(cor),g,0,0.55,0),0.03);
     contorno(malha(geoArred(lg*0.55,0.45,0.9,0.16),toon(cor),g,-0.12,1.02,0),0.03);
     bloco(0.05,0.32,0.76,toon(0x9FD3EA),g,lg*0.27-0.1,1.03,0); bloco(lg*0.48,0.26,0.04,toon(0x9FD3EA),g,-0.12,1.04,0.46); bloco(lg*0.48,0.26,0.04,toon(0x9FD3EA),g,-0.12,1.04,-0.46);
@@ -7885,9 +7940,9 @@ function atualizarTransito(dt){
     let alvoV=v.base*alvo.k;
     // preferência: para antes do ponto de espera (placa de PARE, conversão) enquanto vier alguém
     if(alvo.ced&&dd<1.6&&!v.liberado){ if(alvo.ced()) { alvoV=0; v.esperou=(v.esperou||0)+dt; } else v.liberado=true; if(v.esperou>9) v.liberado=true; }
-    if(alvo.parada&&dd<0.7&&!(v.tAbast>=alvo.parada)){ v.tAbast=(v.tAbast||0)+dt; v.abastecendo=true; alvoV=0; v.spd=Math.min(v.spd,dd*2.5); }   // encosta na bomba sem passar do ponto
+    if(alvo.parada&&dd<0.7&&!(v.servido||v.tAbast>=25)){ v.tAbast=(v.tAbast||0)+dt; v.abastecendo=true; alvoV=0; v.spd=Math.min(v.spd,dd*2.5); }   // encosta na bomba sem passar do ponto
     else if(v.abastecendo&&!(alvo.parada&&dd<0.7)) v.abastecendo=false;
-    if(v.abastecendo&&v.tAbast>=alvo.parada) v.abastecendo=false;
+    if(v.abastecendo&&(v.servido||v.tAbast>=25)) v.abastecendo=false;
     const esperandoPare=(alvo.ced&&dd<1.6&&!v.liberado)||v.abastecendo;
     if(!esperandoPare&&(v.parado||0)>14&&!(v.forca>0)) v.forca=3.5;   // ninguém fica travado para sempre
     if(v.abastecendo) v.forca=0;
@@ -7900,7 +7955,7 @@ function atualizarTransito(dt){
       if(dc>0&&dc<4){ if(!v.entrou&&!(v.forca>0)&&!podeEntrar(v,p,_hd)){ alvoV=Math.min(alvoV,Math.max(0,(dc-0.6)*2.2)); if(dc<1.6){ v.naLinha=true; v.espBox=(v.espBox||0)+dt; } } else if(dc<1.2){ v.entrou=true; if(v.manobra[0]==='V') CRUZ.dono=v; } }
       else if(dc===0){ v.entrou=true; if(v.manobra[0]==='V'&&!CRUZ.dono) CRUZ.dono=v; }
       if(naCaixa(p)) v.jaDentro=true; else if(v.jaDentro&&!naCaixa(p,0.8)&&CRUZ.dono===v) CRUZ.dono=null; }
-    if(alvoV<0.05&&!esperandoPare&&!v.naFaixa) v.parado=(v.parado||0)+dt; else if(alvoV>=0.05) v.parado=0;   // nunca atravessa outro veículo: espera
+    if(alvoV<0.05&&!esperandoPare&&!v.naFaixa&&!(v.naLinha&&(v.espBox||0)<20)) v.parado=(v.parado||0)+dt;   // esperar a vez no cruzamento não é travar else if(alvoV>=0.05) v.parado=0;   // nunca atravessa outro veículo: espera
     v.spd+=Math.max(-14*dt,Math.min(6*dt,alvoV-v.spd));
     const antes=r.i; andarRota(v.g,r,v.spd,dt); if(r.i!==antes) v.liberado=false;
     v.dz=(v.felice&&p.x>-27&&Math.abs(p.z-FZ_DESCE)<0.3)?desvioZ(p.x,p.z,null):0; p.z+=v.dz;
