@@ -1033,7 +1033,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 27/11/2026 · 23h30 · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 28/11/2026 · 00h30 · 🎄</p>
   </div>
 </section>
 
@@ -7255,16 +7255,17 @@ const PEDESTRES=[];
 const pessoasRua=()=>PEDESTRES.concat(clientes.filter(c=>c.g&&c.g.parent));
 const naPistaFelice=q=>q.z>7.6&&q.z<12;
 const naPistaMilton=q=>q.z>12&&q.x>MILTON_X-1.7&&q.x<MILTON_X+1.7;
-const pedestresNaRua=()=>pessoasRua().filter(p=>{ const q=p.g.position; return naPistaFelice(q)||naPistaMilton(q); }).map(p=>p.g);
+const naEntradaPosto=q=>(q.z>5.0&&q.z<7.8&&q.x>-21.8&&q.x<-18.2)||(q.x>-28.7&&q.x<-27.0&&q.z>-3.2&&q.z<6.5);
+const pedestresNaRua=()=>pessoasRua().filter(p=>{ const q=p.g.position; return naPistaFelice(q)||naPistaMilton(q)||naEntradaPosto(q); }).map(p=>p.g);
 const faixaAtiva=f=>pessoasRua().some(p=>p.aguarda===f||(f==='felice'?naPistaFelice(p.g.position)&&Math.abs(p.g.position.x-FAIXA_FELICE_X)<1.3:naPistaMilton(p.g.position)&&Math.abs(p.g.position.z-FAIXA_MILTON_Z)<1.3));
 // pontos da faixa onde os carros precisam parar (um por mão)
 const pontosFaixa=f=>f==='felice'?[[FAIXA_FELICE_X,FZ_DESCE],[FAIXA_FELICE_X,FZ_SOBE]]:[[MM_ENTRA,FAIXA_MILTON_Z],[MM_SAI,FAIXA_MILTON_Z]];   // função: as constantes da rua vêm depois
+// o pedestre só espera quem já está em cima da faixa, ou quem vem rápido demais para frear; carro parado antes da faixa não segura ninguém
 function felicaLivre(){ const x0=FAIXA_FELICE_X;
-  if(TRANSITO.some(o=>{ const q=o.g.position; return naPistaFelice(q)&&Math.abs(q.x-x0)<(o.caminhaoBR?3.4:2.6); })) return false;
-  return !especiais().some(g=>naPistaFelice(g.position)&&Math.abs(g.position.x-x0)<4.2); }
+  if(TRANSITO.some(o=>{ const q=o.g.position; if(!naPistaFelice(q)) return false; const d=Math.abs(q.x-x0); return d<(o.caminhaoBR?2.4:1.6)||(d<4&&o.spd>3.5&&Math.sign(x0-q.x)===Math.sign(Math.cos(-o.g.rotation.y))); })) return false;
+  return !especiais().some(g=>naPistaFelice(g.position)&&Math.abs(g.position.x-x0)<3.4); }
 function miltonLivre(){ const z0=FAIXA_MILTON_Z;
-  if(TRANSITO.some(o=>{ const q=o.g.position; return Math.abs(q.x-MILTON_X)<1.8&&Math.abs(q.z-z0)<2.6; })) return false;
-  return !TRANSITO.some(o=>{ const q=o.g.position; return o.manobra&&o.manobra[0]==='V'&&Math.abs(q.x-MILTON_X)<3&&q.z>11.5&&q.z<13.5; }); }
+  return !TRANSITO.some(o=>{ const q=o.g.position; if(Math.abs(q.x-MILTON_X)>1.8) return false; const d=Math.abs(q.z-z0); return d<1.6||(d<4&&o.spd>3.5&&Math.sign(z0-q.z)===Math.sign(Math.sin(-o.g.rotation.y))); }); }
 // veículos da loja (ônibus, caminhão, van, carro do Edu) também param antes da faixa
 function segurarNaFaixa(x,z,dir,meia){ if(!naPistaFelice({x,z})||!faixaAtiva('felice')) return false;
   const frente=x+dir*meia, xf=FAIXA_FELICE_X; return dir<0?(frente>xf+1.0&&frente<xf+3.6):(frente<xf-1.0&&frente>xf-3.6); }
@@ -7277,13 +7278,13 @@ function moverPed(p,dt){
 const V0=(x,z)=>new THREE.Vector3(x,0,z);
 function caminhoMilton(chegando,ladoLeste){
   const xf=FAIXA_FELICE_X, zo=12.9, xw=MILTON_X-2.3, xe=MILTON_X+2.3, zl=34;
-  const ida=ladoLeste?[V0(xe,zl),V0(xe,FAIXA_MILTON_Z),V0(xw,FAIXA_MILTON_Z),V0(xw,zo),V0(xf,zo),V0(xf,12.1),V0(xf,7.75),V0(xf,6.7),FORA_PORTA.clone(),PORTA.clone()]
-                     :[V0(xw,zl),V0(xw,zo),V0(xf,zo),V0(xf,12.1),V0(xf,7.75),V0(xf,6.7),FORA_PORTA.clone(),PORTA.clone()];
+  const ida=ladoLeste?[V0(xe,zl),V0(xe,FAIXA_MILTON_Z),V0(xw,FAIXA_MILTON_Z),V0(xw,zo),V0(xf,zo),V0(xf,12.1),V0(xf,7.45),V0(xf,6.7),FORA_PORTA.clone(),PORTA.clone()]
+                     :[V0(xw,zl),V0(xw,zo),V0(xf,zo),V0(xf,12.1),V0(xf,7.45),V0(xf,6.7),FORA_PORTA.clone(),PORTA.clone()];
   if(chegando){ const pts=ida.slice(1), esperas=[]; const iF=pts.findIndex(v=>v.z===12.1); esperas.push({n:pts.length-iF-1,ok:felicaLivre,faixa:'felice'});
     if(ladoLeste){ const iM=pts.findIndex(v=>v.x===xe&&v.z===FAIXA_MILTON_Z); esperas.push({n:pts.length-iM-1,ok:miltonLivre,faixa:'milton'}); }
     return {ini:ida[0],pts,esperas}; }
   const volta=ida.slice(0,-1).reverse();   // da porta de volta à Milton
-  const esperas=[]; const iF=volta.findIndex(v=>v.z===7.75); esperas.push({n:volta.length-iF-1,ok:felicaLivre,faixa:'felice'});
+  const esperas=[]; const iF=volta.findIndex(v=>v.z===7.45); esperas.push({n:volta.length-iF-1,ok:felicaLivre,faixa:'felice'});
   if(ladoLeste){ const iM=volta.findIndex(v=>v.x===xw&&v.z===FAIXA_MILTON_Z); esperas.push({n:volta.length-iM-1,ok:miltonLivre,faixa:'milton'}); }
   return {pts:volta,esperas}; }
 let pedidoRua=0;
@@ -7465,19 +7466,22 @@ casaTelhado(-7.2,17.6,0xF4D9C4,Math.PI,4.2,3.6);
 // lado da Adega: duas casas entre o posto e a Adega
 [[-14.2,0xA8D8F4],[-9.9,0xF4B8A8]].forEach(([x,c])=>vizinho({x,z:2.2,w:3.6,d:3,h:2.2,cor:c,janelas:2}));
 // ---------- Posto 1001, esquina com a BR-116 ----------
+// Movimento do posto: carros do trânsito que entram, abastecem e saem pela BR-116 (sem fila: no máximo um por pista)
+const POSTO={x:-22.6,z:0.6,pistas:[-23.55,-21.65],parada:2.0,visores:[[],[]],frentistas:[]};
 (function(){ const g=new THREE.Group(); g.position.set(-22.6,0,0.6); scene.add(g);
   malha(new THREE.BoxGeometry(10.6,0.06,9.6),toon(0xBFC3C7),g,0,0.0,0,false).receiveShadow=true;   // pátio de concreto
   const VERM=toon(0xC2362B), BRANCO=toon(0xF5F5F1);
   // cobertura sobre as bombas
-  [[-3,-0.4],[3,-0.4],[-3,3.2],[3,3.2]].forEach(([x,z])=>bloco(0.3,3.3,0.3,BRANCO,g,x,1.65,z));
-  bloco(8.2,0.32,5.2,BRANCO,g,0,3.45,1.4,0.04,0.02);
-  bloco(8.3,0.42,5.3,VERM,g,0,3.1,1.4,0.03);
+  [[-4.1,-0.4],[4.1,-0.4],[-4.1,3.2],[4.1,3.2]].forEach(([x,z])=>bloco(0.3,3.3,0.3,BRANCO,g,x,1.65,z));
+  bloco(9.6,0.32,5.2,BRANCO,g,0,3.45,1.4,0.04,0.02);
+  bloco(9.7,0.42,5.3,VERM,g,0,3.1,1.4,0.03);
   const tPosto=placaTex('POSTO 1001','#C2362B','#FFFFFF');
   malha(new THREE.PlaneGeometry(4.4,0.38),new THREE.MeshBasicMaterial({map:tPosto}),g,0,3.1,4.07,false);
-  const lt=malha(new THREE.PlaneGeometry(3.4,0.36),new THREE.MeshBasicMaterial({map:tPosto}),g,4.17,3.1,1.4,false); lt.rotation.y=Math.PI/2;
-  // ilhas com bombas
-  [-1.6,1.6].forEach(x=>{ bloco(0.9,0.2,3.0,toon(0x9A9EA3),g,x,0.1,1.4);
-    [0.5,2.3].forEach(z=>{ bloco(0.5,1.25,0.32,BRANCO,g,x,0.82,z,0.05,0.015); bloco(0.52,0.28,0.34,VERM,g,x,1.32,z); malha(new THREE.PlaneGeometry(0.3,0.22),new THREE.MeshBasicMaterial({color:0x2A3A44}),g,x+0.26,0.95,z,false).rotation.y=Math.PI/2; }); });
+  const lt=malha(new THREE.PlaneGeometry(3.4,0.36),new THREE.MeshBasicMaterial({map:tPosto}),g,4.87,3.1,1.4,false); lt.rotation.y=Math.PI/2;
+  // ilhas com bombas, uma de cada lado das duas pistas de abastecimento (o visor acende quando abastece)
+  [-2.4,2.4].forEach((x,k)=>{ bloco(0.9,0.2,3.0,toon(0x9A9EA3),g,x,0.1,1.4); const lado=x<0?1:-1;
+    [0.5,2.3].forEach(z=>{ bloco(0.5,1.25,0.32,BRANCO,g,x,0.82,z,0.05,0.015); bloco(0.52,0.28,0.34,VERM,g,x,1.32,z);
+      const vis=malha(new THREE.PlaneGeometry(0.3,0.22),new THREE.MeshBasicMaterial({color:0x2A3A44}),g,x+lado*0.26,0.95,z,false); vis.rotation.y=lado*Math.PI/2; POSTO.visores[k].push(vis.material); }); });
   // loja de conveniência no fundo
   bloco(6.4,2.6,2.8,toon(0xF2EFE8),g,0,1.3,-3.2,0.04,0.025); bloco(6.6,0.18,3.0,VERM,g,0,2.68,-3.2);
   const vit=new THREE.MeshBasicMaterial({color:0x9FC7D8}); malha(new THREE.PlaneGeometry(3.8,1.4),vit,g,-0.8,1.0,-1.79,false);
@@ -7489,7 +7493,20 @@ casaTelhado(-7.2,17.6,0xF4D9C4,Math.PI,4.2,3.6);
     c.font='bold 18px Nunito, sans-serif'; c.fillText('GASOLINA',64,116); c.fillText('ETANOL',64,140); c.fillText('DIESEL',64,164); });
   malha(new THREE.PlaneGeometry(1.15,1.6),new THREE.MeshBasicMaterial({map:tt}),g,4.6,3.5,4.235,false);
   VIZINHOS.push({o:{x:-22.6,abre:0,fecha:24},vitrine:vit,porta:null});
+  // dois frentistas, de boné e camisa vermelha, um em cada ilha
+  [-2.4,2.4].forEach((x,k)=>{ const f=montarPop({pele:pega(POP_PELES),cabelo:'bone',corCab:0xC2362B,estilo:'polo',roupa:0xC2362B,calca:0x22345A});
+    const lado=x<0?1:-1, base=new THREE.Vector3(POSTO.x+x+lado*0.75,0,POSTO.z+3.4);
+    f.position.copy(base); f.rotation.y=Math.PI; scene.add(f); POSTO.frentistas.push({g:f,base,pista:k,caminho:[],vel:1.6,passo:0,estado:'livre'}); });
 })();
+function atualizarPosto(dt){
+  const t=performance.now()/1000;
+  POSTO.frentistas.forEach(F=>{
+    const carro=TRANSITO.find(v=>v.posto===F.pista+1&&v.abastecendo);
+    const alvo=carro?new THREE.Vector3(POSTO.pistas[F.pista]+(F.pista===0?-1:1)*0.95,0,POSTO.z+POSTO.parada+0.6):F.base;
+    if(F.g.position.distanceTo(alvo)>0.08){ if(!F.caminho.length||F.alvoAtual!==alvo.x+'|'+alvo.z){ F.caminho=[alvo.clone()]; F.alvoAtual=alvo.x+'|'+alvo.z; } mover(F,dt); }
+    else { const u=F.g.userData; u.pE.rotation.x=u.pD.rotation.x=0; u.corpo.position.y=0; F.g.rotation.y=lerpAng(F.g.rotation.y,carro?(F.pista===0?Math.PI/2:-Math.PI/2):Math.PI,0.15); }
+    POSTO.visores[F.pista].forEach(m=>m.color.setHex(carro&&carro.abastecendo&&Math.sin(t*6)>-0.6?0x3BE07A:0x2A3A44)); });
+}
 // ---------- casa num terreno grande, ao lado da Adega ----------
 (function(){ const g=new THREE.Group(); g.position.set(11.9,0,0); scene.add(g);
   malha(new THREE.BoxGeometry(10.6,0.04,10.2),toon(0x7FC46F),g,0,0.0,0,false).receiveShadow=true;   // gramado
@@ -7668,7 +7685,20 @@ const R={
   miltonDireita:()=>curva(V3(MM_SAI,MM_BOCA+0.9),V3(MM_SAI,FZ_SOBE),V3(MM_SAI+2.2,FZ_SOBE),7),
   miltonEsquerda:()=>curva(V3(MM_SAI,MM_BOCA+0.9),V3(MM_SAI,FZ_DESCE),V3(MM_SAI-2.6,FZ_DESCE),9),
 };
-function sortearRota(){ const r=Math.random(), livre=!ruaOcupada();
+// entra no posto pela Felice (descendo para a BR) ou pela BR-116, abastece e sai pela BR-116 dando a preferência
+function rotaPosto(){
+  const ocup=[1,2].map(k=>TRANSITO.some(o=>o.posto===k)); const livres=[1,2].filter((k,i)=>!ocup[i]); if(!livres.length) return null;
+  const k=pega(livres), xl=POSTO.pistas[k-1], zp=POSTO.z+POSTO.parada, xb=BR_SUL[1], zs=-0.8;
+  const pista=[V3(xl,4.4,0.45),V3(xl,zp,0.3)]; pista[1].parada=rnd(6,9);
+  const saida=[V3(xl,0.2,0.4)].concat(curva(V3(xl,0.2),V3(xl,zs),V3(xl-2.4,zs),6,0.4),[V3(-27.7,zs,0.35,()=>vemAlguem(xb-0.7,xb+0.7,zs-3,zs+13))],
+    curva(V3(-27.7,zs),V3(xb,zs),V3(xb,zs-2.4),6,0.45),[V3(xb,BR_Z0,1.4)]);
+  if(Math.random()<0.6){   // vem descendo a Felice e vira à direita na entrada do posto
+    const ent=[V3(F_X1,FZ_DESCE,1.05),V3(-15.2,FZ_DESCE,0.9)].concat(curva(V3(-15.2,FZ_DESCE),V3(-19.4,FZ_DESCE),V3(-19.9,5.9),8,0.42),curva(V3(-19.9,5.9),V3(xl,5.6),V3(xl,4.4),6,0.4));
+    return {pts:ent.concat(pista,saida),felice:true,posto:k}; }
+  const ent=[V3(xb,BR_Z1,1.4),V3(xb,7.2,1.0)].concat(curva(V3(xb,7.2),V3(xb,4.9),V3(-27.2,4.9),6,0.42),[V3(-25.2,4.9,0.4)],curva(V3(-25.2,4.9),V3(xl,4.9),V3(xl,3.9),5,0.38));
+  return {pts:ent.concat(pista.slice(1),saida),felice:false,br:true,posto:k}; }
+function sortearRota(){ if(Math.random()<0.16){ const rp=rotaPosto(); if(rp) return rp; }
+  const r=Math.random(), livre=!ruaOcupada();
   if(r<0.42||!livre){ const sul=Math.random()<0.5; return {pts:sul?R.brSul(pega(BR_SUL)):R.brNorte(pega(BR_NORTE)),felice:false,br:true}; }
   if(r<0.62){ const p=R.brParaFelice(), vira=Math.random()<0.25; return {pts:vira?p.concat(R.subirParaMilton()):p.concat(R.subir(F_X1)),felice:true,manobra:vira?'V':'S'}; }
   if(r<0.86){ const p=[V3(F_X1,FZ_DESCE,1.05)], vira=Math.random()<0.2; return {pts:vira?p.concat(R.descerParaMilton()):p.concat(R.feliceParaBR()),felice:true,manobra:vira?'VE':'D'}; }
@@ -7739,6 +7769,7 @@ function podeEntrar(v,p,hd){
   if(CRUZ.dono&&!TRANSITO.includes(CRUZ.dono)) CRUZ.dono=null;
   if(vira){
     if(CRUZ.dono&&CRUZ.dono!==v) return false;
+    if((v.manobra==='V'||v.manobra==='VE')&&faixaAtiva('milton')) return false;   // não entra no cruzamento para ficar parado na faixa da Milton
     if(dentro.length) return false;
     if(esp.length) return false;
     // ninguém seguindo reto pode estar chegando ao cruzamento (a mão principal tem a preferência)
@@ -7763,18 +7794,22 @@ function atualizarTransito(dt){
     let alvoV=v.base*alvo.k;
     // preferência: para antes do ponto de espera (placa de PARE, conversão) enquanto vier alguém
     if(alvo.ced&&dd<1.6&&!v.liberado){ if(alvo.ced()) { alvoV=0; v.esperou=(v.esperou||0)+dt; } else v.liberado=true; if(v.esperou>9) v.liberado=true; }
-    const esperandoPare=alvo.ced&&dd<1.6&&!v.liberado;
+    if(alvo.parada&&dd<0.7&&!(v.tAbast>=alvo.parada)){ v.tAbast=(v.tAbast||0)+dt; v.abastecendo=true; alvoV=0; v.spd=Math.min(v.spd,dd*2.5); }   // encosta na bomba sem passar do ponto
+    else if(v.abastecendo&&!(alvo.parada&&dd<0.7)) v.abastecendo=false;
+    if(v.abastecendo&&v.tAbast>=alvo.parada) v.abastecendo=false;
+    const esperandoPare=(alvo.ced&&dd<1.6&&!v.liberado)||v.abastecendo;
     if(!esperandoPare&&(v.parado||0)>14&&!(v.forca>0)) v.forca=3.5;   // ninguém fica travado para sempre
+    if(v.abastecendo) v.forca=0;
     if(v.forca>0) v.forca-=dt;
-    const gap=v.forca>0?99:caminhoLivre(v,p); if(gap<7){ alvoV=Math.min(alvoV,Math.max(0,(gap-1.9)*1.6)); }
-    const fx=faixaNoCaminho(v,p); if(fx<8){ alvoV=Math.min(alvoV,Math.max(0,(fx-(v.caminhaoBR?2.6:1.9))*1.8)); if(alvoV<0.05) v.parado=0; }   // prioridade do pedestre   // para com uns 3 m de para-choque a para-choque
+    const gap=v.forca>0||v.abastecendo?99:caminhoLivre(v,p); if(gap<7){ alvoV=Math.min(alvoV,Math.max(0,(gap-1.9)*1.6)); }
+    const fx=faixaNoCaminho(v,p); v.naFaixa=false; if(fx<8){ alvoV=Math.min(alvoV,Math.max(0,(fx-(v.caminhaoBR?2.6:1.9))*1.8)); if(alvoV<0.05){ v.espFaixa=(v.espFaixa||0)+dt; v.naFaixa=v.espFaixa<30; } } else v.espFaixa=0;   // prioridade do pedestre (esperar na faixa não é travar)   // para com uns 3 m de para-choque a para-choque
     if(v.forca>0) alvoV=Math.max(alvoV,Math.min(v.base*0.4,2.5));
     if(v.manobra){ const dc=distCaixa(p,_hd);
       v.naLinha=false;
       if(dc>0&&dc<4){ if(!v.entrou&&!(v.forca>0)&&!podeEntrar(v,p,_hd)){ alvoV=Math.min(alvoV,Math.max(0,(dc-0.6)*2.2)); if(dc<1.6){ v.naLinha=true; v.espBox=(v.espBox||0)+dt; } } else if(dc<1.2){ v.entrou=true; if(v.manobra[0]==='V') CRUZ.dono=v; } }
       else if(dc===0){ v.entrou=true; if(v.manobra[0]==='V'&&!CRUZ.dono) CRUZ.dono=v; }
       if(naCaixa(p)) v.jaDentro=true; else if(v.jaDentro&&!naCaixa(p,0.8)&&CRUZ.dono===v) CRUZ.dono=null; }
-    if(alvoV<0.05&&!esperandoPare) v.parado=(v.parado||0)+dt; else if(alvoV>=0.05) v.parado=0;   // nunca atravessa outro veículo: espera
+    if(alvoV<0.05&&!esperandoPare&&!v.naFaixa) v.parado=(v.parado||0)+dt; else if(alvoV>=0.05) v.parado=0;   // nunca atravessa outro veículo: espera
     v.spd+=Math.max(-14*dt,Math.min(6*dt,alvoV-v.spd));
     const antes=r.i; andarRota(v.g,r,v.spd,dt); if(r.i!==antes) v.liberado=false;
     v.dz=(v.felice&&p.x>-27&&Math.abs(p.z-FZ_DESCE)<0.3)?desvioZ(p.x,p.z,null):0; p.z+=v.dz;
@@ -7782,13 +7817,14 @@ function atualizarTransito(dt){
       if(Math.abs(_hd.z)<0.2) v.g.rotation.y=-Math.atan2(s*dir,dir); }
     v.rodas.forEach(w=>w.rotation.y-=dt*v.spd*3);
     v.naFelice=v.felice&&p.x>-28.6&&p.z>7.6&&p.z<12; }
+  atualizarPosto(dt);
   FAROL.color.setHex(ehNoite(h)?0xFFF6C8:0xD9DDE0);
   tTransito-=dt;
   if(tTransito<=0){ tTransito=rnd(0.9,2.2)/Math.max(0.35,mov);
     if(TRANSITO.length<16){ const rota=sortearRota(), ini=rota.pts[0];
       if(!TRANSITO.some(o=>o.g.position.distanceTo(ini)<7)){
         const caminhao=rota.br&&Math.random()<0.3, v=caminhao?caminhaoBR():veiculoRua();
-        v.caminhaoBR=caminhao; v.base=caminhao?rnd(7,8.5):v.moto?rnd(8.5,10):rnd(7,8.6); v.spd=v.base*ini.k; v.felice=rota.felice; v.manobra=rota.manobra||null;
+        v.caminhaoBR=caminhao; v.base=caminhao?rnd(7,8.5):v.moto?rnd(8.5,10):rnd(7,8.6); v.spd=v.base*ini.k; v.felice=rota.felice; v.manobra=rota.manobra||null; v.posto=rota.posto||null;
         v.rota={pts:rota.pts.slice(1),i:0}; v.g.position.copy(ini); const nx=rota.pts[1]; v.g.rotation.y=-Math.atan2(nx.z-ini.z,nx.x-ini.x);
         scene.add(v.g); TRANSITO.push(v); } } }
   // pedestres na calçada (desviam do ponto de ônibus)
@@ -7801,9 +7837,9 @@ function atualizarTransito(dt){
       let esperas=null;
       if(Math.random()<0.4){   // atravessa pela faixa da Felice e segue pela calçada de lá, cruzando a Milton pela outra faixa
         const V=(x,z)=>new THREE.Vector3(x,0,z), xf=FAIXA_FELICE_X, zo=12.9, xm0=MILTON_X-2.3, xm1=MILTON_X+2.3;
-        if(d>0){ pts=[V(-28.0,z),V(xf,z),V(xf,7.75),V(xf,12.1),V(xf,zo),V(xm0,zo),V(xm0,FAIXA_MILTON_Z),V(xm1,FAIXA_MILTON_Z),V(xm1,zo),V(RUA_FIM,zo)];
+        if(d>0){ pts=[V(-28.0,z),V(xf,z),V(xf,7.45),V(xf,12.1),V(xf,zo),V(xm0,zo),V(xm0,FAIXA_MILTON_Z),V(xm1,FAIXA_MILTON_Z),V(xm1,zo),V(RUA_FIM,zo)];
           esperas=[{n:pts.length-3,ok:felicaLivre,faixa:'felice'},{n:pts.length-7,ok:miltonLivre,faixa:'milton'}]; g.position.set(-28.0,0,-40); }
-        else { pts=[V(RUA_FIM,zo),V(xm1,zo),V(xm1,FAIXA_MILTON_Z),V(xm0,FAIXA_MILTON_Z),V(xm0,zo),V(xf,zo),V(xf,12.1),V(xf,7.75),V(xf,z),V(-28.0,z),V(-28.0,-40)];
+        else { pts=[V(RUA_FIM,zo),V(xm1,zo),V(xm1,FAIXA_MILTON_Z),V(xm0,FAIXA_MILTON_Z),V(xm0,zo),V(xf,zo),V(xf,12.1),V(xf,7.45),V(xf,z),V(-28.0,z),V(-28.0,-40)];
           g.position.set(RUA_FIM,0,zo); esperas=[{n:pts.length-3,ok:miltonLivre,faixa:'milton'},{n:pts.length-7,ok:felicaLivre,faixa:'felice'}]; } }
       PEDESTRES.push({g,caminho:pts,vel:rnd(1.3,1.8),passo:rnd(0,6),esperas}); } }
 }
