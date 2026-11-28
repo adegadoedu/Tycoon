@@ -314,6 +314,10 @@ body:not(.jogando) .alerta{display:none}
 .btn-fiado[hidden]{display:none}
 .btn-fiado .badge-missoes{animation:none}
 .cobrar.fiado{background:#FFC93C}
+.cobrar.saque{background:#F4A3A3}
+.saque-conta{background:#FFF7E8;border:2px dashed #E3D8BF;border-radius:14px;padding:10px 12px;margin:10px 0;text-align:left;font-size:.92rem}
+.saque-conta p{margin:3px 0;display:flex;justify-content:space-between;gap:10px}
+.saque-conta .tot{border-top:2px solid #E3D8BF;padding-top:6px;margin-top:6px;font-weight:900}
 .fiado-fala{font-size:1.05rem;margin:10px 0}
 .fiado-aviso{color:#B3362B;font-weight:900;font-size:.9rem;margin:6px 0}
 .fiado-aviso:empty{display:none}
@@ -794,6 +798,10 @@ body:not(.jogando) .alerta{display:none}
   </div>
 </section>
 
+<section class="tela" id="telaSaque" hidden>
+  <div class="caixa centro" id="saqueCaixa"></div>
+</section>
+
 <section class="tela" id="telaCaderninho" hidden>
   <div class="caixa">
     <div class="papo-topo"><h2 class="titulo" style="font-size:1.7rem">📒 Caderninho</h2><button class="pilula" id="btnCadernoFechar" type="button" aria-label="Fechar">✕</button></div>
@@ -1025,7 +1033,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 27/11/2026 · 19h45 · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 27/11/2026 · 23h30 · 🎄</p>
   </div>
 </section>
 
@@ -1735,6 +1743,14 @@ const CX=new THREE.Vector3(2.4,0,0.9);
 const caixaG=new THREE.Group(); caixaG.position.copy(CX); scene.add(caixaG);
 bloco(3.4,1.0,0.9,toon(0xD8BF8F),caixaG,0,0.5,0,0.06,0.03);
 bloco(3.6,0.1,1.05,toon(0xC8AC7A),caixaG,0,1.03,0,0.03,0.02);
+// plaquinha de acrílico no balcão: na Adega do Edu não se faz saque
+(function(){ const tx=texCanvas(256,180,(c)=>{ c.fillStyle='#C8302B'; c.fillRect(0,0,256,180); c.strokeStyle='#FFFFFF'; c.lineWidth=6; c.strokeRect(8,8,240,164);
+    c.fillStyle='#FFFFFF'; c.textAlign='center'; c.textBaseline='middle'; c.font='900 30px Nunito, sans-serif'; c.fillText('NÃO FAZEMOS',128,52); c.font='900 44px Nunito, sans-serif'; c.fillText('SAQUE',128,98);
+    c.font='800 20px Nunito, sans-serif'; c.fillText('nem no Pix, nem no cartão',128,142); });
+  const g=new THREE.Group(); g.position.set(-1.15,1.08,0.32); g.rotation.y=0.25; caixaG.add(g);
+  bloco(0.95,0.04,0.2,toon(0xE8E8E8),g,0,0.02,0);
+  const p=malha(new THREE.PlaneGeometry(0.9,0.63),new THREE.MeshBasicMaterial({map:tx}),g,0,0.36,0.02,false); p.rotation.x=-0.12;
+  const t=malha(new THREE.PlaneGeometry(0.9,0.63),new THREE.MeshBasicMaterial({color:0xC8302B}),g,0,0.36,0.015,false); t.rotation.x=-0.12; t.rotation.y=Math.PI; })();
 (function(){ const n=new THREE.Group(); n.position.set(1.4,1.08,0.05); n.rotation.y=-0.3; caixaG.add(n); bloco(0.46,0.03,0.32,toon(0x3A3F44),n,0,0.015,0,0.01,0.01); const t=new THREE.Group(); t.position.set(0,0.03,-0.15); t.rotation.x=-0.35; n.add(t); bloco(0.46,0.3,0.02,toon(0x3A3F44),t,0,0.15,0,0.008,0.01); malha(new THREE.PlaneGeometry(0.42,0.26),new THREE.MeshBasicMaterial({color:0x9FD8FF}),t,0,0.15,0.012,false); })();
 bloco(3.42,0.06,0.02,toon(0xB89C6A),caixaG,0,0.95,0.46);
 const caixasReg=[];
@@ -1986,19 +2002,23 @@ function novoCliente(){
   const qtd={}; lista.forEach(id=>{ const x=Math.random(); qtd[id]=x<0.45?1:x<0.8?2:3; });
   const cb=(typeof clienteCombo==='function')?clienteCombo():null;
   if(cb){ lista.length=0; for(const id in COMBOS[cb].itens){ lista.push(id); qtd[id]=COMBOS[cb].itens[id]; } }
-  clientes.push({g,lista,qtd,combo:cb,nome:sortearFreguês(),valor:0,estado:'chegando',caminho:[FORA_PORTA.clone(),PORTA.clone()],t:0,passo:rnd(0,6),est:null,slot:-1,vel:rnd(1.9,2.3)});
+  const c={g,lista,qtd,combo:cb,nome:sortearFreguês(),valor:0,estado:'chegando',caminho:[FORA_PORTA.clone(),PORTA.clone()],t:0,passo:rnd(0,6),est:null,slot:-1,vel:rnd(1.9,2.3)};
+  if(typeof caminhoMilton==='function'&&ruaPronta&&Math.random()<0.3){ const leste=Math.random()<0.5, m=caminhoMilton(true,leste); c.milton=leste?'leste':'oeste'; g.position.copy(m.ini); c.caminho=m.pts; c.esperas=m.esperas; }
+  clientes.push(c);
 }
+// por onde o cliente vai embora: quem veio pela Milton costuma voltar por ela, atravessando na faixa
+function saidaCli(c){ if(c.milton&&Math.random()<0.75){ const m=caminhoMilton(false,c.milton==='leste'); c.esperas=m.esperas; return m.pts; } c.esperas=null; return [FORA_PORTA.clone(),SAIDA.clone()]; }
 function irPara(c,dest){ c.caminho=rota(c.g.position,dest); }
 function proximoAlvo(c){
   while(c.lista.length&&S.est[c.lista[0]].estoque<=0){ pop(c.g.position.clone().setY(1.8),'😕 Acabou '+EST[c.lista[0]].ic,'ruim'); faltaComFiado(c.lista[0]); c.lista.shift(); }
-  if(!c.lista.length&&c.valor<=0&&!c.retirada){ pop(c.g.position.clone().setY(2.1),'Saiu sem comprar','ruim'); c.g.userData.sacola.visible=false; c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat([FORA_PORTA.clone(),SAIDA.clone()]); return; }
+  if(!c.lista.length&&c.valor<=0&&!c.retirada){ pop(c.g.position.clone().setY(2.1),'Saiu sem comprar','ruim'); c.g.userData.sacola.visible=false; c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat(saidaCli(c)); return; }
   if(c.lista.length){
     const id=c.lista[0], v=vagasEst[id], s=v.indexOf(null);
     if(s>=0){ v[s]=c; c.est=id; c.slot=s; c.estado='indoEst'; irPara(c,pontoEst(id,s)); }
     else { c.estado='esperandoVaga'; c.t=0.5; const d=EST[id]; irPara(c,pontoEst(id,1).add(new THREE.Vector3(d.face[0],0,d.face[2]).multiplyScalar(1.0)).add(new THREE.Vector3(rnd(-0.5,0.5),0,rnd(-0.3,0.3)))); }
   } else if(fila.length>=MAX_FILA){
     pop(c.g.position.clone().setY(2.1),'Fila cheia 😤','ruim'); c.g.userData.sacola.visible=false;
-    c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat([FORA_PORTA.clone(),SAIDA.clone()]);
+    c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat(saidaCli(c));
   } else { c.estado='fila'; fila.push(c); reordenarFila(); }
 }
 function reordenarFila(){ fila.forEach((c,i)=>{ if(c.posFila!==i){ c.posFila=i; irPara(c,pontoFila(i)); } }); }
@@ -2022,7 +2042,7 @@ const baloesCobrar=[0,1,2].map(k=>{
   const b=document.createElement('button'); b.type='button'; b.className='cobrar';
   b.innerHTML='<span class="ln"><span class="cart">💳</span><span class="tx"></span></span><span class="br"><i></i></span>';
   b.addEventListener('pointerdown',e=>{e.stopPropagation();});
-  b.addEventListener('click',e=>{e.stopPropagation(); const c=pagando[k]; if(c&&c.estado==='noCaixa'&&!(k===0&&caixaAusente())){ if(c.pedeFiado) abrirPedidoFiado(c); else cobrar(c,'manual'); }});
+  b.addEventListener('click',e=>{e.stopPropagation(); const c=pagando[k]; if(c&&c.estado==='noCaixa'&&!(k===0&&caixaAusente())){ if(c.pedeSaque) abrirPedidoSaque(c); else if(c.pedeFiado) abrirPedidoFiado(c); else cobrar(c,'manual'); }});
   $('#cobrancas').appendChild(b); return b;
 });
 function cobrar(c,modo){
@@ -2051,7 +2071,7 @@ function cobrar(c,modo){
     const a=pega(livres); a.estado='reservado'; a.cliente=c; c.assento=a; c.estado='indoMesa';
     c.caminho=rota(c.g.position,a.aprox).concat([a.pos.clone()]); return;
   }
-  c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat([FORA_PORTA.clone(),SAIDA.clone()]);
+  c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat(saidaCli(c));
 }
 function recolherMesa(i,auto){
   let v=0; assentos.forEach(a=>{ if(a.mesa===i&&a.estado==='sujo'){ v+=a.valor; a.valor=0; a.estado='livre'; a.copo.visible=false; a.nota.visible=false; a.t=0; } });
@@ -2086,10 +2106,11 @@ function posicionarCobrancas(){
     if(!c||c.estado!=='noCaixa'||!document.body.classList.contains('jogando')||(k===0&&caixaAusente())||(c.retirada&&c.valor<=0)){ b.style.display='none'; continue; }
     const t=naTela(c.g.position.clone().setY(1.95));
     b.style.display='flex'; b.style.left=t.x+'px'; b.style.top=t.y+'px';
-    const auto=automatico(k)&&!c.pedeFiado, barra=b.querySelector('.br i');
-    b.classList.toggle('auto',auto); b.classList.toggle('fiado',!!c.pedeFiado);
-    const txt=b.querySelector('.tx'), novo=(c.pedeFiado?'Pendura? ':'Cobrar ')+fmt(c.valor); if(txt.textContent!==novo) txt.textContent=novo;
-    const ic=b.querySelector('.cart'), icn=c.pedeFiado?'📒':'💳'; if(ic.textContent!==icn) ic.textContent=icn;
+    const auto=automatico(k)&&!c.pedeFiado&&!c.pedeSaque, barra=b.querySelector('.br i');
+    b.classList.toggle('auto',auto); b.classList.toggle('fiado',!!c.pedeFiado); b.classList.toggle('saque',!!c.pedeSaque);
+    const txt=b.querySelector('.tx'), novo=c.pedeSaque?'Saque? '+fmt(c.saque.valor):(c.pedeFiado?'Pendura? ':'Cobrar ')+fmt(c.valor); if(txt.textContent!==novo) txt.textContent=novo;
+    const ic=b.querySelector('.cart'), icn=c.pedeSaque?'💵':c.pedeFiado?'📒':'💳'; if(ic.textContent!==icn) ic.textContent=icn;
+    if(c.pedeSaque){ barra.style.width=Math.max(0,100*(1-c.t/SAQUE_ESPERA))+'%'; barra.style.background='#D9534F'; continue; }
     if(c.pedeFiado){ barra.style.width=Math.max(0,100*(1-c.t/FIADO_ESPERA))+'%'; barra.style.background='#E09A12'; continue; }
     if(auto){ barra.style.width=Math.min(100,100*c.t/tempoPagar())+'%'; barra.style.background='#2F8FD8'; }
     else { const r=Math.max(0,1-c.t/JANELA_GORJETA); barra.style.width=(r*100)+'%'; barra.style.background=r>0.5?'#3CB371':r>0?'#FFB020':'#B9B0A2'; }
@@ -2108,7 +2129,7 @@ function atualizarClientes(dt){
   for(let i=clientes.length-1;i>=0;i--){
     const c=clientes[i];
     switch(c.estado){
-      case 'chegando': if(mover(c,dt)) proximoAlvo(c); break;
+      case 'chegando': if(moverPed(c,dt)){ c.esperas=null; c.aguarda=null; proximoAlvo(c); } break;
       case 'esperandoVaga': mover(c,dt); c.t-=dt; if(c.t<=0){ c.t=0.5; const id=c.lista[0], s=vagasEst[id].indexOf(null); if(s>=0){ vagasEst[id][s]=c; c.est=id; c.slot=s; c.estado='indoEst'; irPara(c,pontoEst(id,s)); } } break;
       case 'indoEst': if(mover(c,dt)){ c.estado='pegando'; c.t=tempoEst(c.est); } break;
       case 'pegando':{
@@ -2128,11 +2149,11 @@ function atualizarClientes(dt){
         }
         break;}
       case 'fila': mover(c,dt); if(!c.caminho.length) olhar(c,new THREE.Vector3(0,0,-1)); break;
-      case 'indoPagar': if(mover(c,dt)){ c.estado='noCaixa'; c.t=0; c.pedeFiado=sortearFiado(c); } break;
+      case 'indoPagar': if(mover(c,dt)){ c.estado='noCaixa'; c.t=0; c.pedeFiado=sortearFiado(c); if(!c.pedeFiado) c.pedeSaque=sortearSaque(c); } break;
       case 'noCaixa':
         if(c.retirada&&c.valor<=0){ olhar(c,new THREE.Vector3(0,0,-1)); if(!(c.caixa===0&&caixaAusente())){ c.t+=dt; if(c.t>=1.0) entregarPacote(c); } break; }
         olhar(c,new THREE.Vector3(0,0,-1));
-        if(!(c.caixa===0&&caixaAusente())){ c.t+=dt; if(!c.pedeFiado&&automatico(c.caixa)&&c.t>=tempoPagar()) cobrar(c,'auto'); }
+        if(!(c.caixa===0&&caixaAusente())){ c.t+=dt; if(!c.pedeFiado&&!c.pedeSaque&&automatico(c.caixa)&&c.t>=tempoPagar()) cobrar(c,'auto'); }
         break;
       case 'indoMesa': if(mover(c,dt)){ const a=c.assento; c.estado='sentado'; c.t=TEMPO_MESA; a.estado='ocupado'; a.copo.visible=true; c.g.rotation.y=Math.atan2(-a.lado,0); c.g.position.y=0.12; c.g.userData.pE.rotation.x=c.g.userData.pD.rotation.x=-1.35; c.g.userData.sacola.visible=false; } break;
       case 'sentado':{
@@ -2141,10 +2162,10 @@ function atualizarClientes(dt){
         if(c.t<=0){
           missaoEvento('mesa',1); a.estado='sujo'; a.valor=valorMesa(); a.nota.visible=true; a.cliente=null; a.t=0; c.assento=null;
           c.g.position.y=0; c.g.userData.corpo.position.y=0; c.g.userData.pE.rotation.x=c.g.userData.pD.rotation.x=0;
-          c.estado='saindo'; c.caminho=[a.aprox.clone()].concat(rota(a.aprox,PORTA)).concat([FORA_PORTA.clone(),SAIDA.clone()]);
+          c.estado='saindo'; c.caminho=[a.aprox.clone()].concat(rota(a.aprox,PORTA)).concat(saidaCli(c));
         }
         break;}
-      case 'saindo': if(mover(c,dt)){ if(c.retirada&&!c.retirou) pdrEmRota=Math.max(0,pdrEmRota-1); scene.remove(c.g); clientes.splice(i,1); } break;
+      case 'saindo': if(moverPed(c,dt)){ if(c.retirada&&!c.retirou) pdrEmRota=Math.max(0,pdrEmRota-1); scene.remove(c.g); clientes.splice(i,1); } break;
     }
   }
   for(let k=0;k<S.caixas;k++){
@@ -2273,7 +2294,7 @@ function atualizarFornecedor(dt){
     rodas.forEach(r=>r.rotation.y-=dt*12);
     if(F.rota){ if(andarRota(caminhao,F.rota,7,dt)){ F.rota=null; caminhao.visible=false; F.estado='ocioso'; } }
     else { const alvo=F.estado==='chegando'?PARADA_X:F_X0+0.4, v=F.estado==='chegando'?Math.min(6.5,1.2+(caminhao.position.x-PARADA_X)*1.2):Math.min(7,2+(PARADA_X-caminhao.position.x)*0.8);
-      caminhao.position.x=Math.max(alvo,caminhao.position.x-v*dt); caminhao.position.z=Z_RUA+desvioZ(caminhao.position.x,Z_RUA,caminhao); rumoDesvio(caminhao,caminhao.position.x,Z_RUA,-1);
+      if(!segurarNaFaixa(caminhao.position.x,caminhao.position.z,-1,2.6)) caminhao.position.x=Math.max(alvo,caminhao.position.x-v*dt); caminhao.position.z=Z_RUA+desvioZ(caminhao.position.x,Z_RUA,caminhao); rumoDesvio(caminhao,caminhao.position.x,Z_RUA,-1);
       if(caminhao.position.x<=alvo){ if(F.estado==='chegando') F.estado='parado'; else F.rota=rotaSaidaEspecial(Z_RUA); } }
   }
   else if(F.estado==='parado'){
@@ -3412,7 +3433,7 @@ function atualizarPdr(dt){
     rodasVan.forEach(r=>r.rotation.y-=dt*12);
     if(VAN.rota){ if(andarRota(vanPdr,VAN.rota,7,dt)){ VAN.rota=null; vanPdr.visible=false; VAN.estado='ocioso'; const nAt=Object.keys(PARCEIROS).filter(k=>p.parceiros[k]).length; VAN.t=rnd(35,65)/(1+(nAt-1)*0.35); } }
     else { const alvo=VAN.estado==='chegando'?PARADA_VAN:F_X0+0.4, v=VAN.estado==='chegando'?Math.min(6.5,1.2+(vanPdr.position.x-PARADA_VAN)*1.2):Math.min(7,2+(PARADA_VAN-vanPdr.position.x)*0.8);
-      vanPdr.position.x=Math.max(alvo,vanPdr.position.x-v*dt); vanPdr.position.z=Z_VAN+desvioZ(vanPdr.position.x,Z_VAN,vanPdr); rumoDesvio(vanPdr,vanPdr.position.x,Z_VAN,-1);
+      if(!segurarNaFaixa(vanPdr.position.x,vanPdr.position.z,-1,1.6)) vanPdr.position.x=Math.max(alvo,vanPdr.position.x-v*dt); vanPdr.position.z=Z_VAN+desvioZ(vanPdr.position.x,Z_VAN,vanPdr); rumoDesvio(vanPdr,vanPdr.position.x,Z_VAN,-1);
       if(vanPdr.position.x<=alvo){ if(VAN.estado==='chegando'){ VAN.estado='parado'; VAN.n=2+Math.floor(Math.random()*4)+(VAN.parceiro==='amazon'?1:0); } else VAN.rota=rotaSaidaEspecial(Z_VAN); } }
   }
   else if(VAN.estado==='parado'&&G.estado==='livre'){
@@ -3483,7 +3504,7 @@ function marcarRetirada(c){
 function entregarPacote(c){
   const k=c.caixa; pagando[k]=null; baloesCobrar[k].style.display='none';
   marcarRetirada(c);
-  c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat([FORA_PORTA.clone(),SAIDA.clone()]);
+  c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat(saidaCli(c));
 }
 // ---------- Selo e painel ----------
 const seloPdr=document.createElement('button'); seloPdr.type='button'; seloPdr.className='selo-pdr';
@@ -4350,7 +4371,7 @@ function atualizarOnibus(dt){
     }
     o.rodas.forEach(r=>r.rotation.y-=dt*o.vel*2.6);
     if(o.rota){ if(andarRota(o.g,o.rota,o.dir>0?5.5:7,dt)){ o.rota=null; if(o.dir>0) o.g.rotation.y=0; else { o.ativo=false; o.g.visible=false; } } return; }
-    o.g.position.x+=o.dir*o.vel*dt; if(o.dir<0){ o.g.position.z=FAIXAS_ONIBUS.volta.z+desvioZ(o.g.position.x,FAIXAS_ONIBUS.volta.z,o.g); rumoDesvio(o.g,o.g.position.x,FAIXAS_ONIBUS.volta.z,-1); }
+    if(!segurarNaFaixa(o.g.position.x,o.g.position.z,o.dir,2.9)) o.g.position.x+=o.dir*o.vel*dt; if(o.dir<0){ o.g.position.z=FAIXAS_ONIBUS.volta.z+desvioZ(o.g.position.x,FAIXAS_ONIBUS.volta.z,o.g); rumoDesvio(o.g,o.g.position.x,FAIXAS_ONIBUS.volta.z,-1); }
     if(o.dir<0&&o.g.position.x<=F_X0+0.4){ o.rota=rotaSaidaEspecial(o.g.position.z); return; }
     if(o.dir<0&&!o.parou&&o.g.position.x<=PARADA_ONIBUS_X){ o.g.position.x=PARADA_ONIBUS_X; o.parou=true; o.estado='parado'; o.t=3; o.tDesc=0.6; o.desc=1+Math.floor(Math.random()*3); o.desceram=0; }
     if(o.g.position.x>RUA_FIM+2){ o.ativo=false; o.g.visible=false; } });
@@ -4921,7 +4942,7 @@ function mostrarPilha(n){ pilhaAtac.children.forEach((c,i)=>c.visible=i<n); }
 // leva o carro para estacionar (não fica atrapalhando a rua) e volta andando para repor os setores.
 const CALCADA_LONGE=new THREE.Vector3(-22,0,6.0), CALCADA_MEIO=new THREE.Vector3(-9,0,6.0);
 let atacFase=null, avisoForn=false, atacAlvo=null, rotaEdu=null;
-function andarCarro(dt,alvoX,dir,frear){ const vmax=dir>0?4.4:6.6, falta=Math.abs(alvoX-carroEdu.position.x), v=frear?vmax*Math.max(0.18,Math.min(1,falta/5)):vmax;
+function andarCarro(dt,alvoX,dir,frear){ if(segurarNaFaixa(carroEdu.position.x,carroEdu.position.z,dir,1.1)) return false; const vmax=dir>0?4.4:6.6, falta=Math.abs(alvoX-carroEdu.position.x), v=frear?vmax*Math.max(0.18,Math.min(1,falta/5)):vmax;
   carroEdu.position.x+=dir*v*dt; if(dir<0?carroEdu.position.x<alvoX:carroEdu.position.x>alvoX) carroEdu.position.x=alvoX;
   carroEdu.position.z=CARRO_PARADO.z+desvioZ(carroEdu.position.x,CARRO_PARADO.z,carroEdu); rumoDesvio(carroEdu,carroEdu.position.x,CARRO_PARADO.z,dir);
   rodasCarro.forEach(r=>r.rotation.y-=dt*v*1.8*dir); return dir>0?carroEdu.position.x>=alvoX:carroEdu.position.x<=alvoX; }
@@ -5359,7 +5380,7 @@ function sairSemComprar(c,msg){
   for(const id in (c.pegou||{})){ S.est[id].estoque=Math.min(cap(id),S.est[id].estoque+c.pegou[id]); atualizarProdutos(id); }
   const k=c.caixa; if(pagando[k]===c) pagando[k]=null; baloesCobrar[k].style.display='none';
   pop(c.g.position.clone().setY(2.0),msg,'ruim'); c.g.userData.sacola.visible=false;
-  c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat([FORA_PORTA.clone(),SAIDA.clone()]);
+  c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat(saidaCli(c));
 }
 function fiadoAVista(c,sozinho){
   const f=F(); c.pedeFiado=false; c.t=JANELA_GORJETA; if(!sozinho){ f.recusados++; f.pedidos++; }
@@ -5374,11 +5395,68 @@ function fiadoPendurar(c){
   f.lista.push({id:++f.seq,nome:c.nomeFiado,valor:c.valor,vence,resolve,saida,lembrete:false});
   const k=c.caixa; pagando[k]=null; baloesCobrar[k].style.display='none';
   pop(c.g.position.clone().setY(2.0),'📒 Pendurado: '+fmt(c.valor),'');
-  c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat([FORA_PORTA.clone(),SAIDA.clone()]);
+  c.estado='saindo'; c.caminho=rota(c.g.position,PORTA).concat(saidaCli(c));
   SOM.abrir(); salvar(); atualizarBtnFiado();
 }
 $('#btnFiadoSim').addEventListener('click',()=>{ const c=fiadoCliente; fecharPedidoFiado(); if(c&&c.pedeFiado&&c.estado==='noCaixa') fiadoPendurar(c); });
 $('#btnFiadoNao').addEventListener('click',()=>{ const c=fiadoCliente; fecharPedidoFiado(); if(c&&c.pedeFiado&&c.estado==='noCaixa') fiadoAVista(c,false); });
+// ================= Saque: "passa no cartão e me dá em dinheiro?" =================
+// Na Adega do Edu de verdade NÃO se faz saque (nem Pix, nem cartão). Tudo o que passa na maquininha ou cai
+// no Pix da loja conta como faturamento: paga imposto (Simples) e taxa da maquininha sobre um dinheiro que
+// não era venda. E o faturamento maior pode levar a loja para uma faixa mais alta do Simples. Mesmo com taxinha, não compensa.
+const SAQUE_CHANCE=0.12, SAQUE_INTERVALO=110, SAQUE_ESPERA=18, SAQUE_DESISTE=0.08, SIMPLES_EX=0.04;   // imposto de exemplo, o mesmo do boleto do mês
+function Sq(){ if(!S.saque) S.saque={pedidos:0,recusados:0,feitos:0,movimentado:0,prejuizo:0,prox:0}; return S.saque; }
+function sortearSaque(c){
+  if(!fiadoLiberado()||c.retirada||!(c.valor>0)) return false;
+  const q=Sq(); if(tJogo()<q.prox||pagando.some(o=>o&&o!==c&&(o.pedeSaque||o.pedeFiado))) return false;
+  if(Math.random()>=(q.pedidos?SAQUE_CHANCE:SAQUE_CHANCE*2.5)) return false;
+  q.prox=tJogo()+SAQUE_INTERVALO*rnd(0.8,1.3);
+  const valor=pega([50,100,100,150,200]), forma=pega(['debito','debito','credito','pix']), taxa=Math.max(2,Math.round(valor*rnd(0.02,0.03)));
+  c.saque={valor,forma,taxa,nome:pega(NOMES_FIADO)}; c.t=0; return true;
+}
+const nomeForma=f=>f==='pix'?'Pix':f==='debito'?'cartão de débito':'cartão de crédito';
+function contaSaque(q){ const entra=q.valor+q.taxa, maq=Math.round(entra*PAG[q.forma].taxa*100)/100, imp=Math.round(entra*SIMPLES_EX*100)/100;
+  return {entra,maq,imp,res:Math.round((entra-q.valor-maq-imp)*100)/100}; }
+let saqueCliente=null;
+function abrirPedidoSaque(c){
+  saqueCliente=c; SOM.abrir(); const q=c.saque;
+  $('#saqueCaixa').innerHTML=`<h2 class="titulo" style="font-size:1.8rem">💵 Me arruma um dinheiro?</h2>
+    <p class="txt fiado-fala"><b>${q.nome}:</b> “Edu, passa ${fmt(q.valor)} no ${nomeForma(q.forma)} e me dá em dinheiro? Pode cobrar ${fmt(q.taxa)} de taxa.”</p>
+    <div class="stat destaque"><span>Saque pedido</span><b>${fmt(q.valor)} + ${fmt(q.taxa)} de taxa</b></div>
+    <button class="btn" id="btnSaqueNao" type="button">🙅 Aqui não fazemos saque</button>
+    <button class="btn amarelo" id="btnSaqueSim" type="button" style="margin-top:10px">💵 Fazer o saque</button>
+    <p class="fiado-dica">A compra de ${fmt(c.valor)} continua: ela é paga normalmente.</p>`;
+  $('#btnSaqueNao').onclick=()=>{ const c2=saqueCliente; fecharPedidoSaque(); if(c2&&c2.pedeSaque&&c2.estado==='noCaixa') recusarSaque(c2,false); };
+  $('#btnSaqueSim').onclick=()=>{ const c2=saqueCliente; if(c2&&c2.pedeSaque&&c2.estado==='noCaixa') fazerSaque(c2); else fecharPedidoSaque(); };
+  $('#telaSaque').hidden=false;
+}
+function fecharPedidoSaque(){ $('#telaSaque').hidden=true; saqueCliente=null; }
+function recusarSaque(c,sozinho){
+  const q=Sq(); c.pedeSaque=false; c.t=JANELA_GORJETA; q.pedidos++; q.recusados++;
+  if(!sozinho&&Math.random()<SAQUE_DESISTE){ sairSemComprar(c,'“Então deixa…” 🙁'); salvar(); oferecerLicao('saque'); return; }
+  pop(c.g.position.clone().setY(2.5),sozinho?'🙅 “Aqui não fazemos saque”':'“Ah, tudo bem! Só a compra então.” 👍','');
+  cobrar(c,'manual'); salvar(); oferecerLicao('saque');
+}
+function fazerSaque(c){
+  const q=c.saque, Q=Sq(), k=contaSaque(q);
+  if(S.din<q.valor){ $('#saqueCaixa').innerHTML=`<h2 class="titulo" style="font-size:1.6rem">💵 Não tem dinheiro na gaveta</h2><p class="txt">O caixa tem ${fmt(S.din)}: não dá para entregar ${fmt(q.valor)} em espécie. Viu? O saque ainda tira o troco da gaveta.</p><button class="btn" id="btnSaqueOk" type="button">Entendi</button>`;
+    $('#btnSaqueOk').onclick=()=>{ fecharPedidoSaque(); recusarSaque(c,true); }; return; }
+  // o dinheiro sai da gaveta e entra no cartão/Pix: vira faturamento do mês (imposto e maquininha vêm no boleto)
+  S.din+=q.taxa; if(S.contas) S.contas.fat+=k.entra; registrarPagamento(q.forma,k.entra);
+  Q.pedidos++; Q.feitos++; Q.movimentado+=k.entra; Q.prejuizo=Math.round((Q.prejuizo-k.res)*100)/100;
+  c.pedeSaque=false; c.t=JANELA_GORJETA; pop(c.g.position.clone().setY(2.5),'💵 Saque de '+fmt(q.valor),'');
+  cobrar(c,'manual'); salvar(); atualizarHUD(true);
+  $('#saqueCaixa').innerHTML=`<h2 class="titulo" style="font-size:1.6rem">🧾 A conta do saque</h2>
+    <div class="saque-conta"><p><span>Entrou no ${q.forma==='pix'?'Pix':'cartão'} (saque + taxa)</span><b>${fmt(k.entra)}</b></p>
+      <p><span>Saiu da gaveta em dinheiro</span><b>−${fmt(q.valor)}</b></p>
+      <p><span>Taxa da maquininha (${(PAG[q.forma].taxa*100).toFixed(1).replace('.',',')}%)</span><b>−${fmt(k.maq)}</b></p>
+      <p><span>Imposto do Simples sobre os ${fmt(k.entra)}</span><b>−${fmt(k.imp)}</b></p>
+      <p class="tot"><span>${k.res<0?'Prejuízo':'Sobrou'}</span><b style="color:${k.res<0?'#B3362B':'#1F7A3A'}">${fmt(Math.abs(k.res))}</b></p></div>
+    <p class="txt" style="font-size:.9rem">Os ${fmt(k.entra)} entram como <b>faturamento</b>, mas não eram venda nenhuma. Além do imposto, o faturamento maior pode levar a adega para uma <b>faixa mais alta do Simples</b>, que aumenta o imposto de tudo o que ela vende.</p>
+    <p class="fiado-dica">Na Adega do Edu: <b>não fazemos saque</b>. Valores de exemplo.</p>
+    <button class="btn" id="btnSaqueOk" type="button">Entendi</button>`;
+  $('#btnSaqueOk').onclick=()=>{ fecharPedidoSaque(); oferecerLicao('saque'); };
+}
 // --- o caderninho anda com o tempo ---
 let tFiado=0;
 function atualizarFiado(dt){
@@ -5386,6 +5464,7 @@ function atualizarFiado(dt){
   const f=F(), t=tJogo(); let mudou=false;
   // cliente que pediu fiado e ninguém respondeu: paga à vista sozinho
   pagando.forEach(c=>{ if(c&&c.pedeFiado&&c.estado==='noCaixa'&&c.t>=FIADO_ESPERA&&c!==fiadoCliente) fiadoAVista(c,true); });
+  pagando.forEach(c=>{ if(c&&c.pedeSaque&&c.estado==='noCaixa'&&c.t>=SAQUE_ESPERA&&c!==saqueCliente) recusarSaque(c,true); });
   for(let i=f.lista.length-1;i>=0;i--){
     const e=f.lista[i];
     if(!e.avisouAtraso&&t>=e.vence&&t<e.resolve){ e.avisouAtraso=true; mudou=true; toastMissao(`📒 ${e.nome} não pagou no dia combinado.${textoRepor(e.valor)?' Esse dinheiro repunha '+textoRepor(e.valor)+'.':''}`); oferecerLicao('fiado'); }
@@ -5550,6 +5629,19 @@ const LICOES={
     errado:'Quase! O preço da adega não fica mudando, e a gasolina gasta não volta comprando mais. Tente de novo.',
     nota:'Preços e variações de exemplo.',
     libera:()=>!!S.compras},
+  saque:{ic:'💵',tit:'Por que a adega não faz saque',
+    falas:['Muita gente chega na adega pedindo para <b>passar o cartão ou fazer um Pix</b> e levar o valor em dinheiro. É o tal do <b>saque</b>.',
+           'Parece um favor sem custo, mas tudo o que passa na maquininha ou cai no Pix da loja <b>conta como faturamento</b>. E o imposto do Simples é cobrado sobre o faturamento.',
+           'Num saque de R$ 100, a adega paga imposto sobre R$ 100 que não eram venda nenhuma, mais a taxa da maquininha. E o faturamento maior pode levar a loja para uma <b>faixa mais alta do Simples</b>, aumentando o imposto de tudo.',
+           'Mesmo cobrando uma taxinha, <b>não compensa</b>, e ainda some o troco da gaveta. Por isso, na Adega do Edu: <b>não fazemos saque</b>. 💛'],
+    perg:'Um cliente pede para passar R$ 100 no débito e levar em dinheiro, pagando R$ 3 de taxa. Por que a adega recusa?',
+    ops:[{t:'Porque os R$ 100 viram faturamento: a adega paga imposto e taxa da maquininha sobre eles, e a taxinha não cobre.',ok:true},
+         {t:'Porque dinheiro em espécie é proibido no comércio.'},
+         {t:'Porque a adega ganharia dinheiro demais com a taxa.'}],
+    certo:'Isso! O saque infla o faturamento e o imposto, e a taxinha não paga a conta. Aqui não fazemos saque. 💛',
+    errado:'Quase! Pense no que acontece com o faturamento e com o imposto da adega. Tente de novo.',
+    nota:'Impostos e taxas de exemplo. A faixa do Simples Nacional depende do faturamento dos últimos 12 meses.',
+    libera:()=>!!(S.saque&&S.saque.pedidos>0)},
   isca:{ic:'🎣',tit:'O produto isca',
     falas:['O refri é o produto que todo mundo procura e compara o preço. Por isso ele fica <b>baratinho</b>: a adega ganha só uns <b>10%</b> nele.',
            'Ele é a <b>isca</b>: traz o cliente até a loja. O lucro vem do que ele leva junto, como o <b>gelo</b> (30%) e o <b>salgadinho</b> (25%).',
@@ -7158,13 +7250,42 @@ let tRel=0; tempoPronto=true;
 // ================= Rua viva: vizinhos, postes, trânsito e pedestres =================
 // Os outros veículos (caminhão, van, ônibus e o carro do Edu) só entram quando a rua está livre do trânsito.
 const PEDESTRES=[];
-// quem está atravessando (na pista da Felice ou da Milton): os carros param para eles
-const pedestresNaRua=()=>PEDESTRES.filter(p=>{ const q=p.g.position; return (q.z>7.6&&q.z<12)||(q.z>12&&q.x>MILTON_X-1.7&&q.x<MILTON_X+1.7); }).map(p=>p.g);
-// o pedestre só começa a atravessar com a rua livre perto da faixa (olha para os dois lados)
-function felicaLivre(){ const x0=FAIXA_FELICE_X; if(TRANSITO.some(o=>{ const q=o.g.position; return q.z>7.6&&q.z<12&&Math.abs(q.x-x0)<7&&o.spd>0.3; })) return false;
-  return !especiais().some(g=>g.position.z>7.6&&g.position.z<12&&Math.abs(g.position.x-x0)<14); }
-function miltonLivre(){ const z0=FAIXA_MILTON_Z; if(TRANSITO.some(o=>{ const q=o.g.position; return Math.abs(q.x-MILTON_X)<1.8&&q.z>11&&Math.abs(q.z-z0)<7&&o.spd>0.3; })) return false;
-  return !TRANSITO.some(o=>{ const q=o.g.position; return o.manobra&&o.manobra[0]==='V'&&Math.abs(q.x-MILTON_X)<6&&q.z>7.6&&q.z<12.5; }); }
+// Faixas de pedestre: quem está atravessando OU esperando na guia para atravessar tem prioridade (CTB).
+// Os carros param antes da faixa; o pedestre só espera quem já está em cima dela (não dá mais para frear).
+const pessoasRua=()=>PEDESTRES.concat(clientes.filter(c=>c.g&&c.g.parent));
+const naPistaFelice=q=>q.z>7.6&&q.z<12;
+const naPistaMilton=q=>q.z>12&&q.x>MILTON_X-1.7&&q.x<MILTON_X+1.7;
+const pedestresNaRua=()=>pessoasRua().filter(p=>{ const q=p.g.position; return naPistaFelice(q)||naPistaMilton(q); }).map(p=>p.g);
+const faixaAtiva=f=>pessoasRua().some(p=>p.aguarda===f||(f==='felice'?naPistaFelice(p.g.position)&&Math.abs(p.g.position.x-FAIXA_FELICE_X)<1.3:naPistaMilton(p.g.position)&&Math.abs(p.g.position.z-FAIXA_MILTON_Z)<1.3));
+// pontos da faixa onde os carros precisam parar (um por mão)
+const pontosFaixa=f=>f==='felice'?[[FAIXA_FELICE_X,FZ_DESCE],[FAIXA_FELICE_X,FZ_SOBE]]:[[MM_ENTRA,FAIXA_MILTON_Z],[MM_SAI,FAIXA_MILTON_Z]];   // função: as constantes da rua vêm depois
+function felicaLivre(){ const x0=FAIXA_FELICE_X;
+  if(TRANSITO.some(o=>{ const q=o.g.position; return naPistaFelice(q)&&Math.abs(q.x-x0)<(o.caminhaoBR?3.4:2.6); })) return false;
+  return !especiais().some(g=>naPistaFelice(g.position)&&Math.abs(g.position.x-x0)<4.2); }
+function miltonLivre(){ const z0=FAIXA_MILTON_Z;
+  if(TRANSITO.some(o=>{ const q=o.g.position; return Math.abs(q.x-MILTON_X)<1.8&&Math.abs(q.z-z0)<2.6; })) return false;
+  return !TRANSITO.some(o=>{ const q=o.g.position; return o.manobra&&o.manobra[0]==='V'&&Math.abs(q.x-MILTON_X)<3&&q.z>11.5&&q.z<13.5; }); }
+// veículos da loja (ônibus, caminhão, van, carro do Edu) também param antes da faixa
+function segurarNaFaixa(x,z,dir,meia){ if(!naPistaFelice({x,z})||!faixaAtiva('felice')) return false;
+  const frente=x+dir*meia, xf=FAIXA_FELICE_X; return dir<0?(frente>xf+1.0&&frente<xf+3.6):(frente<xf-1.0&&frente>xf-3.6); }
+// anda com as esperas na guia: enquanto espera, avisa que quer atravessar (os carros param)
+function moverPed(p,dt){
+  const w=p.esperas&&p.esperas.find(e=>!e.foi&&p.caminho.length===e.n);
+  if(w){ p.aguarda=w.faixa; if(w.ok()){ w.foi=true; p.aguarda=null; } else { const u=p.g.userData; u.pE.rotation.x=u.pD.rotation.x=0; u.corpo.position.y=0; return false; } }
+  return mover(p,dt); }
+// caminhos pela Rua Milton Martins Moura (clientes que vêm do outro lado e atravessam na faixa)
+const V0=(x,z)=>new THREE.Vector3(x,0,z);
+function caminhoMilton(chegando,ladoLeste){
+  const xf=FAIXA_FELICE_X, zo=12.9, xw=MILTON_X-2.3, xe=MILTON_X+2.3, zl=34;
+  const ida=ladoLeste?[V0(xe,zl),V0(xe,FAIXA_MILTON_Z),V0(xw,FAIXA_MILTON_Z),V0(xw,zo),V0(xf,zo),V0(xf,12.1),V0(xf,7.75),V0(xf,6.7),FORA_PORTA.clone(),PORTA.clone()]
+                     :[V0(xw,zl),V0(xw,zo),V0(xf,zo),V0(xf,12.1),V0(xf,7.75),V0(xf,6.7),FORA_PORTA.clone(),PORTA.clone()];
+  if(chegando){ const pts=ida.slice(1), esperas=[]; const iF=pts.findIndex(v=>v.z===12.1); esperas.push({n:pts.length-iF-1,ok:felicaLivre,faixa:'felice'});
+    if(ladoLeste){ const iM=pts.findIndex(v=>v.x===xe&&v.z===FAIXA_MILTON_Z); esperas.push({n:pts.length-iM-1,ok:miltonLivre,faixa:'milton'}); }
+    return {ini:ida[0],pts,esperas}; }
+  const volta=ida.slice(0,-1).reverse();   // da porta de volta à Milton
+  const esperas=[]; const iF=volta.findIndex(v=>v.z===7.75); esperas.push({n:volta.length-iF-1,ok:felicaLivre,faixa:'felice'});
+  if(ladoLeste){ const iM=volta.findIndex(v=>v.x===xw&&v.z===FAIXA_MILTON_Z); esperas.push({n:volta.length-iM-1,ok:miltonLivre,faixa:'milton'}); }
+  return {pts:volta,esperas}; }
 let pedidoRua=0;
 const transitoNaRua=()=>TRANSITO.some(v=>v.felice);   // carro a caminho da Felice (mesmo ainda na BR) conta
 function ruaParaVeiculo(){ if(transitoNaRua()){ pedidoRua=performance.now(); return false; } return true; }
@@ -7572,6 +7693,15 @@ function caminhoLivre(v,p){
         if(dd<0.05||ox*hx+oz*hz<0.35*dd) continue;   // do lado ou atrás: não é "quem está na frente" (evita os dois esperarem um pelo outro)
         return s; } } }
   return 99; }
+// distância, pelo caminho, até a faixa com pedestre (99 se nenhuma faixa ativa no caminho)
+function faixaNoCaminho(v,p){
+  const ativos=[]; ['felice','milton'].forEach(f=>{ if(faixaAtiva(f)) pontosFaixa(f).forEach(q=>{ if(Math.hypot(q[0]-p.x,q[1]-p.z)>2.0) ativos.push(q); }); });   // quem já está em cima da faixa segue
+  if(!ativos.length) return 99;
+  let s=0, x=p.x, z=p.z, i=v.rota.i; const pts=v.rota.pts;
+  while(s<8&&i<pts.length){ const q=pts[i], dx=q.x-x, dz=q.z-z, L=Math.hypot(dx,dz);
+    if(L<1e-4){ i++; continue; } const passo=Math.min(0.4,L); x+=dx/L*passo; z+=dz/L*passo; s+=passo; if(passo>=L) i++;
+    for(const q of ativos){ if(Math.hypot(q[0]-x,q[1]-z)<0.9) return s; } }
+  return 99; }
 function andarRota(obj,r,vmax,dt){ // move um objeto pela lista de pontos; devolve true quando chega no fim
   let resta=vmax*dt;
   while(resta>0&&r.i<r.pts.length){ const alvo=r.pts[r.i]; _d.subVectors(alvo,obj.position); _d.y=0; const dd=_d.length();
@@ -7636,7 +7766,8 @@ function atualizarTransito(dt){
     const esperandoPare=alvo.ced&&dd<1.6&&!v.liberado;
     if(!esperandoPare&&(v.parado||0)>14&&!(v.forca>0)) v.forca=3.5;   // ninguém fica travado para sempre
     if(v.forca>0) v.forca-=dt;
-    const gap=v.forca>0?99:caminhoLivre(v,p); if(gap<7){ alvoV=Math.min(alvoV,Math.max(0,(gap-1.9)*1.6)); }   // para com uns 3 m de para-choque a para-choque
+    const gap=v.forca>0?99:caminhoLivre(v,p); if(gap<7){ alvoV=Math.min(alvoV,Math.max(0,(gap-1.9)*1.6)); }
+    const fx=faixaNoCaminho(v,p); if(fx<8){ alvoV=Math.min(alvoV,Math.max(0,(fx-(v.caminhaoBR?2.6:1.9))*1.8)); if(alvoV<0.05) v.parado=0; }   // prioridade do pedestre   // para com uns 3 m de para-choque a para-choque
     if(v.forca>0) alvoV=Math.max(alvoV,Math.min(v.base*0.4,2.5));
     if(v.manobra){ const dc=distCaixa(p,_hd);
       v.naLinha=false;
@@ -7661,10 +7792,7 @@ function atualizarTransito(dt){
         v.rota={pts:rota.pts.slice(1),i:0}; v.g.position.copy(ini); const nx=rota.pts[1]; v.g.rotation.y=-Math.atan2(nx.z-ini.z,nx.x-ini.x);
         scene.add(v.g); TRANSITO.push(v); } } }
   // pedestres na calçada (desviam do ponto de ônibus)
-  for(let i=PEDESTRES.length-1;i>=0;i--){ const p=PEDESTRES[i];
-    const w=p.esperas&&p.esperas.find(e=>!e.foi&&p.caminho.length===e.n);
-    if(w){ if(w.ok()) w.foi=true; else { const u=p.g.userData; u.pE.rotation.x=u.pD.rotation.x=0; u.corpo.position.y=0; continue; } }
-    if(mover(p,dt)){ scene.remove(p.g); PEDESTRES.splice(i,1); } }
+  for(let i=PEDESTRES.length-1;i>=0;i--){ const p=PEDESTRES[i]; if(moverPed(p,dt)){ scene.remove(p.g); PEDESTRES.splice(i,1); } }
   tPed-=dt;
   if(tPed<=0){ tPed=rnd(4,8)/Math.max(0.3,mov);
     if(PEDESTRES.length<6){ const d=Math.random()<0.5?1:-1, z=6.85+rnd(-0.05,0.05), g=pessoa(); g.position.set(d>0?-28.0:RUA_FIM,0,d>0?-40:z); scene.add(g);
@@ -7674,9 +7802,9 @@ function atualizarTransito(dt){
       if(Math.random()<0.4){   // atravessa pela faixa da Felice e segue pela calçada de lá, cruzando a Milton pela outra faixa
         const V=(x,z)=>new THREE.Vector3(x,0,z), xf=FAIXA_FELICE_X, zo=12.9, xm0=MILTON_X-2.3, xm1=MILTON_X+2.3;
         if(d>0){ pts=[V(-28.0,z),V(xf,z),V(xf,7.75),V(xf,12.1),V(xf,zo),V(xm0,zo),V(xm0,FAIXA_MILTON_Z),V(xm1,FAIXA_MILTON_Z),V(xm1,zo),V(RUA_FIM,zo)];
-          esperas=[{n:pts.length-3,ok:felicaLivre},{n:pts.length-7,ok:miltonLivre}]; g.position.set(-28.0,0,-40); }
+          esperas=[{n:pts.length-3,ok:felicaLivre,faixa:'felice'},{n:pts.length-7,ok:miltonLivre,faixa:'milton'}]; g.position.set(-28.0,0,-40); }
         else { pts=[V(RUA_FIM,zo),V(xm1,zo),V(xm1,FAIXA_MILTON_Z),V(xm0,FAIXA_MILTON_Z),V(xm0,zo),V(xf,zo),V(xf,12.1),V(xf,7.75),V(xf,z),V(-28.0,z),V(-28.0,-40)];
-          g.position.set(RUA_FIM,0,zo); esperas=[{n:pts.length-3,ok:miltonLivre},{n:pts.length-7,ok:felicaLivre}]; } }
+          g.position.set(RUA_FIM,0,zo); esperas=[{n:pts.length-3,ok:miltonLivre,faixa:'milton'},{n:pts.length-7,ok:felicaLivre,faixa:'felice'}]; } }
       PEDESTRES.push({g,caminho:pts,vel:rnd(1.3,1.8),passo:rnd(0,6),esperas}); } }
 }
 function caminhaoBR(){ const g=new THREE.Group(), rodas=[], cor=pega([0xE8433A,0x2F6FD8,0xF2F2F2,0xF2C31B,0x3CB371]);
