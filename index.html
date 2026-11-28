@@ -60,6 +60,13 @@ body:not(.jogando) .hud{display:none}
 
 .selo{position:fixed;left:0;top:0;translate:-50% -100%;z-index:4;display:flex;align-items:center;gap:4px;border:3px solid var(--contorno);border-radius:12px;background:#fff;color:#2A1A12;padding:3px 8px;font-weight:900;font-size:.85rem;box-shadow:0 3px 0 #2A1A12;white-space:nowrap;cursor:pointer}
 .selo.pode{background:#C9F7D8}
+.selo-santo{position:fixed;left:0;top:0;translate:-50% -100%;z-index:5;display:flex;flex-direction:column;align-items:center;border:3px solid var(--contorno);border-radius:14px;background:#C8302B;color:#fff;padding:4px 10px 5px;font:900 .9rem 'Nunito',sans-serif;box-shadow:0 3px 0 #2A1A12;white-space:nowrap;cursor:pointer;line-height:1.1}
+.selo-santo small{font-size:.66rem;font-weight:800;opacity:.95}
+.selo-santo.fechada{background:#FFF7E8;color:#2A1A12}
+.selo-santo::after{content:'';position:absolute;bottom:-9px;left:50%;margin-left:-6px;border:6px solid transparent;border-top-color:var(--contorno)}
+.selo-santo.chama{animation:chamaSanto 1.6s ease-in-out infinite}
+@keyframes chamaSanto{0%,100%{transform:translateY(0)}12%{transform:translateY(-7px)}24%{transform:translateY(0)}34%{transform:translateY(-3px)}44%{transform:translateY(0)}}
+body:not(.jogando) .selo-santo{display:none}
 .btn-venda{position:fixed;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 208px);z-index:6;font:900 1rem 'Nunito',sans-serif;background:#1F4D3A;color:#FFC93C;border:4px solid var(--contorno);border-radius:999px;padding:10px 16px;box-shadow:0 5px 0 var(--contorno);animation:pulo 1.6s ease-in-out infinite}
 body:not(.jogando) .btn-venda{display:none}
 .nv-badge{position:absolute;bottom:-7px;right:-7px;min-width:22px;height:22px;border-radius:11px;background:#FFC93C;color:#2A1A12;border:2px solid #2A1A12;font:900 .72rem 'Nunito',sans-serif;display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none}
@@ -1033,7 +1040,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 28/11/2026 · 00h30 · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 28/11/2026 · 01h15 · 🎄</p>
   </div>
 </section>
 
@@ -3510,6 +3517,22 @@ function entregarPacote(c){
 const seloPdr=document.createElement('button'); seloPdr.type='button'; seloPdr.className='selo-pdr';
 seloPdr.addEventListener('pointerdown',e=>e.stopPropagation()); seloPdr.addEventListener('click',e=>{ e.stopPropagation(); abrirPdr(); });
 $('#selos').appendChild(seloPdr);
+// Balão da Pizzaria Santo Forno: deixa claro que dá para tocar e pedir pizza pelo WhatsApp
+const seloSanto=document.createElement('button'); seloSanto.type='button'; seloSanto.className='selo-santo'; seloSanto.setAttribute('aria-label','Pedir pizza na Santo Forno');
+seloSanto.addEventListener('pointerdown',e=>e.stopPropagation()); seloSanto.addEventListener('click',e=>{ e.stopPropagation(); abrirSanto(); });
+$('#selos').appendChild(seloSanto);
+const SANTO_POS=new THREE.Vector3(14.6,4.25,16.6);
+function posicionarSanto(){
+  const t=naTela(SANTO_POS), W=innerWidth, H=innerHeight, h=typeof horaAgora==='function'?horaAgora():19, aberta=h>=18||h<0.01;
+  const fora=t.x<40||t.x>W-40||t.y<120||t.y>H-40;
+  // fora da tela: com a pizzaria aberta, o balão fica na borda apontando o caminho; fechada, some
+  let x=t.x, y=t.y, seta='';
+  if(fora){ x=Math.min(W-78,Math.max(78,t.x)); y=Math.min(H-120,Math.max(150,t.y)); const a=Math.atan2(t.y-y,t.x-x); seta=' '+['→','↘','↓','↙','←','↖','↑','↗'][((Math.round(a/(Math.PI/4))%8)+8)%8]; }
+  seloSanto.style.display=fora&&!aberta?'none':''; seloSanto.style.left=x+'px'; seloSanto.style.top=y+'px';
+  const html=aberta?'🍕 Peça sua pizza'+seta+'<small>toque aqui · WhatsApp</small>':'🍕 Santo Forno<small>abre às 18h</small>';
+  if(seloSanto._h!==html){ seloSanto._h=html; seloSanto.innerHTML=html; seloSanto.classList.toggle('fechada',!aberta); }
+  const chama=aberta&&((S&&S.santoToques)||0)<3; if(seloSanto._c!==chama){ seloSanto._c=chama; seloSanto.classList.toggle('chama',chama); }
+}
 function posicionarPdr(){
   const p=PDR(), t=naTela(estantePdr.position.clone().setY(2.25));
   seloPdr.style.left=t.x+'px'; seloPdr.style.top=t.y+'px';
@@ -5240,11 +5263,11 @@ const DIV_ESPERA=240;
 let tCartinha=null;
 function abrirSanto(){
   $('#santoLogo').src=SANTO.logo; $('#santoQr').src=SANTO.qr; $('#santoTel').textContent='📱 '+SANTO.tel; $('#santoWa').href=SANTO.wa;
-  fecharPainel(); $('#telaSanto').hidden=false; SOM.abrir();
+  fecharPainel(); $('#telaSanto').hidden=false; SOM.abrir(); if(S){ S.santoToques=(S.santoToques||0)+1; salvar(); }
 }
 $('#btnSantoFechar').addEventListener('click',()=>{ $('#telaSanto').hidden=true; });
 setInterval(()=>{ if(!S||typeof horaAgora!=='function'||!document.body.classList.contains('jogando')) return;
-  const h=horaAgora(), d=diaSP(Date.now()); if(h>=18&&h<19&&S.santoAviso!==d&&!algumaTelaAberta()){ S.santoAviso=d; toastMissao('🍕 A Santo Forno, vizinha da Adega, acendeu as luzinhas! Arraste a tela até a esquina e toque na pizzaria.'); } },5000);
+  const h=horaAgora(), d=diaSP(Date.now()); if(h>=18&&h<19&&S.santoAviso!==d&&!algumaTelaAberta()){ S.santoAviso=d; toastMissao('🍕 A Santo Forno, vizinha da Adega, acendeu as luzinhas! Toque no balão vermelho “Peça sua pizza” em cima da pizzaria.'); } },5000);
 function talvezDivisao(c){
   if(S.divOff) return; S.divN=(S.divN||0)+1;
   const vez=S.divN===3||(S.divN>3&&(S.divN-3)%20===0);
@@ -6882,6 +6905,10 @@ window.addEventListener('pointercancel',e=>soltarDedo(e,true),{capture:true});
 // depois de arrastar em cima de uma plaquinha, ela não abre sozinha
 window.addEventListener('click',e=>{ if(performance.now()<cancelarClique&&ehMundo(e.target)){ e.stopPropagation(); e.preventDefault(); } },{capture:true});
 const ray=new THREE.Raycaster(), ptr=new THREE.Vector2();
+let tHover=0;
+addEventListener('pointermove',e=>{ if(e.pointerType!=='mouse'||!document.body.classList.contains('jogando')) return; const n=performance.now(); if(n-tHover<120) return; tHover=n;
+  ptr.x=(e.clientX/window.innerWidth)*2-1; ptr.y=-(e.clientY/window.innerHeight)*2+1; ray.setFromCamera(ptr,cam);
+  const h=ray.intersectObjects(alvos,false)[0]; renderer.domElement.style.cursor=h?'pointer':''; },{passive:true});
 function tocarMundo(e){
   if(!document.body.classList.contains('jogando')) return;
   ptr.x=(e.clientX/window.innerWidth)*2-1; ptr.y=-(e.clientY/window.innerHeight)*2+1;
@@ -7006,7 +7033,7 @@ function laco(){
   atualizarEdu(dt);
   atendentes.concat(edus).forEach((a,i)=>{ if(a.visible&&!(G.estado!=='livre'&&G.g===a)) a.userData.corpo.position.y=Math.abs(Math.sin(performance.now()/300+i))*0.03; });
   for(let i=confetes.length-1;i>=0;i--){const c=confetes[i];c.t+=dt;c.v.y-=6*dt;c.m.position.addScaledVector(c.v,dt);c.m.rotation.x+=c.r.x*dt;c.m.rotation.y+=c.r.y*dt;if(c.t>1.4||c.m.position.y<0.05){scene.remove(c.m);c.m.geometry.dispose();c.m.material.dispose();confetes.splice(i,1);}}
-  posicionarSelos(); posicionarCobrancas(); posicionarMesas(); posicionarReceber(); posicionarPdr();
+  posicionarSelos(); posicionarCobrancas(); posicionarMesas(); posicionarReceber(); posicionarPdr(); posicionarSanto();
   renderer.render(scene,cam);
 }
 function renderPainelLeve(){
