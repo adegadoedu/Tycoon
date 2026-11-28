@@ -324,6 +324,7 @@ body:not(.jogando) .alerta{display:none}
 .cobrar.saque{background:#F4A3A3}
 .saque-conta{background:#FFF7E8;border:2px dashed #E3D8BF;border-radius:14px;padding:10px 12px;margin:10px 0;text-align:left;font-size:.92rem}
 .saque-conta p{margin:3px 0;display:flex;justify-content:space-between;gap:10px}
+.saque-conta b{white-space:nowrap}
 .saque-conta .tot{border-top:2px solid #E3D8BF;padding-top:6px;margin-top:6px;font-weight:900}
 .fiado-fala{font-size:1.05rem;margin:10px 0}
 .fiado-aviso{color:#B3362B;font-weight:900;font-size:.9rem;margin:6px 0}
@@ -569,6 +570,12 @@ body:not(.jogando) .alerta{display:none}
 .meta-lista span{background:#FFF3C4;border:2px solid #2A1A12;border-radius:999px;padding:3px 10px;font-weight:900;font-size:.85rem}
 .meta-lista span.ok{background:#BDF2CB}
 .tarefa.meta .barra i{background:#F2B21B}
+.tarefa{cursor:pointer;transition:max-width .25s ease}
+.tarefa.recolhida{width:auto;max-width:9.5rem;align-self:center;padding:4px 10px;gap:7px}
+.tarefa.recolhida .txt{flex:none;width:4.6rem;font-size:0;line-height:0}
+.tarefa.recolhida .txt .barra{margin-top:0}
+.tarefa.recolhida .rec{display:none}
+.tarefa.recolhida .ic{font-size:1.05rem}
 .mapa-no.meta .mapa-bola{background:#FFE58A}
 .freg-sub{margin:2px 2px 8px;color:var(--sub);font-size:.82rem;font-weight:700}
 .freg-tab{background:#fff;border:2.5px solid var(--contorno);border-radius:14px;padding:4px 12px;margin-top:8px}
@@ -1040,7 +1047,7 @@ body:not(.jogando) .alerta{display:none}
     <p class="txt">Os clientes entram sozinhos, pegam as bebidas e vão para o caixa. Toque no balão amarelo para cobrar: quanto mais rápido, maior a gorjeta. Depois, melhore as geladeiras, mantenha o estoque abastecido com o fornecedor e transforme a adega na maior do bairro.</p>
     <p class="txt" style="color:var(--sub);font-size:.9rem">Arraste o dedo para andar pela loja. Toque nas etiquetas para melhorar cada parte.</p>
     <button class="btn" id="btnComecar">Abrir a adega</button>
-    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 28/11/2026 · 01h15 · 🎄</p>
+    <p style="color:var(--sub);font-size:.72rem;margin-top:10px">Versão 28/11/2026 · 01h45 · 🎄</p>
   </div>
 </section>
 
@@ -1757,7 +1764,8 @@ bloco(3.6,0.1,1.05,toon(0xC8AC7A),caixaG,0,1.03,0,0.03,0.02);
   const g=new THREE.Group(); g.position.set(-1.15,1.08,0.32); g.rotation.y=0.25; caixaG.add(g);
   bloco(0.95,0.04,0.2,toon(0xE8E8E8),g,0,0.02,0);
   const p=malha(new THREE.PlaneGeometry(0.9,0.63),new THREE.MeshBasicMaterial({map:tx}),g,0,0.36,0.02,false); p.rotation.x=-0.12;
-  const t=malha(new THREE.PlaneGeometry(0.9,0.63),new THREE.MeshBasicMaterial({color:0xC8302B}),g,0,0.36,0.015,false); t.rotation.x=-0.12; t.rotation.y=Math.PI; })();
+  const t=malha(new THREE.PlaneGeometry(0.9,0.63),new THREE.MeshBasicMaterial({color:0xC8302B}),g,0,0.36,0.015,false); t.rotation.x=-0.12; t.rotation.y=Math.PI;
+  hit('saque',g,1.0,0.8,0.35,0,0.38,0); })();
 (function(){ const n=new THREE.Group(); n.position.set(1.4,1.08,0.05); n.rotation.y=-0.3; caixaG.add(n); bloco(0.46,0.03,0.32,toon(0x3A3F44),n,0,0.015,0,0.01,0.01); const t=new THREE.Group(); t.position.set(0,0.03,-0.15); t.rotation.x=-0.35; n.add(t); bloco(0.46,0.3,0.02,toon(0x3A3F44),t,0,0.15,0,0.008,0.01); malha(new THREE.PlaneGeometry(0.42,0.26),new THREE.MeshBasicMaterial({color:0x9FD8FF}),t,0,0.15,0.012,false); })();
 bloco(3.42,0.06,0.02,toon(0xB89C6A),caixaG,0,0.95,0.46);
 const caixasReg=[];
@@ -3526,10 +3534,9 @@ function posicionarSanto(){
   const t=naTela(SANTO_POS), W=innerWidth, H=innerHeight, h=typeof horaAgora==='function'?horaAgora():19, aberta=h>=18||h<0.01;
   const fora=t.x<40||t.x>W-40||t.y<120||t.y>H-40;
   // fora da tela: com a pizzaria aberta, o balão fica na borda apontando o caminho; fechada, some
-  let x=t.x, y=t.y, seta='';
-  if(fora){ x=Math.min(W-78,Math.max(78,t.x)); y=Math.min(H-120,Math.max(150,t.y)); const a=Math.atan2(t.y-y,t.x-x); seta=' '+['→','↘','↓','↙','←','↖','↑','↗'][((Math.round(a/(Math.PI/4))%8)+8)%8]; }
-  seloSanto.style.display=fora&&!aberta?'none':''; seloSanto.style.left=x+'px'; seloSanto.style.top=y+'px';
-  const html=aberta?'🍕 Peça sua pizza'+seta+'<small>toque aqui · WhatsApp</small>':'🍕 Santo Forno<small>abre às 18h</small>';
+  // o balão fica só em cima da pizzaria: fora da tela, some
+  seloSanto.style.display=fora?'none':''; seloSanto.style.left=t.x+'px'; seloSanto.style.top=t.y+'px';
+  const html=aberta?'🍕 Peça sua pizza<small>toque aqui · WhatsApp</small>':'🍕 Santo Forno<small>abre às 18h</small>';
   if(seloSanto._h!==html){ seloSanto._h=html; seloSanto.innerHTML=html; seloSanto.classList.toggle('fechada',!aberta); }
   const chama=aberta&&((S&&S.santoToques)||0)<3; if(seloSanto._c!==chama){ seloSanto._c=chama; seloSanto.classList.toggle('chama',chama); }
 }
@@ -5453,6 +5460,25 @@ function abrirPedidoSaque(c){
   $('#btnSaqueSim').onclick=()=>{ const c2=saqueCliente; if(c2&&c2.pedeSaque&&c2.estado==='noCaixa') fazerSaque(c2); else fecharPedidoSaque(); };
   $('#telaSaque').hidden=false;
 }
+// toque na plaquinha do balcão: o porquê, com a conta de um saque de exemplo
+function abrirInfoSaque(){
+  fecharPainel(); SOM.abrir(); const k=contaSaque({valor:100,forma:'debito',taxa:3}), Q=S.saque;
+  $('#saqueCaixa').innerHTML=`<div class="papo-topo"><h2 class="titulo" style="font-size:1.6rem">💵 Não fazemos saque</h2><button class="pilula" id="btnInfoSaqueX" type="button" aria-label="Fechar">✕</button></div>
+    <p class="txt" style="text-align:left">Muita gente procura a adega para pegar dinheiro: passa o cartão de débito ou de crédito, ou faz um Pix, e leva o valor em espécie. <b>Na Adega do Edu, não fazemos.</b> Mesmo cobrando uma taxa, não compensa:</p>
+    <div class="saque-conta"><p><span>Entrou no cartão (R$ 100 + R$ 3 de taxa)</span><b>${fmt(k.entra)}</b></p>
+      <p><span>Saiu da gaveta em dinheiro</span><b>−${fmt(100)}</b></p>
+      <p><span>Taxa da maquininha (débito 1,5%)</span><b>−${fmt(k.maq)}</b></p>
+      <p><span>Imposto do Simples sobre os ${fmt(k.entra)}</span><b>−${fmt(k.imp)}</b></p>
+      <p class="tot"><span>Prejuízo</span><b style="color:#B3362B">${fmt(Math.abs(k.res))}</b></p></div>
+    <p class="txt" style="font-size:.9rem;text-align:left">📈 Todo valor movimentado na maquininha ou no Pix <b>conta como faturamento</b>, mesmo não sendo venda. E faturamento maior pode levar a adega para uma <b>faixa mais alta do Simples</b>, aumentando o imposto de tudo o que ela vende. Além disso, some o troco da gaveta.</p>
+    ${Q&&Q.feitos?`<p class="fiado-aviso">Na sua adega: ${Q.feitos} ${Q.feitos>1?'saques feitos':'saque feito'}, ${fmt(Q.prejuizo)} de prejuízo.</p>`:''}
+    ${licaoFeita('saque')?'':'<button class="btn" id="btnInfoSaqueLicao" type="button">📚 Fazer a lição do Edu</button>'}
+    <button class="btn azul peq" id="btnInfoSaqueOk" type="button" style="margin-top:8px">Entendi</button>
+    <p class="fiado-dica">Valores de exemplo.</p>`;
+  $('#btnInfoSaqueX').onclick=$('#btnInfoSaqueOk').onclick=()=>{ $('#telaSaque').hidden=true; };
+  const bl=$('#btnInfoSaqueLicao'); if(bl) bl.onclick=()=>{ $('#telaSaque').hidden=true; abrirLicao('saque'); };
+  $('#telaSaque').hidden=false;
+}
 function fecharPedidoSaque(){ $('#telaSaque').hidden=true; saqueCliente=null; }
 function recusarSaque(c,sozinho){
   const q=Sq(); c.pedeSaque=false; c.t=JANELA_GORJETA; q.pedidos++; q.recusados++;
@@ -6683,8 +6709,16 @@ function avisoTemporada2(){
 }
 $('#btnT2Ok').addEventListener('click',()=>{ $('#telaT2').hidden=true; S.avisoT2=false; salvar(); SOM.abrir(); });
 setInterval(avisoTemporada2,2000);
+// O cartão da tarefa/meta fica recolhido numa pílula (ícone + barrinha). Toque para abrir; ele se recolhe sozinho
+// depois de alguns segundos, e abre sozinho quando chega tarefa nova ou o prêmio está pronto para pegar.
+let tRecolhe=null, chaveTarefa=null;
+function expandirTarefa(ms){ const el=$('#tarefa'); el.classList.remove('recolhida'); clearTimeout(tRecolhe);
+  tRecolhe=setTimeout(function recolhe(){ if(el.querySelector('button')){ tRecolhe=setTimeout(recolhe,3000); return; } el.classList.add('recolhida'); },ms||6000); }
+$('#tarefa').addEventListener('click',e=>{ const el=$('#tarefa'); if(el.classList.contains('recolhida')){ e.stopImmediatePropagation(); e.preventDefault(); SOM.abrir(); expandirTarefa(6000); } },true);
 function renderTarefa(){
   const el=$('#tarefa');
+  const chave=S.tarefa<TAREFAS.length?'t'+S.tarefa:(S.conclusaoMes?'m'+(proximaMeta()||0):'fim');
+  if(chave!==chaveTarefa){ const primeira=chaveTarefa===null; chaveTarefa=chave; expandirTarefa(primeira?7000:5000); }
   if(S.tarefa>=TAREFAS.length&&S.conclusaoMes){
     const m=proximaMeta(); if(!m){ el.hidden=true; el.classList.remove('meta'); cacheTarefa='oculto'; return; }
     const a=fatTemporada(), html=`<span class="ic">🎯</span><div class="txt">Meta: faturar ${nomeMeta(m)} <small>(${fmt(a)})</small><div class="barra"><i style="width:${Math.min(100,100*a/m).toFixed(1)}%"></i></div></div><span class="rec"><small>🎁 Prêmio</small><b>+${fmt(premioMeta(m))}</b></span>`;
@@ -6695,7 +6729,7 @@ function renderTarefa(){
   const t=TAREFAS[S.tarefa], [a,b]=t.meta(), feito=a>=b;
   const html=`<span class="ic">${t.ic}</span><div class="txt">${t.txt}<div class="barra"><i style="width:${Math.min(100,100*a/b)}%"></i></div></div>`+
     (feito?`<button id="btnTarefa">Pegar</button>`:`<span class="rec"><small>🎁 Prêmio</small><b>+${fmt(t.premio*multPrest())}</b></span>`);
-  if(html===cacheTarefa) return; cacheTarefa=html; el.innerHTML=html;
+  if(html===cacheTarefa) return; cacheTarefa=html; el.innerHTML=html; if(feito) expandirTarefa(5000);
   if(feito) $('#btnTarefa').onclick=()=>{ S.din+=t.premio*multPrest(); S.tarefa++; ganharXP('tarefa',1); SOM.marco(); atualizarHUD(true); salvar(); if(S.tarefa>=TAREFAS.length) setTimeout(()=>$('#telaPrestigio').hidden=false,400); };
 }
 
@@ -6919,6 +6953,7 @@ function tocarMundo(e){
   if(a==='pilha'){ if(pilhaValor>=1) coletar(); else abrirPainel('caixa'); }
   else if(a==='pdr') abrirPdr();
   else if(a==='santo') abrirSanto();
+  else if(a==='saque') abrirInfoSaque();
   else if(a.indexOf('mesa')===0){ const i=+a.slice(4); if(!recolherMesa(i)) abrirPainel('mesas'); }
   else if(vitrineDisponivel(a)) abrirVitrine(a);
   else abrirPainel(a);
